@@ -4,10 +4,12 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import com.live.customview.Utils
+import java.util.*
 import kotlin.math.roundToInt
 
 class ChuiziSwitchView : View {
@@ -27,6 +29,19 @@ class ChuiziSwitchView : View {
     private val dotFlagRadius = Utils.dp2px(6)
     private var touchButtonXinit = 0f
 
+    private lateinit var shadowPath: Path
+    private var cornerRadius = 0f
+    private lateinit var shadowRectF: RectF
+
+    /**
+     * 圆形按钮 x 位置
+     */
+    var touchButtonX = 0f
+
+    /**
+     * 圆形按钮 x 轴滑动比例，根据已滑动距离/全部滑动距离
+     */
+    var touchButtonMoveRate = 0f
     /**
      * 触摸按钮阴影需要预留出来的空间，也是阴影扩散的大小
      */
@@ -49,45 +64,38 @@ class ChuiziSwitchView : View {
     /**
      * 开关状态
      */
-    private var switchState = false
-    /**
-     * 开关状态转换进度，和动画挂钩
-     */
-    private var switchRate = 0f
+    var switchState = false
 
     /**
-     * 触摸按钮按下状态
+     * 触摸按钮按下动画,进度
      */
-    private var touchPushRate = 0f;
+    private var touchPushRate = 0f
+
+    /**
+     * 滑动式上一次 x 位置
+     */
+    private var lastX = 0f
+
+    /**
+     * 触摸按钮绘制时已滑动的距离
+     */
+    private var offsetXofTouchButton = 0f
+
+    /**
+     * 触摸按钮左限制
+     */
+    private var touchButtonLeftLimit = 0f
+
+    /**
+     * 触摸按钮友限制
+     */
+    private var touchButtonRightLimit = 0f
+
+    private var touchButtonFreeSpace = 0f
 
     private var touchButtonAnnotation: ValueAnimator? = null
 
     private var touchButtonMoveAnnotation: ValueAnimator? = null
-
-    private fun touchButtonMoveAnnotation(value: Float): ValueAnimator?{
-        if (touchButtonMoveAnnotation == null){
-            touchButtonMoveAnnotation = ValueAnimator.ofFloat()
-        }
-        touchButtonMoveAnnotation?.setFloatValues(value)
-        touchButtonMoveAnnotation?.addUpdateListener {
-            needOffsetXofTouchButton = -(it.animatedValue as Float)
-            invalidate()
-        }
-        return touchButtonMoveAnnotation
-    }
-
-    private fun touchButtonAnnotation(value: Float): ValueAnimator? {
-        if (touchButtonAnnotation == null){
-            touchButtonAnnotation = ValueAnimator.ofFloat()
-        }
-        touchButtonAnnotation?.duration = 200
-        touchButtonAnnotation?.setFloatValues(value)
-        touchButtonAnnotation?.addUpdateListener {
-            touchPushRate = it.animatedValue as Float
-            invalidate()
-        }
-        return touchButtonAnnotation
-    }
 
     constructor(context: Context) : super(context){
         init(context)
@@ -108,10 +116,25 @@ class ChuiziSwitchView : View {
         touchButtonXinit = reallyUseHeight / 2f
         // 计算公式，2 * 触摸按钮圆点到初始状态flag圆点的位置。
         switchFlagBetweenDistance = (reallyUseWidth - 2f*dotFlagDistance).roundToInt()
+
+        touchButtonRightLimit = reallyUseWidth - touchButtonXinit
+        touchButtonLeftLimit = touchButtonXinit
+
+        touchButtonFreeSpace = touchButtonRightLimit - touchButtonLeftLimit
+
+        cornerRadius = reallyUseHeight / 2f
+        shadowRectF = RectF(0f, 0f, reallyUseWidth.toFloat(), reallyUseHeight.toFloat())
+        shadowPath = Path()
+        shadowPath.addRoundRect(
+            shadowRectF,
+            cornerRadius,
+            cornerRadius,
+            Path.Direction.CW
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
-        // 这个是计算的关键，坐标移动了！！！
+        // 这个是计算的关键，坐标移动了！！！留出四周空隙好显示阴影
         canvas.translate(touchButtonShadowSpaceMax,touchButtonShadowSpaceMax - touchButtonShadowSpaceYOffse)
         drawFlag(canvas)
 
@@ -120,50 +143,52 @@ class ChuiziSwitchView : View {
         drawTouchButton(canvas)
     }
 
-    private var downX = 0f
-    private var downy = 0f
-    private var needOffsetXofTouchButton = 0f
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        var action = event.action
+        val action = event.action
         when(action){
             MotionEvent.ACTION_DOWN -> {
-                downX = event.x
-                downy = event.y
-                // 实现按下状态动画
-                touchButtonAnnotation(1f)?.start()
-                return true
+                lastX = event.x
+                var isInTouchButtonArea = computerPointInTouchButtonArea(event.x,event.y)
+                if (isInTouchButtonArea){
+                    // 实现按下状态动画
+                    touchButtonAnnotation(1f)?.start()
+                }
+                return isInTouchButtonArea
             }
             MotionEvent.ACTION_MOVE -> {
                 val moveX = event.x
-                needOffsetXofTouchButton = moveX - downX
-                val willMoveDiatance = touchButtonXinit + needOffsetXofTouchButton
+                val onceMoveDistance = moveX - lastX
+                val willMoveDiatance = touchButtonX + onceMoveDistance
 
-                if (willMoveDiatance < touchButtonXinit){
-                    needOffsetXofTouchButton = touchButtonXinit
+                if (willMoveDiatance < touchButtonLeftLimit){
+                    offsetXofTouchButton +=  - (touchButtonX - touchButtonLeftLimit)
                 } else {
-                    if (willMoveDiatance > reallyUseWidth-touchButtonXinit){
-                        needOffsetXofTouchButton = reallyUseWidth-touchButtonXinit
+                    if (willMoveDiatance > touchButtonRightLimit){
+                        offsetXofTouchButton += (touchButtonRightLimit - touchButtonX)
+                    } else{
+                        offsetXofTouchButton += onceMoveDistance
                     }
                 }
+                touchButtonMoveRate = offsetXofTouchButton / touchButtonFreeSpace
+
                 invalidate()
+                lastX = moveX
             }
             MotionEvent.ACTION_UP -> {
                 touchButtonAnnotation(1f)?.reverse()
-                val absNeedOffsetXofTouchButton = Math.abs(needOffsetXofTouchButton)
+                val absNeedOffsetXofTouchButton = Math.abs(offsetXofTouchButton)
                 val canMoveDistance = (reallyUseWidth - 2f*dotFlagDistance).roundToInt()
                 if (absNeedOffsetXofTouchButton > canMoveDistance/2){
                     // 切换状态
-
+                    touchButtonMoveAnnotation(touchButtonMoveRate,1f)?.start()
                 } else {
                     // 归零
-                    touchButtonMoveAnnotation(needOffsetXofTouchButton)?.start()
+                    touchButtonMoveAnnotation(0f,touchButtonMoveRate)?.reverse()
                 }
-
             }
         }
         return super.onTouchEvent(event)
     }
-
 
     /**
      * 绘制触摸按钮
@@ -177,8 +202,8 @@ class ChuiziSwitchView : View {
 
         val finalShadowSpace = touchButtonShadowSpaceMin + (1 - touchPushRate) * (touchButtonShadowSpaceMax - touchButtonShadowSpaceMin)
         dotFlagPaint.setShadowLayer(finalShadowSpace,0f,touchButtonShadowSpaceYOffse,Color.parseColor("#d1d1d1"))
-
-        val touchButtonX = touchButtonXinit + needOffsetXofTouchButton
+        // 计算圆形按钮 x 位置
+        touchButtonX = touchButtonXinit + touchButtonFreeSpace*touchButtonMoveRate
         canvas.drawCircle(
             touchButtonX, reallyUseHeight / 2f,
             reallyUseHeight / 2f ,
@@ -195,16 +220,6 @@ class ChuiziSwitchView : View {
      */
     private fun drawSwitchBackground(canvas: Canvas) {
         canvas.save()
-        // 线上记得挪出去
-        val shadowPath = Path()
-        val cornerRadius = reallyUseHeight / 2f
-        val shadowRectF = RectF(0f, 0f, reallyUseWidth.toFloat(), reallyUseHeight.toFloat())
-        shadowPath.addRoundRect(
-            shadowRectF,
-            cornerRadius,
-            cornerRadius,
-            Path.Direction.CW
-        )
         commnPaint.color = Color.parseColor("#e1e1e1")
         commnPaint.style = Paint.Style.STROKE
         commnPaint.strokeWidth = Utils.dp2px(1)
@@ -223,16 +238,64 @@ class ChuiziSwitchView : View {
      * @param canvas
      */
     private fun drawFlag(canvas: Canvas) {
+        canvas.save()
+        canvas.clipPath(shadowPath)
         dotFlagPaint.color = dotFlagColors[0]
-        canvas.drawCircle(dotFlagDistance - (1 - switchRate)*switchFlagBetweenDistance, reallyUseHeight / 2f, dotFlagRadius, dotFlagPaint)
+        canvas.drawCircle(dotFlagDistance - (1 - touchButtonMoveRate)*switchFlagBetweenDistance, reallyUseHeight / 2f, dotFlagRadius, dotFlagPaint)
         dotFlagPaint.color = dotFlagColors[1]
         canvas.drawCircle(
-            reallyUseWidth - dotFlagDistance + switchRate*switchFlagBetweenDistance,
+            reallyUseWidth - dotFlagDistance + touchButtonMoveRate*switchFlagBetweenDistance,
             reallyUseHeight / 2f,
             dotFlagRadius,
             dotFlagPaint
         )
+        canvas.restore()
     }
 
+    /**
+     * 圆形按钮滑动动画
+     */
+    private fun touchButtonMoveAnnotation(start: Float = 0f,end: Float): ValueAnimator?{
+        if (touchButtonMoveAnnotation == null){
+            touchButtonMoveAnnotation = ValueAnimator.ofFloat()
+        }
+        touchButtonMoveAnnotation?.setFloatValues(start,end)
+        touchButtonMoveAnnotation?.addUpdateListener {
+            touchButtonMoveRate = it.animatedValue as Float
+            offsetXofTouchButton = touchButtonFreeSpace * touchButtonMoveRate
+            invalidate()
+        }
+        return touchButtonMoveAnnotation
+    }
+
+    /**
+     * 圆形按钮按下动画
+     */
+    private fun touchButtonAnnotation(value: Float): ValueAnimator? {
+        if (touchButtonAnnotation == null){
+            touchButtonAnnotation = ValueAnimator.ofFloat()
+        }
+        touchButtonAnnotation?.duration = 200
+        touchButtonAnnotation?.setFloatValues(value)
+        touchButtonAnnotation?.addUpdateListener {
+            touchPushRate = it.animatedValue as Float
+            invalidate()
+        }
+        return touchButtonAnnotation
+    }
+
+    fun computerPointInTouchButtonArea(x: Float,y: Float):Boolean {
+        var left = touchButtonX - cornerRadius
+        var right = touchButtonX + cornerRadius
+        var top = touchButtonShadowSpaceMax - touchButtonShadowSpaceYOffse
+        var bottom = top + reallyUseHeight
+        if (x < left || x > right){
+            return false
+        }
+        if (y < top || y > bottom){
+            return false
+        }
+        return true
+    }
 
 }
