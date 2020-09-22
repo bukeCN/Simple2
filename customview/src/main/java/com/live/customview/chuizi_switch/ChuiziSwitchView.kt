@@ -284,6 +284,9 @@ class ChuiziSwitchView : View {
         return touchButtonAnnotation
     }
 
+    /**
+     * 计算触摸点是否在圆形按钮上
+     */
     fun computerPointInTouchButtonArea(x: Float,y: Float):Boolean {
         var left = touchButtonX - cornerRadius
         var right = touchButtonX + cornerRadius
