@@ -1,4 +1,4 @@
-package com.live.simple2;
+package com.live.simple2.view;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -9,6 +9,8 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+
+import com.live.simple2.R;
 
 /**
  * 单一的滚动广告

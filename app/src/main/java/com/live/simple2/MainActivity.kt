@@ -2,21 +2,25 @@ package com.live.simple2
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Message
 import android.view.View
+import com.live.simple2.view.RuningLayout
+import com.live.simple2.view.TextSwitchView
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var runingView : RuningLayout
+    lateinit var sw : TextSwitchView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        runingView = findViewById(R.id.runingView)
 
-        findViewById<View>(R.id.start).setOnClickListener({
-            runingView.update("动起来！！！！动起来！！！")
-        })
+        sw = findViewById(R.id.sw)
+        sw.setChecked(true)
+
+        findViewById<View>(R.id.testBtn).setOnClickListener {
+            sw.setChecked(true)
+        }
 
 
     }

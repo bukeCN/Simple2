@@ -1,4 +1,4 @@
-package com.live.simple2;
+package com.live.simple2.view;
 
 import android.content.Context;
 import android.util.AttributeSet;

@@ -5,9 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/colorAccent"
+    android:gravity="center">
 
-    <!--    <com.live.simple2.RuningTextView-->
+    <!--    <com.live.simple2.view.RuningTextView-->
     <!--        android:layout_width="match_parent"-->
     <!--        android:layout_height="wrap_content"-->
     <!--        android:text="这是一行盘马镫效果，后面他将要动起来！来一来瞧一瞧看一看摸一摸打一打"-->
@@ -18,24 +20,33 @@
     <!--        android:singleLine="true"-->
     <!--        android:ellipsize="marquee"-->
     <!--        android:marqueeRepeatLimit="marquee_forever"/>-->
+<!--    <Button-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="启动"-->
+<!--        android:id="@+id/start"/>-->
+<!--    <com.live.simple2.view.RuningLayout-->
+<!--        android:id="@+id/runingView"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="center">-->
+<!--        <TextView-->
+<!--            android:id="@+id/content"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@color/colorAccent"-->
+<!--            android:text="This is test, now testing" />-->
+<!--    </com.live.simple2.view.RuningLayout>-->
+
+    <com.live.simple2.view.TextSwitchView
+        android:id="@+id/sw"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"/>
     <Button
+        android:id="@+id/testBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="启动"
-        android:id="@+id/start"/>
-    <com.live.simple2.RuningLayout
-        android:id="@+id/runingView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center">
-        <TextView
-            android:id="@+id/content"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/colorAccent"
-            android:text="This is test, now testing" />
-    </com.live.simple2.RuningLayout>
-
-
+        android:text="设置为 true"/>
 
 </LinearLayout>
