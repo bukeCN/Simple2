@@ -3,6 +3,7 @@ package com.live.simple2
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.live.simple2.proformance.UiPromanceManager
 import com.live.simple2.view.RuningLayout
 import com.live.simple2.view.TextSwitchView
 
@@ -22,6 +23,13 @@ class MainActivity : AppCompatActivity() {
             sw.setChecked(true)
         }
 
+        var  uiPromanceManager = UiPromanceManager()
+
+        uiPromanceManager.monitorFPS()
+
+        mainLooper.setMessageLogging {
+            
+        }
 
     }
 }

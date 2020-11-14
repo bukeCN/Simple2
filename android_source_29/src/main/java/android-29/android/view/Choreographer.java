@@ -260,7 +260,7 @@ public final class Choreographer {
                 ? new FrameDisplayEventReceiver(looper, vsyncSource)
                 : null;
         mLastFrameTimeNanos = Long.MIN_VALUE;
-        // 计算最小帧间隔时间，单位毫秒
+        // 计算最小帧间隔时间，单位纳秒
         mFrameIntervalNanos = (long)(1000000000 / getRefreshRate());
         // 初始化事件回调数组，五个，分别对应五种不同的事件，该事件由 ViewRootImpl 调用时传入，处理优先级不同。
         mCallbackQueues = new CallbackQueue[CALLBACK_LAST + 1];
@@ -413,6 +413,9 @@ public final class Choreographer {
      *
      * @see #removeCallbacks
      * @hide
+     *
+     * 向 Choreogerapher 的 Callback 回调队列中加入 vsync 信号回调，同时会触发下一次的 vsync 信号，
+     * 以便在 vsync 信号到时候触发回调。
      */
     @TestApi
     public void postCallback(int callbackType, Runnable action, Object token) {
@@ -717,15 +720,19 @@ public final class Choreographer {
             AnimationUtils.lockAnimationClock(frameTimeNanos / TimeUtils.NANOS_PER_MS);
 
             mFrameInfo.markInputHandlingStart();
+            // 1. 处理用户输入事件，优先级最高
             doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos);
 
             mFrameInfo.markAnimationsStart();
+            // 2. 处理动画
             doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos);
+            // 3. 处理动画回调
             doCallbacks(Choreographer.CALLBACK_INSETS_ANIMATION, frameTimeNanos);
 
             mFrameInfo.markPerformTraversalsStart();
+            // 4. 处理 ViewRootImpl 的 traversal，即处理 ui 绘制任务
             doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos);
-
+            // 5. 处理提交任务
             doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos);
         } finally {
             AnimationUtils.unlockAnimationClock();
@@ -823,6 +830,9 @@ public final class Choreographer {
         }
     }
 
+    /**
+     * 请求下一次 vsync 信号
+     */
     @UnsupportedAppUsage
     private void scheduleVsyncLocked() {
         mDisplayEventReceiver.scheduleVsync();
@@ -942,6 +952,7 @@ public final class Choreographer {
 
             mTimestampNanos = timestampNanos;
             mFrame = frame;
+            // 发送异步消息，异步回调为自身，因此当异步回调执行时会回执行 run() 方法。
             Message msg = Message.obtain(mHandler, this);
             msg.setAsynchronous(true);
             mHandler.sendMessageAtTime(msg, timestampNanos / TimeUtils.NANOS_PER_MS);

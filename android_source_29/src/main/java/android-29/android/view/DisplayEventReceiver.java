@@ -169,6 +169,8 @@ public abstract class DisplayEventReceiver {
     /**
      * Schedules a single vertical sync pulse to be delivered when the next
      * display frame begins.
+     * 通过 native 方法调用，设置在下一次 VSYNC 信号到来时调用该监听的 onVsync 方法。
+     * mReceiverPtr 是否是 c++ 中用的指针？表示该类？
      */
     @UnsupportedAppUsage
     public void scheduleVsync() {

@@ -1686,11 +1686,18 @@ public final class ViewRootImpl implements ViewParent,
         }
     }
 
+    /**
+     * 重要函数，处理 UI 绘制请求，走 mesaure() / layout() / draw() 三大流程
+     * requestLayout() 方法中调用之后会调用此函数。
+     * view 调用 invalidata() 方法之后会调用
+     */
     @UnsupportedAppUsage
     void scheduleTraversals() {
         if (!mTraversalScheduled) {
             mTraversalScheduled = true;
+            // 设置同步屏障
             mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+            // 添加一个 vsync 请求回调，当 vsync 信号来时，会通过调用该回调。
             mChoreographer.postCallback(
                     Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
