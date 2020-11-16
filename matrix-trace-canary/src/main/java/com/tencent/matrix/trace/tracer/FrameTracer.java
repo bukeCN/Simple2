@@ -68,9 +68,11 @@ public class FrameTracer extends Tracer {
         }
     }
 
+    // 父类的 onStartTrace() 方法中会调用该方法
     @Override
     public void onAlive() {
         super.onAlive();
+        // 向 UIThreadMonitor 中添加 LooperObserver 观察者。
         UIThreadMonitor.getMonitor().addObserver(this);
     }
 

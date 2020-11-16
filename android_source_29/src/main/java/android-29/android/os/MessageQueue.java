@@ -396,12 +396,14 @@ public final class MessageQueue {
 
             // Run the idle handlers.
             // We only ever reach this code block during the first iteration.
+            // 循环执行已添加的 IdleHandler
             for (int i = 0; i < pendingIdleHandlerCount; i++) {
                 final IdleHandler idler = mPendingIdleHandlers[i];
                 mPendingIdleHandlers[i] = null; // release the reference to the handler
 
                 boolean keep = false;
                 try {
+                    // 判断是否移除该 IdleHandler
                     keep = idler.queueIdle();
                 } catch (Throwable t) {
                     Log.wtf(TAG, "IdleHandler threw exception", t);

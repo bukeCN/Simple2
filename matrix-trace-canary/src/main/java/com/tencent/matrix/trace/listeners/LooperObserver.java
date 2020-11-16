@@ -6,8 +6,10 @@ public abstract class LooperObserver {
 
     private boolean isDispatchBegin = false;
 
+
     @CallSuper
     public void dispatchBegin(long beginNs, long cpuBeginNs, long token) {
+        // UIThreadMontior 的回调仅仅只是将回调其置位 true。
         isDispatchBegin = true;
     }
 

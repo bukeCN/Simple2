@@ -93,11 +93,11 @@ public class TracePlugin extends Plugin {
                 }
                 // 以下依次启动各个监控模块
                 AppMethodBeat.getInstance().onStart();
-
+                // 启动UIThreaMonitor 监控
                 UIThreadMonitor.getMonitor().onStart();
 
                 anrTracer.onStartTrace();
-
+                // 这里是重点，前面的 UIThreadMonitor 是收集数据，这里含有数据的上报。
                 frameTracer.onStartTrace();
 
                 evilMethodTracer.onStartTrace();

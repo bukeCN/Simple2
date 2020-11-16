@@ -38,11 +38,11 @@
 <!--            android:text="This is test, now testing" />-->
 <!--    </com.live.simple2.view.RuningLayout>-->
 
-    <com.live.simple2.view.TextSwitchView
-        android:id="@+id/sw"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_gravity="center"/>
+<!--    <com.live.simple2.view.TextSwitchView-->
+<!--        android:id="@+id/sw"-->
+<!--        android:layout_width="200dp"-->
+<!--        android:layout_height="60dp"-->
+<!--        android:layout_gravity="center"/>-->
     <Button
         android:id="@+id/testBtn"
         android:layout_width="wrap_content"

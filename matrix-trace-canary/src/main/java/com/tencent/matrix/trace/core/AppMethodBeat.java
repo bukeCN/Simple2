@@ -1,4 +1,4 @@
-package com.tencent.matrix.trace.core;
+currentThreadTimeMillispackage com.tencent.matrix.trace.core;
 
 import android.app.Activity;
 import android.os.Handler;

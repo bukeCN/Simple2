@@ -178,6 +178,7 @@ public final class Looper {
             }
 
             // This must be in a local variable, in case a UI event sets the logger
+            // 消息被执行前输出消息
             final Printer logging = me.mLogging;
             if (logging != null) {
                 logging.println(">>>>> Dispatching to " + msg.target + " " +
@@ -244,7 +245,7 @@ public final class Looper {
             if (logSlowDispatch) {
                 showSlowLog(slowDispatchThresholdMs, dispatchStart, dispatchEnd, "dispatch", msg);
             }
-
+            // 消息执行完成后输出信息
             if (logging != null) {
                 logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
             }

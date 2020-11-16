@@ -135,6 +135,7 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
             MatrixLog.w(TAG, "maybe thread:%s printer[%s] was replace other[%s]!",
                     looper.getThread().getName(), printer, originPrinter);
         }
+        // 向主线程的 Looper 中设置 Message 消息执行前后的监听。
         looper.setMessageLogging(printer = new LooperPrinter(originPrinter));
         if (null != originPrinter) {
             MatrixLog.i(TAG, "reset printer, originPrinter[%s] in %s", originPrinter, looper.getThread().getName());
@@ -178,16 +179,19 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
             this.origin = printer;
         }
 
+        // 输出消息方法
         @Override
         public void println(String x) {
+            // origin 表示最源 Prointer ，即兼容系统添加的 Printer，别自己添加了又把系统的给干掉了。
             if (null != origin) {
                 origin.println(x);
                 if (origin == this) {
                     throw new RuntimeException(TAG + " origin == this");
                 }
             }
-
+            // 通过获取输出消息的第一个字符判断是 Message 执行前调用，还是执行后调用。输出信息格式在源码中有。
             if (!isHasChecked) {
+                // 检查消息格式是否正确，万一 Google 抽风或者其他 OS 给改了
                 isValid = x.charAt(0) == '>' || x.charAt(0) == '<';
                 isHasChecked = true;
                 if (!isValid) {
@@ -196,6 +200,7 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
             }
 
             if (isValid) {
+                // 调用分发
                 dispatch(x.charAt(0) == '>', x);
             }
 
@@ -204,15 +209,17 @@ public class LooperMonitor implements MessageQueue.IdleHandler {
 
 
     private void dispatch(boolean isBegin, String log) {
-
+        // 这里即会回调 UIThreadMonitor 注册的回调方法。
         for (LooperDispatchListener listener : listeners) {
             if (listener.isValid()) {
                 if (isBegin) {
                     if (!listener.isHasDispatchStart) {
+                        // 调用开始
                         listener.onDispatchStart(log);
                     }
                 } else {
                     if (listener.isHasDispatchStart) {
+                        // 调用结束
                         listener.onDispatchEnd(log);
                     }
                 }
