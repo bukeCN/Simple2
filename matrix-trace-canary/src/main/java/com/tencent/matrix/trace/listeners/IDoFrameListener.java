@@ -99,6 +99,7 @@ public class IDoFrameListener {
         replay.animationCostNs = animationCostNs;
         replay.traversalCostNs = traversalCostNs;
         list.add(replay);
+        // 在达到数据量的情况下上报
         if (list.size() >= intervalFrame && getExecutor() != null) {
             final List<FrameReplay> copy = new LinkedList<>(list);
             list.clear();

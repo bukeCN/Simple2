@@ -84,6 +84,7 @@ public class FrameTracer extends Tracer {
 
     @Override
     public void doFrame(String focusedActivity, long startNs, long endNs, boolean isVsyncFrame, long intendedFrameTimeNs, long inputCostNs, long animationCostNs, long traversalCostNs) {
+        // 判断 App 是否位于前台
         if (isForeground()) {
             notifyListener(focusedActivity, startNs, endNs, isVsyncFrame, intendedFrameTimeNs, inputCostNs, animationCostNs, traversalCostNs);
         }
@@ -101,11 +102,15 @@ public class FrameTracer extends Tracer {
                                 final long intendedFrameTimeNs, final long inputCostNs, final long animationCostNs, final long traversalCostNs) {
         long traceBegin = System.currentTimeMillis();
         try {
+            // 本次 vaync 信号耗时，
             final long jiter = endNs - intendedFrameTimeNs;
+            // 本次 vaync 信号耗时 / 预期的耗时 = ？？？？意义
             final int dropFrame = (int) (jiter / frameIntervalNs);
+            // 意义
             droppedSum += dropFrame;
+            // 计算花费时间的总和，注意：和预期相比去大的值
             durationSum += Math.max(jiter, frameIntervalNs);
-
+            // 数据，上报模块
             synchronized (listeners) {
                 for (final IDoFrameListener listener : listeners) {
                     if (config.isDevEnv()) {
@@ -113,9 +118,11 @@ public class FrameTracer extends Tracer {
                     }
                     if (null != listener.getExecutor()) {
                         if (listener.getIntervalFrameReplay() > 0) {
+                            // 数据未达到上报量，先保存，暂时不上报，如：FPSCollector 设置为 200
                             listener.collect(focusedActivity, startNs, endNs, dropFrame, isVsyncFrame,
                                     intendedFrameTimeNs, inputCostNs, animationCostNs, traversalCostNs);
                         } else {
+                            // 启动线程池上报
                             listener.getExecutor().execute(new Runnable() {
                                 @Override
                                 public void run() {
@@ -125,6 +132,7 @@ public class FrameTracer extends Tracer {
                             });
                         }
                     } else {
+                        // 实时上报
                         listener.doFrameSync(focusedActivity, startNs, endNs, dropFrame, isVsyncFrame,
                                 intendedFrameTimeNs, inputCostNs, animationCostNs, traversalCostNs);
                     }
@@ -234,7 +242,9 @@ public class FrameTracer extends Tracer {
             }
         }
 
+        // 处理上报逻辑
         void report() {
+            // 计算平均 fps
             float fps = Math.min(60.f, 1000.f * sumFrame / sumFrameCost);
             MatrixLog.i(TAG, "[report] FPS:%s %s", fps, toString());
 

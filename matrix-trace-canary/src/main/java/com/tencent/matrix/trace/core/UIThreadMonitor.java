@@ -220,6 +220,7 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
             for (LooperObserver observer : observers) {
                 if (!observer.isDispatchBegin()) {
                     // 回调数据收集开始，实现看 FrameTracer 中
+                    // 参数为，当前系统纳秒级时间、当前线程运行时间、token（当前系统纳秒级时间）
                     observer.dispatchBegin(dispatchTimeMs[0], dispatchTimeMs[2], token);
                 }
             }
