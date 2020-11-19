@@ -98,17 +98,21 @@ public class FrameTracer extends Tracer {
         return durationSum;
     }
 
+    // 当前 Activity、本次 Message 消息处理开始时间、本次 Message 消息处理结束时间、是否是由 VSYNC 信号触发的消息、vsync 信号到来时间
+    // INPUT 时间耗时、ANIMATION 事件耗时、TRAVERSAL 事件耗时
     private void notifyListener(final String focusedActivity, final long startNs, final long endNs, final boolean isVsyncFrame,
                                 final long intendedFrameTimeNs, final long inputCostNs, final long animationCostNs, final long traversalCostNs) {
         long traceBegin = System.currentTimeMillis();
         try {
-            // 本次 vaync 信号耗时，
+            // 本次 vsync 信号耗时，
             final long jiter = endNs - intendedFrameTimeNs;
-            // 本次 vaync 信号耗时 / 预期的耗时 = ？？？？意义
+            // 本次 vsync信号耗时 / 预期的每帧耗时耗时 = ？？？？意义？ 15 / 16 大于 1 的说明存在掉帧
+            // 这里用来 int 强转，小于 1 为 0, 大于 1 小于 2 为 1。
+            // 计算掉帧数
             final int dropFrame = (int) (jiter / frameIntervalNs);
-            // 意义
+            // 计算掉帧总和，
             droppedSum += dropFrame;
-            // 计算花费时间的总和，注意：和预期相比去大的值
+            // 计算耗时时间的总和，注意：和预期相比去大的值
             durationSum += Math.max(jiter, frameIntervalNs);
             // 数据，上报模块
             synchronized (listeners) {
@@ -116,13 +120,14 @@ public class FrameTracer extends Tracer {
                     if (config.isDevEnv()) {
                         listener.time = SystemClock.uptimeMillis();
                     }
+                    // 该 Listener 为 IDpFrameListener ，FrameTracer 添加了 FPSCollerctor
                     if (null != listener.getExecutor()) {
                         if (listener.getIntervalFrameReplay() > 0) {
                             // 数据未达到上报量，先保存，暂时不上报，如：FPSCollector 设置为 200
                             listener.collect(focusedActivity, startNs, endNs, dropFrame, isVsyncFrame,
                                     intendedFrameTimeNs, inputCostNs, animationCostNs, traversalCostNs);
                         } else {
-                            // 启动线程池上报
+                            // 启动线程池处理数据上报，这里 FPSCollector 在子线程处理。
                             listener.getExecutor().execute(new Runnable() {
                                 @Override
                                 public void run() {
@@ -132,7 +137,7 @@ public class FrameTracer extends Tracer {
                             });
                         }
                     } else {
-                        // 实时上报
+                        // 实时处理上报
                         listener.doFrameSync(focusedActivity, startNs, endNs, dropFrame, isVsyncFrame,
                                 intendedFrameTimeNs, inputCostNs, animationCostNs, traversalCostNs);
                     }
@@ -175,9 +180,12 @@ public class FrameTracer extends Tracer {
             return 200;
         }
 
+        // 执行数据处理，执行在子线程
+        // FPSCollector 是在数量达到 200 的时候进行上报
         @Override
         public void doReplay(List<FrameReplay> list) {
             super.doReplay(list);
+            // 循环调用，合并数据
             for (FrameReplay replay : list) {
                 doReplayInner(replay.focusedActivity, replay.startNs, replay.endNs, replay.dropFrame, replay.isVsyncFrame,
                         replay.intendedFrameTimeNs, replay.inputCostNs, replay.animationCostNs, replay.traversalCostNs);
@@ -189,17 +197,21 @@ public class FrameTracer extends Tracer {
                                   long animationCostNs, long traversalCostNs) {
 
             if (Utils.isEmpty(visibleScene)) return;
+            // 非 vsync 垂直信号不做操作
             if (!isVsyncFrame) return;
-
+            // 通过 activity 来获取上报数据的 item
             FrameCollectItem item = map.get(visibleScene);
             if (null == item) {
                 item = new FrameCollectItem(visibleScene);
                 map.put(visibleScene, item);
             }
-
+            // 合并数据
             item.collect(droppedFrames);
 
+            // 判断是否执行上报，当收集的数量量达到 10 秒。
             if (item.sumFrameCost >= timeSliceMs) { // report
+                // 达到条件，上报服务器
+                // 删除该 activity 的消息。
                 map.remove(visibleScene);
                 item.report();
             }
@@ -218,12 +230,19 @@ public class FrameTracer extends Tracer {
         FrameCollectItem(String visibleScene) {
             this.visibleScene = visibleScene;
         }
-
+        // 合并数据，并预处理数据
         void collect(int droppedFrames) {
+            //  ??????? 转换成秒？后续以秒为单位
             float frameIntervalCost = 1f * UIThreadMonitor.getMonitor().getFrameIntervalNanos() / Constants.TIME_MILLIS_TO_NANO;
+            // 计算区间内帧花费的时间总和，当达到预设值时才进行上报处理
             sumFrameCost += (droppedFrames + 1) * frameIntervalCost;
+            // 计算掉帧的数量总和
             sumDroppedFrames += droppedFrames;
+            // 计算区间内总帧数
             sumFrame++;
+
+            // 根据掉帧数区分该次掉帧等级，具体可以参考官方文档
+            // 统计收集指定区间内的掉帧情况
             if (droppedFrames >= frozenThreshold) {
                 dropLevel[DropStatus.DROPPED_FROZEN.index]++;
                 dropSum[DropStatus.DROPPED_FROZEN.index] += droppedFrames;
@@ -242,7 +261,8 @@ public class FrameTracer extends Tracer {
             }
         }
 
-        // 处理上报逻辑
+        // 回调上报数据
+        // 这里统计的是一段时间区间内的数据！！！
         void report() {
             // 计算平均 fps
             float fps = Math.min(60.f, 1000.f * sumFrame / sumFrameCost);
@@ -253,26 +273,31 @@ public class FrameTracer extends Tracer {
                 if (null == plugin) {
                     return;
                 }
+                // 掉帧等级
                 JSONObject dropLevelObject = new JSONObject();
                 dropLevelObject.put(DropStatus.DROPPED_FROZEN.name(), dropLevel[DropStatus.DROPPED_FROZEN.index]);
                 dropLevelObject.put(DropStatus.DROPPED_HIGH.name(), dropLevel[DropStatus.DROPPED_HIGH.index]);
                 dropLevelObject.put(DropStatus.DROPPED_MIDDLE.name(), dropLevel[DropStatus.DROPPED_MIDDLE.index]);
                 dropLevelObject.put(DropStatus.DROPPED_NORMAL.name(), dropLevel[DropStatus.DROPPED_NORMAL.index]);
                 dropLevelObject.put(DropStatus.DROPPED_BEST.name(), dropLevel[DropStatus.DROPPED_BEST.index]);
-
+                // 掉帧总数统计
                 JSONObject dropSumObject = new JSONObject();
                 dropSumObject.put(DropStatus.DROPPED_FROZEN.name(), dropSum[DropStatus.DROPPED_FROZEN.index]);
                 dropSumObject.put(DropStatus.DROPPED_HIGH.name(), dropSum[DropStatus.DROPPED_HIGH.index]);
                 dropSumObject.put(DropStatus.DROPPED_MIDDLE.name(), dropSum[DropStatus.DROPPED_MIDDLE.index]);
                 dropSumObject.put(DropStatus.DROPPED_NORMAL.name(), dropSum[DropStatus.DROPPED_NORMAL.index]);
                 dropSumObject.put(DropStatus.DROPPED_BEST.name(), dropSum[DropStatus.DROPPED_BEST.index]);
-
+                // 最终提交的数据内容
                 JSONObject resultObject = new JSONObject();
+                // 设备信息
                 resultObject = DeviceUtil.getDeviceInfo(resultObject, plugin.getApplication());
-
+                // 当前 activity
                 resultObject.put(SharePluginInfo.ISSUE_SCENE, visibleScene);
+                // 掉帧等级
                 resultObject.put(SharePluginInfo.ISSUE_DROP_LEVEL, dropLevelObject);
+                // 掉帧数量
                 resultObject.put(SharePluginInfo.ISSUE_DROP_SUM, dropSumObject);
+                // 平均 fps
                 resultObject.put(SharePluginInfo.ISSUE_FPS, fps);
 
                 Issue issue = new Issue();
@@ -283,6 +308,7 @@ public class FrameTracer extends Tracer {
             } catch (JSONException e) {
                 MatrixLog.e(TAG, "json error", e);
             } finally {
+                // 一次数据上报完毕，充值
                 sumFrame = 0;
                 sumDroppedFrames = 0;
                 sumFrameCost = 0;

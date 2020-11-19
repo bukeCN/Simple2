@@ -32,7 +32,7 @@ public class IDoFrameListener {
     private Executor executor;
     public long time;
     private int intervalFrame = 0;
-
+    // 对象池，避免频繁创建对象引起频繁 GC
     private final static LinkedList<FrameReplay> sPool = new LinkedList<>();
 
     public static final class FrameReplay {
@@ -99,14 +99,17 @@ public class IDoFrameListener {
         replay.animationCostNs = animationCostNs;
         replay.traversalCostNs = traversalCostNs;
         list.add(replay);
-        // 在达到数据量的情况下上报
+        // 在达到数据量的情况下上报，intervalFrame 为 200。
         if (list.size() >= intervalFrame && getExecutor() != null) {
+            // copy 一份数据
             final List<FrameReplay> copy = new LinkedList<>(list);
             list.clear();
             getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
+                    // 准备数据合并
                     doReplay(copy);
+                    // 重置数据
                     for (FrameReplay record : copy) {
                         record.recycle();
                     }

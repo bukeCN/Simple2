@@ -275,6 +275,9 @@ public class UIThreadMonitor implements BeatLifecycle, Runnable {
         synchronized (observers) {
             for (LooperObserver observer : observers) {
                 if (observer.isDispatchBegin()) {
+                    // 这几个参数要明白了
+                    // 当前 Activity、本次 Message 消息处理开始时间、本次 Message 消息处理结束时间、是否是由 VSYNC 信号触发的消息、vsync 信号到来时间
+                    // INPUT 时间耗时、ANIMATION 事件耗时、TRAVERSAL 事件耗时
                     observer.doFrame(AppMethodBeat.getVisibleScene(), startNs, endNs, isVsyncFrame, intendedFrameTimeNs,
                             queueCost[CALLBACK_INPUT], queueCost[CALLBACK_ANIMATION], queueCost[CALLBACK_TRAVERSAL]);
                 }

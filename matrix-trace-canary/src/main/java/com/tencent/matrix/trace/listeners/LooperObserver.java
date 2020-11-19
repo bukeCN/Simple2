@@ -19,6 +19,7 @@ public abstract class LooperObserver {
 
     @CallSuper
     public void dispatchEnd(long beginNs, long cpuBeginMs, long endNs, long cpuEndMs, long token, boolean isVsyncFrame) {
+        // 置为 false
         isDispatchBegin = false;
     }
 
