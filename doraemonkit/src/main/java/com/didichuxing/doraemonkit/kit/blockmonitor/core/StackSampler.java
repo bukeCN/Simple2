@@ -31,6 +31,7 @@ public class StackSampler {
 
     public void init() {
         if (mStackThread == null) {
+            // 使用 HandlerThread 另开线程收集堆栈信息
             mStackThread = new HandlerThread("BlockMonitor") {
                 @Override
                 protected void onLooperPrepared() {
@@ -91,6 +92,7 @@ public class StackSampler {
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
+            // 收集堆栈信息的方法
             dumpInfo();
             if (mRunning.get()) {
                 mStackHandler.postDelayed(mRunnable, DEFAULT_SAMPLE_INTERVAL);
@@ -101,6 +103,7 @@ public class StackSampler {
     private void dumpInfo() {
         StringBuilder stringBuilder = new StringBuilder();
         Thread thread = Looper.getMainLooper().getThread();
+        // 获取主线程堆栈信息
         for (StackTraceElement stackTraceElement : thread.getStackTrace()) {
             stringBuilder
                     .append(stackTraceElement.toString())
@@ -108,10 +111,12 @@ public class StackSampler {
         }
 
         synchronized (sStackMap) {
+            // 限制条数
             if (sStackMap.size() == DEFAULT_MAX_ENTRY_COUNT) {
                 sStackMap.remove(sStackMap.keySet().iterator().next());
             }
             if (!shouldIgnore(stringBuilder)) {
+                // 将堆栈信息放入 Map 中
                 sStackMap.put(System.currentTimeMillis(), stringBuilder.toString());
             }
         }

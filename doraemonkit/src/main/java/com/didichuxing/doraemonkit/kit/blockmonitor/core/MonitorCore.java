@@ -40,13 +40,17 @@ class MonitorCore implements Printer {
             final long endTime = System.currentTimeMillis();
             long endThreadTime = SystemClock.currentThreadTimeMillis();
             mPrintingStarted = false;
+            // 判断是否发生了卡顿，发生了就上报信息
             if (isBlock(endTime)) {
+                // 获取堆栈信息
                 final ArrayList<String> entries = mStackSampler.getThreadStackEntries(mStartTime, endTime);
                 if (entries.size() > 0) {
+                    // 对堆栈信息做初步整理
                     final BlockInfo blockInfo = BlockInfo.newInstance()
                             .setMainThreadTimeCost(mStartTime, endTime, mStartThreadTime, endThreadTime)
                             .setThreadStackEntries(entries)
                             .flushString();
+                    // 通知卡顿发生
                     BlockMonitorManager.getInstance().notifyBlockEvent(blockInfo);
                 }
             }
