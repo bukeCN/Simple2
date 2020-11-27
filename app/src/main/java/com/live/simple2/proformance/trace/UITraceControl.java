@@ -1,7 +1,11 @@
-package com.live.simple2.proformance;
+package com.live.simple2.proformance.trace;
+
+import com.live.simple2.proformance.ComponentObserver;
+import com.live.simple2.proformance.FrameDataItem;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * UI 监控数据处理
@@ -12,9 +16,15 @@ public class UITraceControl {
 
     private LinkedList<FrameDataItem> frameDataItemList;
 
-    public UITraceControl() {
-        frameDataItemList = new LinkedList<>();
+    private ComponentObserver componentObserver;
 
+    private FrameFPSControl fpsControl;
+
+    public UITraceControl(ComponentObserver componentObserver) {
+        frameDataItemList = new LinkedList<>();
+        this.componentObserver = componentObserver;
+
+        fpsControl = new FrameFPSControl();
     }
 
     public void collectData(String topActivity, long startNas, long endNas, boolean isVsync, long frameIntervalNanos) {
@@ -29,8 +39,9 @@ public class UITraceControl {
         item.activity = topActivity;
         frameDataItemList.add(item);
 
-        if (frameDataItemList.size() >= 200) {
+        if (frameDataItemList.size() >= onceDataCountLimit) {
             // 处理数据，准备上报
+
 
         }
     }
@@ -49,6 +60,20 @@ public class UITraceControl {
             result = false;
         }
         return result;
+    }
+
+    // 数据预处理，子线程完成，调用上报
+    private class FrameFPSControl implements Runnable{
+        Executor executor;
+
+        public FrameFPSControl(){
+
+        }
+
+        @Override
+        public void run() {
+
+        }
     }
 
 }

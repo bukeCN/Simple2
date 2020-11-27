@@ -1,13 +1,12 @@
 package com.live.simple2.proformance.compoent;
 
 import android.os.Looper;
-import android.os.SystemClock;
 import android.view.Choreographer;
 
 import com.live.simple2.proformance.Component;
 import com.live.simple2.proformance.LooperMonitor;
 import com.live.simple2.proformance.LooperObserver;
-import com.live.simple2.proformance.UITraceControl;
+import com.live.simple2.proformance.trace.UITraceControl;
 import com.live.simple2.proformance.utils.ReflectUtils;
 
 import java.lang.reflect.InvocationTargetException;
