@@ -39,7 +39,7 @@ public class UIThreadComponent implements Component, LooperObserver, Runnable {
             return;
         }
 
-        uiTraceControl = new UITraceControl();
+//        uiTraceControl = new UITraceControl();
 
         choreographer = Choreographer.getInstance();
 

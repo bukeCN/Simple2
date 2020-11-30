@@ -25,28 +25,35 @@
 <!--        android:layout_height="wrap_content"-->
 <!--        android:text="启动"-->
 <!--        android:id="@+id/start"/>-->
-<!--    <com.live.simple2.view.RuningLayout-->
-<!--        android:id="@+id/runingView"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_gravity="center">-->
-<!--        <TextView-->
-<!--            android:id="@+id/content"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:background="@color/colorAccent"-->
-<!--            android:text="This is test, now testing" />-->
-<!--    </com.live.simple2.view.RuningLayout>-->
+    <com.live.simple2.view.RuningAdView
+        android:id="@+id/runingView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+        <TextView
+            android:id="@+id/adContentTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/colorAccent"
+            android:text="This is test, now testing"
+            android:textSize="30sp"/>
+    </com.live.simple2.view.RuningAdView>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="另一个"
+        android:id="@+id/test"/>
 
 <!--    <com.live.simple2.view.TextSwitchView-->
 <!--        android:id="@+id/sw"-->
 <!--        android:layout_width="200dp"-->
 <!--        android:layout_height="60dp"-->
 <!--        android:layout_gravity="center"/>-->
-    <Button
-        android:id="@+id/testBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="设置为 true"/>
+<!--    <Button-->
+<!--        android:id="@+id/testBtn"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="设置为 true"/>-->
 
 </LinearLayout>

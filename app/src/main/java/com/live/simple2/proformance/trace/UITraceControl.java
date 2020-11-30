@@ -42,7 +42,6 @@ public class UITraceControl {
         if (frameDataItemList.size() >= onceDataCountLimit) {
             // 处理数据，准备上报
 
-
         }
     }
 
