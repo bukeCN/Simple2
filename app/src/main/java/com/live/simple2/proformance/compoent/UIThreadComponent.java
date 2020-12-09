@@ -1,9 +1,13 @@
 package com.live.simple2.proformance.compoent;
 
 import android.os.Looper;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.Choreographer;
 
 import com.live.simple2.proformance.Component;
+import com.live.simple2.proformance.ComponentObserver;
+import com.live.simple2.proformance.Issue;
 import com.live.simple2.proformance.LooperMonitor;
 import com.live.simple2.proformance.LooperObserver;
 import com.live.simple2.proformance.trace.UITraceControl;
@@ -15,7 +19,7 @@ import java.lang.reflect.Method;
 /**
  * UI 线程监控组件
  */
-public class UIThreadComponent implements Component, LooperObserver, Runnable {
+public class UIThreadComponent implements Component, LooperObserver, Runnable , ComponentObserver {
 
     private UITraceControl uiTraceControl;
 
@@ -32,14 +36,13 @@ public class UIThreadComponent implements Component, LooperObserver, Runnable {
     // 预期 vsync 间隔，纳秒
     private long frameIntervalNanos;
 
-
     @Override
     public void init() {
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             return;
         }
 
-//        uiTraceControl = new UITraceControl();
+        uiTraceControl = new UITraceControl(this);
 
         choreographer = Choreographer.getInstance();
 
@@ -67,7 +70,7 @@ public class UIThreadComponent implements Component, LooperObserver, Runnable {
         token = System.nanoTime();
         // 向 vsync 信号回调头部插入回调
         try {
-            addInputQueue.invoke(0, true, this, null);
+            addInputQueue.invoke(callbackQueues[0], SystemClock.uptimeMillis(), this, null);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -95,12 +98,27 @@ public class UIThreadComponent implements Component, LooperObserver, Runnable {
      * @param frameIntervalNanos 预期完成时间
      */
     private void collectData(long startNas, long endNas, boolean isVsync, long frameIntervalNanos) {
-        uiTraceControl.collectData("",startNas,endNas,isVsync,frameIntervalNanos);
+        Log.e("sun","统计数据: startNas:"+startNas + " endNas: " + endNas + " isVsync: "+ isVsync + " frameIntervalNanos: "+frameIntervalNanos);
+        // 计算这一次事件花费的时间差
+        long jiter = endNas - startNas;
+        // 计算这一次的掉帧数，注意 int 强转的作用。
+        int dropFrame = (int) (jiter / frameIntervalNanos);
+        uiTraceControl.collectData("",startNas,endNas, dropFrame,isVsync,frameIntervalNanos);
     }
 
     @Override
     public void run() {
+        Log.e("sun","run >>>> " + isVsync);
         // 改变标志
         isVsync = true;
+    }
+
+    /**
+     * 处理数据上报
+     * @param issue
+     */
+    @Override
+    public void onDetectIssue(Issue issue) {
+        Log.e("sun","数据 >>>> " + issue.toString());
     }
 }

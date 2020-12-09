@@ -3,10 +3,12 @@ package com.live.simple2.view;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -24,7 +26,7 @@ public class RuningAdView extends FrameLayout implements Animator.AnimatorListen
     private static final long DELAT_TIME_USUAL = 1000 * 2;
     private ValueAnimator engine;
 
-    private int textId = R.id.adContentTv;
+    private int textId = 0;
 
     private View onlyView;
 
@@ -56,11 +58,18 @@ public class RuningAdView extends FrameLayout implements Animator.AnimatorListen
 
     private void init() {
         createEngine();
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.e("sun","onGlobalLayout");
+            }
+        });
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        Log.e("sun","onAttachedToWindow");
         onlyView = getChildAt(0);
         textView = findViewById(textId);
 
@@ -178,10 +187,51 @@ public class RuningAdView extends FrameLayout implements Animator.AnimatorListen
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        Log.e("sun","onSizeChanged: "+ w + "-" + h );
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        Log.e("sun","onMeasure");
+
+        getWidth();
+        getMeasuredWidth();
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasWindowFocus) {
         Log.e("sun","onWindowFocusChanged: "+ hasWindowFocus);
         super.onWindowFocusChanged(hasWindowFocus);
     }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        Log.e("sun","onFinishInflate"+getChildCount());
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        Log.e("sun","draw");
+        super.draw(canvas);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        Log.e("sun","onDraw");
+        super.onDraw(canvas);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        Log.e("sun","onLayout："+getChildCount()+"**"+getWidth());
+    }
+
+
 
     public void update(String content) {
         if (StringUtil.isEmpty(content)) {

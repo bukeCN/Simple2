@@ -197,7 +197,7 @@ public class FrameTracer extends Tracer {
                                   long animationCostNs, long traversalCostNs) {
 
             if (Utils.isEmpty(visibleScene)) return;
-            // 非 vsync 垂直信号不做操作
+            // 非 vsync 垂直信号不添加入上报数据
             if (!isVsyncFrame) return;
             // 通过 activity 来获取上报数据的 item
             FrameCollectItem item = map.get(visibleScene);
