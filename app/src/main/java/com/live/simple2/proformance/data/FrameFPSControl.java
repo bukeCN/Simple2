@@ -1,5 +1,7 @@
 package com.live.simple2.proformance.data;
 
+import android.util.Log;
+
 import com.live.simple2.proformance.ComponentObserver;
 import com.live.simple2.proformance.Issue;
 
@@ -8,6 +10,8 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.List;
+
+import javax.crypto.Mac;
 
 /**
  * 最终合成数据，触发上报
@@ -81,7 +85,8 @@ public class FrameFPSControl {
         }
 
         public void collect(String topActivity, long startNas, long endNas, int dropFrame, long frameIntervalNanos) {
-            // 得到预期完成时间，秒！
+            Log.i("sun","原始数据 >>> " + topActivity + "-" + dropFrame);
+            // 得到预期完成时间，毫秒！
             float frameIntervalCost = frameIntervalNanos / 1000000f;
             // 通过掉帧数计算该次时间按照预期时间上花费时间，为什么要加 1？没掉帧说明在预期时间内完成了，掉一帧说明用了两帧的时间，以此类推。
             totalTimes += (dropFrame + 1) * frameIntervalCost;
@@ -110,7 +115,7 @@ public class FrameFPSControl {
             } else {
                 // best 最好的
                 dropFrameLevel[DropStatus.DROPPED_BEST.index]++;
-                dropFrameSum[DropStatus.DROPPED_BEST.index] += dropFrame;
+                dropFrameSum[DropStatus.DROPPED_BEST.index] += Math.max(0,dropFrame);
             }
 
         }

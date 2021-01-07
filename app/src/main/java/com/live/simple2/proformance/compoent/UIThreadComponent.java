@@ -108,7 +108,6 @@ public class UIThreadComponent implements Component, LooperObserver, Runnable , 
 
     @Override
     public void run() {
-        Log.e("sun","run >>>> " + isVsync);
         // 改变标志
         isVsync = true;
     }

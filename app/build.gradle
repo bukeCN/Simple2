@@ -29,6 +29,7 @@ android {
     }
 }
 
+
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -38,6 +39,23 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-
+//
+//    implementation group: "com.tencent.matrix", name: "matrix-android-lib", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-android-commons", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-trace-canary", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-resource-canary-android", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-resource-canary-common", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-io-canary", version: "0.6.6", changing: true
+//    implementation group: "com.tencent.matrix", name: "matrix-sqlite-lint-android-sdk", version: "0.6.6", changing: true
 
 }
+
+//
+//apply plugin: 'com.tencent.matrix-plugin'
+//matrix {
+//    trace {
+//        enable = true	//if you don't want to use trace canary, set false
+//        baseMethodMapFile = "${project.buildDir}/matrix_output/Debug.methodmap"
+//        blackListFile = "${project.projectDir}/matrixTrace/blackMethodList.txt"
+//    }
+//}

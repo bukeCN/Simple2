@@ -232,7 +232,7 @@ public class FrameTracer extends Tracer {
         }
         // 合并数据，并预处理数据
         void collect(int droppedFrames) {
-            //  ??????? 转换成秒？后续以秒为单位
+            //  ??????? 转换成秒？后续以毫秒为单位
             float frameIntervalCost = 1f * UIThreadMonitor.getMonitor().getFrameIntervalNanos() / Constants.TIME_MILLIS_TO_NANO;
             // 计算区间内帧花费的时间总和，当达到预设值时才进行上报处理
             sumFrameCost += (droppedFrames + 1) * frameIntervalCost;
