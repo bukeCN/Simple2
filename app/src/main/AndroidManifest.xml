@@ -20,6 +20,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".animation.shareElement.StartActivity"/>
+        <activity android:name=".animation.shareElement.TargetActivity"/>
     </application>
 
 </manifest>

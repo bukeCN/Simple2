@@ -4510,7 +4510,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
         private ArrayList<OnUnhandledKeyEventListener> mUnhandledKeyListeners;
 
-        private WindowInsetsAnimationListener mWindowInsetsAnimationListener;
+        private android.view.WindowInsetsAnimationListener mWindowInsetsAnimationListener;
 
         /**
          * This lives here since it's only valid for interactive views.
@@ -4751,7 +4751,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     /**
      * List of registered FrameMetricsObservers.
      */
-    private ArrayList<FrameMetricsObserver> mFrameMetricsObservers;
+    private ArrayList<android.view.FrameMetricsObserver> mFrameMetricsObservers;
 
     /**
      * Flag indicating that a drag can cross window boundaries.  When
@@ -4964,9 +4964,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * Consistency verifier for debugging purposes.
      * @hide
      */
-    protected final InputEventConsistencyVerifier mInputEventConsistencyVerifier =
-            InputEventConsistencyVerifier.isInstrumentationEnabled() ?
-                    new InputEventConsistencyVerifier(this, 0) : null;
+    protected final android.view.InputEventConsistencyVerifier mInputEventConsistencyVerifier =
+            android.view.InputEventConsistencyVerifier.isInstrumentationEnabled() ?
+                    new android.view.InputEventConsistencyVerifier(this, 0) : null;
 
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
 
@@ -4977,7 +4977,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * View's parent. mGhostView is the View in the Overlay that must be invalidated
      * when this view is invalidated.
      */
-    GhostView mGhostView;
+    android.view.GhostView mGhostView;
 
     /**
      * Holds pairs of adjacent attribute data: attribute name followed by its value.
@@ -4995,7 +4995,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * Queue of pending runnables. Used to postpone calls to post() until this
      * view is attached and has a handler.
      */
-    private HandlerActionQueue mRunQueue;
+    private android.view.HandlerActionQueue mRunQueue;
 
     /**
      * The pointer icon when the mouse hovers on this view. The default is null.
@@ -5009,7 +5009,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     String mStartActivityRequestWho;
 
     @Nullable
-    private RoundScrollbarRenderer mRoundScrollbarRenderer;
+    private android.view.RoundScrollbarRenderer mRoundScrollbarRenderer;
 
     /** Used to delay visibility updates sent to the autofill manager */
     private Handler mVisibilityChangeForAutofillHandler;
@@ -5060,7 +5060,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         setOverScrollMode(OVER_SCROLL_IF_CONTENT_SCROLLS);
         mUserPaddingStart = UNDEFINED_PADDING;
         mUserPaddingEnd = UNDEFINED_PADDING;
-        mRenderNode = RenderNode.create(getClass().getName(), new ViewAnimationHostBridge(this));
+        mRenderNode = RenderNode.create(getClass().getName(), new android.view.ViewAnimationHostBridge(this));
 
         if (!sCompatibilityDone && context != null) {
             final int targetSdkVersion = context.getApplicationInfo().targetSdkVersion;
@@ -5114,7 +5114,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
             sAcceptZeroSizeDragShadow = targetSdkVersion < Build.VERSION_CODES.P;
 
-            sBrokenInsetsDispatch = ViewRootImpl.sNewInsetsMode != NEW_INSETS_MODE_FULL
+            sBrokenInsetsDispatch = android.view.ViewRootImpl.sNewInsetsMode != NEW_INSETS_MODE_FULL
                     || targetSdkVersion < Build.VERSION_CODES.Q;
 
             sBrokenWindowBackground = targetSdkVersion < Build.VERSION_CODES.Q;
@@ -6035,7 +6035,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     @UnsupportedAppUsage
     View() {
         mResources = null;
-        mRenderNode = RenderNode.create(getClass().getName(), new ViewAnimationHostBridge(this));
+        mRenderNode = RenderNode.create(getClass().getName(), new android.view.ViewAnimationHostBridge(this));
     }
 
     final boolean debugDraw() {
@@ -7014,7 +7014,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                     mFrameMetricsObservers = new ArrayList<>();
                 }
 
-                FrameMetricsObserver fmo = new FrameMetricsObserver(window,
+                android.view.FrameMetricsObserver fmo = new android.view.FrameMetricsObserver(window,
                         handler.getLooper(), listener);
                 mFrameMetricsObservers.add(fmo);
                 mAttachInfo.mThreadedRenderer.addFrameMetricsObserver(fmo);
@@ -7026,7 +7026,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 mFrameMetricsObservers = new ArrayList<>();
             }
 
-            FrameMetricsObserver fmo = new FrameMetricsObserver(window,
+            android.view.FrameMetricsObserver fmo = new android.view.FrameMetricsObserver(window,
                     handler.getLooper(), listener);
             mFrameMetricsObservers.add(fmo);
         }
@@ -7039,8 +7039,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      */
     public void removeFrameMetricsListener(
             Window.OnFrameMetricsAvailableListener listener) {
-        ThreadedRenderer renderer = getThreadedRenderer();
-        FrameMetricsObserver fmo = findFrameMetricsObserver(listener);
+        android.view.ThreadedRenderer renderer = getThreadedRenderer();
+        android.view.FrameMetricsObserver fmo = findFrameMetricsObserver(listener);
         if (fmo == null) {
             throw new IllegalArgumentException(
                     "attempt to remove OnFrameMetricsAvailableListener that was never added");
@@ -7056,9 +7056,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     private void registerPendingFrameMetricsObservers() {
         if (mFrameMetricsObservers != null) {
-            ThreadedRenderer renderer = getThreadedRenderer();
+            android.view.ThreadedRenderer renderer = getThreadedRenderer();
             if (renderer != null) {
-                for (FrameMetricsObserver fmo : mFrameMetricsObservers) {
+                for (android.view.FrameMetricsObserver fmo : mFrameMetricsObservers) {
                     renderer.addFrameMetricsObserver(fmo);
                 }
             } else {
@@ -7067,11 +7067,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
     }
 
-    private FrameMetricsObserver findFrameMetricsObserver(
+    private android.view.FrameMetricsObserver findFrameMetricsObserver(
             Window.OnFrameMetricsAvailableListener listener) {
         if (mFrameMetricsObservers != null) {
             for (int i = 0; i < mFrameMetricsObservers.size(); i++) {
-                FrameMetricsObserver observer = mFrameMetricsObservers.get(i);
+                android.view.FrameMetricsObserver observer = mFrameMetricsObservers.get(i);
                 if (observer.mListener == listener) {
                     return observer;
                 }
@@ -8340,8 +8340,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             parent = parentView.mParent;
         }
 
-        if (parent instanceof ViewRootImpl) {
-            ViewRootImpl viewRootImpl = (ViewRootImpl) parent;
+        if (parent instanceof android.view.ViewRootImpl) {
+            android.view.ViewRootImpl viewRootImpl = (android.view.ViewRootImpl) parent;
             rect.offset(0, -viewRootImpl.mCurScrollY);
         }
 
@@ -9824,7 +9824,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see #getContentDescription()
      * @attr ref android.R.styleable#View_contentDescription
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setContentDescription(CharSequence contentDescription) {
         if (mContentDescription == null) {
             if (contentDescription == null) {
@@ -9866,7 +9866,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @see #setImportantForAccessibility(int)
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setAccessibilityTraversalBefore(@IdRes int beforeId) {
         if (mAccessibilityTraversalBeforeId == beforeId) {
             return;
@@ -9912,7 +9912,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @see #setImportantForAccessibility(int)
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setAccessibilityTraversalAfter(@IdRes int afterId) {
         if (mAccessibilityTraversalAfterId == afterId) {
             return;
@@ -9955,7 +9955,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @param id The labeled view id.
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setLabelFor(@IdRes int id) {
         if (mLabelForId == id) {
             return;
@@ -10527,7 +10527,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @param listener The listener to set.
      * @hide pending unhide
      */
-    public void setWindowInsetsAnimationListener(WindowInsetsAnimationListener listener) {
+    public void setWindowInsetsAnimationListener(android.view.WindowInsetsAnimationListener listener) {
         getListenerInfo().mWindowInsetsAnimationListener = listener;
     }
 
@@ -10846,7 +10846,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @param visibility One of {@link #VISIBLE}, {@link #INVISIBLE}, or {@link #GONE}.
      * @attr ref android.R.styleable#View_visibility
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setVisibility(@Visibility int visibility) {
         setFlags(visibility, VISIBILITY_MASK);
     }
@@ -10869,7 +10869,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @param enabled True if this view is enabled, false otherwise.
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setEnabled(boolean enabled) {
         if (enabled == isEnabled()) return;
 
@@ -11109,7 +11109,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @attr ref android.R.styleable#View_layoutDirection
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setLayoutDirection(@LayoutDir int layoutDirection) {
         if (getRawLayoutDirection() != layoutDirection) {
             // Reset the current layout direction and the resolved one
@@ -11830,7 +11830,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 } else if (oldFocus instanceof ViewGroup
                         && ((ViewGroup) oldFocus).getDescendantFocusability()
                                 == ViewGroup.FOCUS_AFTER_DESCENDANTS
-                        && ViewRootImpl.isViewDescendantOf(this, oldFocus)) {
+                        && android.view.ViewRootImpl.isViewDescendantOf(this, oldFocus)) {
                     // This means oldFocus is not focusable since it obviously has a focusable
                     // child (this). Don't restore focus to it in the future.
                     ((ViewGroup) oldFocus.mParent).clearFocusedInCluster(oldFocus);
@@ -12215,7 +12215,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
         if ((mPrivateFlags2 & PFLAG2_ACCESSIBILITY_FOCUSED) == 0) {
             mPrivateFlags2 |= PFLAG2_ACCESSIBILITY_FOCUSED;
-            ViewRootImpl viewRootImpl = getViewRootImpl();
+            android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
             if (viewRootImpl != null) {
                 viewRootImpl.setAccessibilityFocus(this, null);
             }
@@ -12242,10 +12242,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         // any of its descendants had accessibility focus. This will NOT send
         // an event or update internal state if focus is cleared from a
         // descendant view, which may leave views in inconsistent states.
-        final ViewRootImpl viewRootImpl = getViewRootImpl();
+        final android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
         if (viewRootImpl != null) {
             final View focusHost = viewRootImpl.getAccessibilityFocusedHost();
-            if (focusHost != null && ViewRootImpl.isViewDescendantOf(focusHost, this)) {
+            if (focusHost != null && android.view.ViewRootImpl.isViewDescendantOf(focusHost, this)) {
                 viewRootImpl.setAccessibilityFocus(null, null);
             }
         }
@@ -12462,7 +12462,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     public final boolean requestFocusFromTouch() {
         // Leave touch mode if we need to
         if (isInTouchMode()) {
-            ViewRootImpl viewRoot = getViewRootImpl();
+            android.view.ViewRootImpl viewRoot = getViewRootImpl();
             if (viewRoot != null) {
                 viewRoot.ensureTouchMode(false);
             }
@@ -12641,10 +12641,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
 
         if (searchDescendants) {
-            final ViewRootImpl viewRoot = getViewRootImpl();
+            final android.view.ViewRootImpl viewRoot = getViewRootImpl();
             if (viewRoot != null) {
                 final View focusHost = viewRoot.getAccessibilityFocusedHost();
-                if (focusHost != null && ViewRootImpl.isViewDescendantOf(focusHost, this)) {
+                if (focusHost != null && android.view.ViewRootImpl.isViewDescendantOf(focusHost, this)) {
                     return focusHost;
                 }
             }
@@ -14041,7 +14041,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if (mAttachInfo != null) {
             return mAttachInfo.mInTouchMode;
         } else {
-            return ViewRootImpl.isInTouchMode();
+            return android.view.ViewRootImpl.isInTouchMode();
         }
     }
 
@@ -15150,7 +15150,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                  * if no one else already has it.
                  */
                 if (mParent != null) {
-                    ViewRootImpl viewRootImpl = getViewRootImpl();
+                    android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
                     if (!sAutoFocusableOffUIThreadWontNotifyParents
                             || focusableChangedByAuto == 0
                             || viewRootImpl == null
@@ -17806,9 +17806,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @return the queue of runnables for this view
      */
-    private HandlerActionQueue getRunQueue() {
+    private android.view.HandlerActionQueue getRunQueue() {
         if (mRunQueue == null) {
-            mRunQueue = new HandlerActionQueue();
+            mRunQueue = new android.view.HandlerActionQueue();
         }
         return mRunQueue;
     }
@@ -17819,7 +17819,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @hide
      */
     @UnsupportedAppUsage
-    public ViewRootImpl getViewRootImpl() {
+    public android.view.ViewRootImpl getViewRootImpl() {
         if (mAttachInfo != null) {
             return mAttachInfo.mViewRootImpl;
         }
@@ -17830,7 +17830,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @hide
      */
     @UnsupportedAppUsage
-    public ThreadedRenderer getThreadedRenderer() {
+    public android.view.ThreadedRenderer getThreadedRenderer() {
         return mAttachInfo != null ? mAttachInfo.mThreadedRenderer : null;
     }
 
@@ -21698,7 +21698,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     private RenderNode getDrawableRenderNode(Drawable drawable, RenderNode renderNode) {
         if (renderNode == null) {
             renderNode = RenderNode.create(drawable.getClass().getName(),
-                    new ViewAnimationHostBridge(this));
+                    new android.view.ViewAnimationHostBridge(this));
             renderNode.setUsageHint(RenderNode.USAGE_BACKGROUND);
         }
 
@@ -21928,7 +21928,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
             if (shouldDrawRoundScrollbar()) {
                 if(mRoundScrollbarRenderer == null) {
-                    mRoundScrollbarRenderer = new RoundScrollbarRenderer(this);
+                    mRoundScrollbarRenderer = new android.view.RoundScrollbarRenderer(this);
                 }
             } else {
                 mRoundScrollbarRenderer = null;
@@ -22589,7 +22589,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if (hasWindowFocus()) viewStateIndex |= StateSet.VIEW_STATE_WINDOW_FOCUSED;
         if ((privateFlags & PFLAG_ACTIVATED) != 0) viewStateIndex |= StateSet.VIEW_STATE_ACTIVATED;
         if (mAttachInfo != null && mAttachInfo.mHardwareAccelerationRequested &&
-                ThreadedRenderer.isAvailable()) {
+                android.view.ThreadedRenderer.isAvailable()) {
             // This is set if HW acceleration is requested, even if the current
             // process doesn't allow it.  This is just to allow app preview
             // windows to better match their app.
@@ -22688,7 +22688,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * Sets the background color for this view.
      * @param color the color of the background
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setBackgroundColor(@ColorInt int color) {
         if (mBackground instanceof ColorDrawable) {
             ((ColorDrawable) mBackground.mutate()).setColor(color);
@@ -22706,7 +22706,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @attr ref android.R.styleable#View_background
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setBackgroundResource(@DrawableRes int resid) {
         if (resid != 0 && resid == mBackgroundResource) {
             return;
@@ -23820,8 +23820,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             final View vp = (View) parent;
             vp.transformMatrixToGlobal(matrix);
             matrix.preTranslate(-vp.mScrollX, -vp.mScrollY);
-        } else if (parent instanceof ViewRootImpl) {
-            final ViewRootImpl vr = (ViewRootImpl) parent;
+        } else if (parent instanceof android.view.ViewRootImpl) {
+            final android.view.ViewRootImpl vr = (android.view.ViewRootImpl) parent;
             vr.transformMatrixToGlobal(matrix);
             matrix.preTranslate(0, -vr.mCurScrollY);
         }
@@ -23845,8 +23845,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             final View vp = (View) parent;
             vp.transformMatrixToLocal(matrix);
             matrix.postTranslate(vp.mScrollX, vp.mScrollY);
-        } else if (parent instanceof ViewRootImpl) {
-            final ViewRootImpl vr = (ViewRootImpl) parent;
+        } else if (parent instanceof android.view.ViewRootImpl) {
+            final android.view.ViewRootImpl vr = (android.view.ViewRootImpl) parent;
             vr.transformMatrixToLocal(matrix);
             matrix.postTranslate(0, vr.mCurScrollY);
         }
@@ -23947,9 +23947,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             viewParent = view.mParent;
          }
 
-        if (viewParent instanceof ViewRootImpl) {
+        if (viewParent instanceof android.view.ViewRootImpl) {
             // *cough*
-            final ViewRootImpl vr = (ViewRootImpl) viewParent;
+            final android.view.ViewRootImpl vr = (android.view.ViewRootImpl) viewParent;
             position[1] -= vr.mCurScrollY;
         }
 
@@ -24431,7 +24431,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @return whether the view hierarchy is currently undergoing a layout pass
      */
     public boolean isInLayout() {
-        ViewRootImpl viewRoot = getViewRootImpl();
+        android.view.ViewRootImpl viewRoot = getViewRootImpl();
         return (viewRoot != null && viewRoot.isInLayout());
     }
 
@@ -24453,7 +24453,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == null) {
             // Only trigger request-during-layout logic if this is the view requesting it,
             // not the views in its parent hierarchy
-            ViewRootImpl viewRoot = getViewRootImpl();
+            android.view.ViewRootImpl viewRoot = getViewRootImpl();
             if (viewRoot != null && viewRoot.isInLayout()) {
                 if (!viewRoot.requestLayoutDuringLayout(this)) {
                     return;
@@ -24805,7 +24805,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @attr ref android.R.styleable#View_minHeight
      */
-    @RemotableViewMethod
+    @android.view.RemotableViewMethod
     public void setMinimumHeight(int minHeight) {
         mMinHeight = minHeight;
         requestLayout();
@@ -25416,8 +25416,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                     + " shadowX=" + shadowTouchPoint.x + " shadowY=" + shadowTouchPoint.y);
         }
 
-        final ViewRootImpl root = mAttachInfo.mViewRootImpl;
-        final SurfaceSession session = new SurfaceSession();
+        final android.view.ViewRootImpl root = mAttachInfo.mViewRootImpl;
+        final android.view.SurfaceSession session = new android.view.SurfaceSession();
         final SurfaceControl surfaceControl = new SurfaceControl.Builder(session)
                 .setName("drag surface")
                 .setParent(root.getSurfaceControl())
@@ -26834,7 +26834,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see #hasPointerCapture()
      */
     public boolean hasPointerCapture() {
-        final ViewRootImpl viewRootImpl = getViewRootImpl();
+        final android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
         if (viewRootImpl == null) {
             return false;
         }
@@ -26859,7 +26859,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see #hasPointerCapture()
      */
     public void requestPointerCapture() {
-        final ViewRootImpl viewRootImpl = getViewRootImpl();
+        final android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
         if (viewRootImpl != null) {
             viewRootImpl.requestPointerCapture(true);
         }
@@ -26874,7 +26874,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see #hasPointerCapture()
      */
     public void releasePointerCapture() {
-        final ViewRootImpl viewRootImpl = getViewRootImpl();
+        final android.view.ViewRootImpl viewRootImpl = getViewRootImpl();
         if (viewRootImpl != null) {
             viewRootImpl.requestPointerCapture(false);
         }
@@ -27838,7 +27838,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
         boolean mHardwareAccelerated;
         boolean mHardwareAccelerationRequested;
-        ThreadedRenderer mThreadedRenderer;
+        android.view.ThreadedRenderer mThreadedRenderer;
         List<RenderNode> mPendingAnimatingRenderNodes;
 
         /**
@@ -28088,7 +28088,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         /**
          * The view root impl.
          */
-        final ViewRootImpl mViewRootImpl;
+        final android.view.ViewRootImpl mViewRootImpl;
 
         /**
          * A Handler supplied by a view's {@link android.view.ViewRootImpl}. This
@@ -28202,8 +28202,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
          * @param handler the events handler the view must use
          */
         AttachInfo(IWindowSession session, IWindow window, Display display,
-                ViewRootImpl viewRootImpl, Handler handler, Callbacks effectPlayer,
-                Context context) {
+                   android.view.ViewRootImpl viewRootImpl, Handler handler, Callbacks effectPlayer,
+                   Context context) {
             mSession = session;
             mWindow = window;
             mWindowToken = window.asBinder();
@@ -28771,7 +28771,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     }
 
     /** {@hide} */
-    public void encode(@NonNull ViewHierarchyEncoder stream) {
+    public void encode(@NonNull android.view.ViewHierarchyEncoder stream) {
         stream.beginObject(this);
         encodeProperties(stream);
         stream.endObject();
@@ -28779,7 +28779,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     /** {@hide} */
     @CallSuper
-    protected void encodeProperties(@NonNull ViewHierarchyEncoder stream) {
+    protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder stream) {
         Object resolveId = ViewDebug.resolveId(getContext(), mID);
         if (resolveId instanceof String) {
             stream.addProperty("id", (String) resolveId);

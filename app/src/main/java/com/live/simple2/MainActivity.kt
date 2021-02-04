@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        testView = findViewById(R.id.testView)
 
         findViewById<View>(R.id.test).setOnClickListener {
 //            startActivity(Intent(this,OtherActivity::class.java))
