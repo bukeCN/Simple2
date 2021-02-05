@@ -39,6 +39,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.recyclerview:recyclerview:+'
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0-alpha01'
+
+
 //
 //    implementation group: "com.tencent.matrix", name: "matrix-android-lib", version: "0.6.6", changing: true
 //    implementation group: "com.tencent.matrix", name: "matrix-android-commons", version: "0.6.6", changing: true

@@ -2,10 +2,18 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
     <ImageView
         android:id="@+id/startImg"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:src="@drawable/shan"/>
+        android:src="@drawable/shan"
+        />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/recyclerView"/>
+
 </LinearLayout>
