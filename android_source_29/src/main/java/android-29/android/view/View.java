@@ -17583,18 +17583,19 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     void invalidateInternal(int l, int t, int r, int b, boolean invalidateCache,
             boolean fullInvalidate) {
+        // 如果该 view 有覆盖层
         if (mGhostView != null) {
             mGhostView.invalidate(true);
             return;
         }
-
+        // 当 view 处于不可见、正在动画中时，不进行重新绘制。
         if (skipInvalidate()) {
             return;
         }
 
         // Reset content capture caches
         mCachedContentCaptureSession = null;
-
+        // 根据 View 标记为来判断 View 是否需要重绘
         if ((mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
                 || (invalidateCache && (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == PFLAG_DRAWING_CACHE_VALID)
                 || (mPrivateFlags & PFLAG_INVALIDATED) != PFLAG_INVALIDATED
@@ -17617,6 +17618,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             if (p != null && ai != null && l < r && t < b) {
                 final Rect damage = ai.mTmpInvalRect;
                 damage.set(l, t, r, b);
+                // 把需要重绘的区域传给父 View
                 p.invalidateChild(this, damage);
             }
 
@@ -24455,6 +24457,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             // not the views in its parent hierarchy
             android.view.ViewRootImpl viewRoot = getViewRootImpl();
             if (viewRoot != null && viewRoot.isInLayout()) {
+                // 这里，如果 ViewRoot 正在布局中，则直接加入布局。属于兜底操作。
                 if (!viewRoot.requestLayoutDuringLayout(this)) {
                     return;
                 }
@@ -24466,6 +24469,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         mPrivateFlags |= PFLAG_INVALIDATED;
 
         if (mParent != null && !mParent.isLayoutRequested()) {
+            // 调用父布局，请求父布局进行重新布局。
+            // 一层一层向上传递，最终一层即为 ViewRootImpl。
             mParent.requestLayout();
         }
         if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == this) {

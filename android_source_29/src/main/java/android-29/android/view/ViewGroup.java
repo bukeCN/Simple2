@@ -2808,7 +2808,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      * @return The child that has focus.
      */
     private View findChildWithAccessibilityFocus() {
-        ViewRootImpl viewRoot = getViewRootImpl();
+        android.view.ViewRootImpl viewRoot = getViewRootImpl();
         if (viewRoot == null) {
             return null;
         }
@@ -5910,6 +5910,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         final AttachInfo attachInfo = mAttachInfo;
         if (attachInfo != null && attachInfo.mHardwareAccelerated) {
             // HW accelerated fast path
+            // 如果开启了硬件加速
             onDescendantInvalidated(child, child);
             return;
         }
@@ -5932,7 +5933,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                 mPrivateFlags |= PFLAG_INVALIDATED;
                 mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
             }
-
+            // 记录 child 的左右定点
             final int[] location = attachInfo.mInvalidateChildLocation;
             location[CHILD_LEFT_INDEX] = child.mLeft;
             location[CHILD_TOP_INDEX] = child.mTop;
@@ -5962,7 +5963,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                         (int) Math.ceil(boundingRect.right),
                         (int) Math.ceil(boundingRect.bottom));
             }
-
+            // do while 循环，循环逻辑 > 向上回溯父级，合并需要重绘的区域，最终 parent 到达 ViewRootImpl。
             do {
                 View view = null;
                 if (parent instanceof View) {
@@ -5972,8 +5973,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                 if (drawAnimation) {
                     if (view != null) {
                         view.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
-                    } else if (parent instanceof ViewRootImpl) {
-                        ((ViewRootImpl) parent).mIsAnimating = true;
+                    } else if (parent instanceof android.view.ViewRootImpl) {
+                        ((android.view.ViewRootImpl) parent).mIsAnimating = true;
                     }
                 }
 
@@ -5984,7 +5985,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                         view.mPrivateFlags = (view.mPrivateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DIRTY;
                     }
                 }
-
+                // 调用父级回溯
                 parent = parent.invalidateChildInParent(location, dirty);
                 if (view != null) {
                     // Account for transform on current parent
@@ -7378,7 +7379,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      * @hide
      */
     public void requestTransitionStart(LayoutTransition transition) {
-        ViewRootImpl viewAncestor = getViewRootImpl();
+        android.view.ViewRootImpl viewAncestor = getViewRootImpl();
         if (viewAncestor != null) {
             viewAncestor.requestTransitionStart(transition);
         }
@@ -7990,14 +7991,14 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         }
 
         /** @hide */
-        void encode(@NonNull ViewHierarchyEncoder encoder) {
+        void encode(@NonNull android.view.ViewHierarchyEncoder encoder) {
             encoder.beginObject(this);
             encodeProperties(encoder);
             encoder.endObject();
         }
 
         /** @hide */
-        protected void encodeProperties(@NonNull ViewHierarchyEncoder encoder) {
+        protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder encoder) {
             encoder.addProperty("width", width);
             encoder.addProperty("height", height);
         }
@@ -8498,7 +8499,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
 
         /** @hide */
         @Override
-        protected void encodeProperties(@NonNull ViewHierarchyEncoder encoder) {
+        protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder encoder) {
             super.encodeProperties(encoder);
             encoder.addProperty("leftMargin", leftMargin);
             encoder.addProperty("topMargin", topMargin);
@@ -8933,7 +8934,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
     /** @hide */
     @Override
     @UnsupportedAppUsage
-    protected void encodeProperties(@NonNull ViewHierarchyEncoder encoder) {
+    protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder encoder) {
         super.encodeProperties(encoder);
 
         encoder.addProperty("focus:descendantFocusability", getDescendantFocusability());

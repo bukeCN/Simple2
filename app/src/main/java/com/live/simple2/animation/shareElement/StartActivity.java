@@ -44,6 +44,7 @@ public class StartActivity extends AppCompatActivity {
         pics.add("https://cdn.sspai.com/2021/02/04/b49da3a37d05aa605ef9334339186ffa.png?imageView2/2/w/1120/q/90/interlace/1/ignore-error/1");
         pics.add("https://cdn.sspai.com/2021/02/03/bb8740027c884869eed801bfea970e78.jpeg?imageView2/2/w/1120/q/90/interlace/1/ignore-error/1");
 
+        startImg.invalidate();
 
         startImg.setOnClickListener(view -> {
             ViewCompat.setTransitionName(startImg, "stratImg");
