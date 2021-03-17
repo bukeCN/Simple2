@@ -4797,6 +4797,8 @@ public final class ViewRootImpl implements ViewParent,
             } else if (shouldDropInputEvent(q)) {
                 finish(q, false);
             } else {
+                // onProcess() 方法需要看其子类有无重写。
+                // 触摸的看 ViewPostImeInputStage
                 apply(q, onProcess(q));
             }
         }
@@ -5252,6 +5254,7 @@ public final class ViewRootImpl implements ViewParent,
 
     /**
      * Delivers post-ime input events to a native activity.
+     * 屏幕、按钮、感应器等外部输入事件处理
      */
     final class NativePostImeInputStage extends AsyncInputStage
             implements InputQueue.FinishedInputEventCallback {
@@ -5281,6 +5284,7 @@ public final class ViewRootImpl implements ViewParent,
 
     /**
      * Delivers post-ime input events to the view hierarchy.
+     * 将触摸时间传递给 View
      */
     final class ViewPostImeInputStage extends InputStage {
         public ViewPostImeInputStage(InputStage next) {
@@ -5293,9 +5297,12 @@ public final class ViewRootImpl implements ViewParent,
                 return processKeyEvent(q);
             } else {
                 final int source = q.mEvent.getSource();
+                // 根据输入源不同，选择逻辑执行
                 if ((source & InputDevice.SOURCE_CLASS_POINTER) != 0) {
+                    // 输入源是屏幕、鼠标等与屏幕关联的。
                     return processPointerEvent(q);
                 } else if ((source & InputDevice.SOURCE_CLASS_TRACKBALL) != 0) {
+                    // 轨迹球
                     return processTrackballEvent(q);
                 } else {
                     return processGenericMotionEvent(q);
@@ -5491,6 +5498,7 @@ public final class ViewRootImpl implements ViewParent,
 
             mAttachInfo.mUnbufferedDispatchRequested = false;
             mAttachInfo.mHandlingPointerEvent = true;
+            // 重点，mView == DecorView ,这里返回的 handled 则表示有无 View 进行了事件处理。
             boolean handled = mView.dispatchPointerEvent(event);
             maybeUpdatePointerIcon(event);
             maybeUpdateTooltip(event);
@@ -7444,6 +7452,7 @@ public final class ViewRootImpl implements ViewParent,
                 mPendingInputEventCount);
 
         if (processImmediately) {
+            // 从 WindowInputEventReceiver 来的，processImmediately 都是为 true。
             doProcessInputEvents();
         } else {
             scheduleProcessInputEvents();
@@ -7482,7 +7491,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
             }
             mChoreographer.mFrameInfo.updateInputEventTime(eventTime, oldestEventTime);
-
+            // 继续处理
             deliverInputEvent(q);
         }
 
@@ -7513,7 +7522,10 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         if (stage != null) {
+            // 处理焦点改变事件
             handleWindowFocusChanged();
+            // 继续处理事件，注意 InputStage 是一个链表结构，实现者看 ViewRootImpl 的构造方法。
+            // deliver() 是一个 final 方法，因此可以直接看 InputStage 类。
             stage.deliver(q);
         } else {
             finishInputEvent(q);
@@ -7620,6 +7632,7 @@ public final class ViewRootImpl implements ViewParent,
         @Override
         public void onInputEvent(InputEvent event) {
             Trace.traceBegin(Trace.TRACE_TAG_VIEW, "processInputEventForCompatibility");
+            // 处理事件
             List<InputEvent> processedEvents;
             try {
                 processedEvents =
@@ -7633,6 +7646,7 @@ public final class ViewRootImpl implements ViewParent,
                     finishInputEvent(event, true);
                 } else {
                     for (int i = 0; i < processedEvents.size(); i++) {
+                        // 遍历处理事件
                         enqueueInputEvent(
                                 processedEvents.get(i), this,
                                 QueuedInputEvent.FLAG_MODIFIED_FOR_COMPATIBILITY, true);

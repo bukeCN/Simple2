@@ -48,8 +48,14 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="去动画共享"
+        android:hint="动起来"
         android:id="@+id/test"/>
+
+    <com.live.simple2.view.TestView3
+        android:id="@+id/test2"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@color/colorPrimary"/>
 
 <!--    <com.live.simple2.view.TextSwitchView-->
 <!--        android:id="@+id/sw"-->

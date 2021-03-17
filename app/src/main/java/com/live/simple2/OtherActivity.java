@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
@@ -34,12 +35,8 @@ public class OtherActivity extends AppCompatActivity {
             thread.start();
         });
 
-        Handler handler = new Handler();
 
-        Message.obtain();
-
-        button.requestLayout();
-        button.invalidate();
+        View view = new View(this);
 
     }
 }
