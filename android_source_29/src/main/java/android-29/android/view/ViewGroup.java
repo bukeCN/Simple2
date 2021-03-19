@@ -2701,7 +2701,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                                 ev.setTargetAccessibilityFocus(false);
                                 continue;
                             }
-                            // 多指触摸适配
+                            // 多指触摸适配，判断该 View 是都已经消费了其它手指的按下事件。如果获取到了，就给其分配 id。
                             newTouchTarget = getTouchTarget(child);
                             if (newTouchTarget != null) {
                                 // Child is already receiving touch within its bounds.
@@ -2774,16 +2774,18 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                     if (alreadyDispatchedToNewTouchTarget && target == newTouchTarget) {
                         handled = true;
                     } else {
+                        // 如果拦截
                         final boolean cancelChild = resetCancelNextUpFlag(target.child)
                                 || intercepted;
                         // 对于非ACTION_DOWN事件继续传递给目标子组件进行处理
-                        // 1. 如果是拦截事件，cancelChild 为 true，target.child != null。则会返回 true，给 target.child 发送 CANCEL 事件。
-                        // 2. 如果父控件没有进行拦截，则继续将该事件序列传递给子View。
+                        // 1. 如果拦截事件，cancelChild 为 true，target.child != null。则会返回 true，给 target.child 发送 CANCEL 事件,而后续事件控件对应的父View就会直接传递（再次注意递归思维）。
+                        // 2. 如果控件没有进行拦截，则继续将该事件序列传递给子View。
                         // 这一步只负责处理 DOWN 事件之外的其他事件。
                         if (dispatchTransformedTouchEvent(ev, cancelChild,
                                 target.child, target.pointerIdBits)) {
                             handled = true;
                         }
+                        // 若给子 View 发送了取消事件
                         if (cancelChild) {
                             if (predecessor == null) {
                                 mFirstTouchTarget = next;

@@ -2,10 +2,12 @@ package com.live.simple2.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
-public class TestViewGroup extends ViewGroup {
+public class TestViewGroup extends FrameLayout {
     public TestViewGroup(Context context) {
         super(context);
     }
@@ -18,13 +20,27 @@ public class TestViewGroup extends ViewGroup {
         super(context, attrs, defStyleAttr);
     }
 
+    private float x;
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN){
+            x = ev.getX();
+        } else if (ev.getAction() == MotionEvent.ACTION_MOVE){
+            float moveX = ev.getX();
+            float absMove = Math.abs(moveX - x);
+            if (absMove > 200){
+                Log.e("sun","拦截"+moveX);
+                return true;
+            } else {
+                Log.e("sun","不拦截"+moveX);
+            }
+        }
+        return super.onInterceptTouchEvent(ev);
     }
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        return super.dispatchTouchEvent(ev);
+    public boolean onTouchEvent(MotionEvent event) {
+        Log.e("sun","处理了"+event.getX());
+        return true;
     }
 }
