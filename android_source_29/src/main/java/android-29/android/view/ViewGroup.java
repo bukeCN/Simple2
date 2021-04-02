@@ -2654,7 +2654,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                 // state since these events are very rare.
                 View childWithAccessibilityFocus = ev.isTargetAccessibilityFocus()
                         ? findChildWithAccessibilityFocus() : null;
-                // 需要 ACTION_DOWN 事件
+                // 需要 ACTION_DOWN 事件！！！！
                 if (actionMasked == MotionEvent.ACTION_DOWN
                         || (split && actionMasked == MotionEvent.ACTION_POINTER_DOWN)
                         || actionMasked == MotionEvent.ACTION_HOVER_MOVE) {
@@ -2759,6 +2759,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             if (mFirstTouchTarget == null) {
                 // No touch targets so treat this as an ordinary view.
                 // 没有子 View 消费事件，那么就只好最后看一下是否是自身来处理事件了,这里就是直接调用 View 的 dispatchTouchEvent() 方法，判断自身是否需要。
+                // 。。。。在一个事件序列被当前View拦截后，该事件序列的后续事件会走此流程。
                 handled = dispatchTransformedTouchEvent(ev, canceled, null,
                         TouchTarget.ALL_POINTER_IDS);
             } else {
@@ -3043,9 +3044,15 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
     }
 
     /**
+     *
      * Transforms a motion event into the coordinate space of a particular child view,
      * filters out irrelevant pointer ids, and overrides its action if necessary.
      * If child is null, assumes the MotionEvent will be sent to this ViewGroup instead.
+     * @param event 事件
+     * @param cancel 是否发送 CANCEL 事件
+     * @param child 子 View
+     * @param desiredPointerIdBits 对应手指 id
+     * @return 是否有 View 或子 View 消费了事件
      */
     private boolean dispatchTransformedTouchEvent(MotionEvent event, boolean cancel,
             View child, int desiredPointerIdBits) {

@@ -17850,6 +17850,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see #removeCallbacks
      */
     public boolean post(Runnable action) {
+        // mAttachInfo 由 ViewRootImpl 在 View 被添加到 Window 上时进行赋值，因此 onCreate() 中调用该方法时为 Null。
+        // mAttachInfo 中的 Handler 是 ViewRootImpl 中的
         final AttachInfo attachInfo = mAttachInfo;
         if (attachInfo != null) {
             return attachInfo.mHandler.post(action);
@@ -17857,6 +17859,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
         // Postpone the runnable until we know on which thread it needs to run.
         // Assume that the runnable will be successfully placed after attach.
+        // 当该 View 还未添加到 Window 上时，这里知识将 action 添加在队列中，在 view 被添加到 window 之上后会被执行。
         getRunQueue().post(action);
         return true;
     }
@@ -19563,6 +19566,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
         // Transfer all pending runnables.
         if (mRunQueue != null) {
+            // 之前通过 view.post() 系列方法执行的 action
+            // dispatchAttachedToWindow() 由 ViewRootImpl 在 performTraversals() 方法中调用，
+            // 因此需要等该方法执行完成之后 Handler 才会执行对应 action
             mRunQueue.executeActions(info.mHandler);
             mRunQueue = null;
         }
@@ -24558,6 +24564,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
             // flag not set, setMeasuredDimension() was not invoked, we raise
             // an exception to warn the developer
+            // 检查子 View 有没有在 onMeasure() 方法中调用
             if ((mPrivateFlags & PFLAG_MEASURED_DIMENSION_SET) != PFLAG_MEASURED_DIMENSION_SET) {
                 throw new IllegalStateException("View with id " + getId() + ": "
                         + getClass().getName() + "#onMeasure() did not set the"

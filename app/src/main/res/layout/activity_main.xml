@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    android:orientation="vertical"
     android:background="@color/colorAccent"
-    android:gravity="center">
+    android:gravity="center"
+    android:orientation="horizontal"
+    tools:context=".MainActivity">
 
     <!--    <com.live.simple2.view.RuningTextView-->
     <!--        android:layout_width="match_parent"-->
@@ -20,56 +20,58 @@
     <!--        android:singleLine="true"-->
     <!--        android:ellipsize="marquee"-->
     <!--        android:marqueeRepeatLimit="marquee_forever"/>-->
-<!--    <Button-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="启动"-->
-<!--        android:id="@+id/start"/>-->
-<!--    <TextView-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="春江潮水连海平，海上明月共潮生，江天一色无纤尘，皎皎空中孤月轮"-->
-<!--        android:textSize="30sp"-->
-<!--        android:id="@+id/tv"/>-->
-<!--    <com.live.simple2.view.RuningAdView-->
-<!--        android:id="@+id/runingView"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_gravity="center">-->
-<!--        <TextView-->
-<!--            android:id="@+id/adContentTv"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:background="@color/colorAccent"-->
-<!--            android:text="This is test, now testing"-->
-<!--            android:textSize="30sp"/>-->
-<!--    </com.live.simple2.view.RuningAdView>-->
+    <!--    <Button-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="启动"-->
+    <!--        android:id="@+id/start"/>-->
+    <!--    <TextView-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="春江潮水连海平，海上明月共潮生，江天一色无纤尘，皎皎空中孤月轮"-->
+    <!--        android:textSize="30sp"-->
+    <!--        android:id="@+id/tv"/>-->
+    <!--    <com.live.simple2.view.RuningAdView-->
+    <!--        android:id="@+id/runingView"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_gravity="center">-->
+    <!--        <TextView-->
+    <!--            android:id="@+id/adContentTv"-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:background="@color/colorAccent"-->
+    <!--            android:text="This is test, now testing"-->
+    <!--            android:textSize="30sp"/>-->
+    <!--    </com.live.simple2.view.RuningAdView>-->
     <com.live.simple2.view.TestViewGroup
         android:layout_width="match_parent"
         android:layout_height="400dp"
         android:background="#80ff00">
+
         <Button
+            android:id="@+id/test"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="动起来"
-            android:id="@+id/test"/>
+            android:hint="动起来" />
     </com.live.simple2.view.TestViewGroup>
 
-<!--    <com.live.simple2.view.TestView3-->
-<!--        android:id="@+id/test2"-->
-<!--        android:layout_width="100dp"-->
-<!--        android:layout_height="100dp"-->
-<!--        android:background="@color/colorPrimary"/>-->
 
-<!--    <com.live.simple2.view.TextSwitchView-->
-<!--        android:id="@+id/sw"-->
-<!--        android:layout_width="200dp"-->
-<!--        android:layout_height="60dp"-->
-<!--        android:layout_gravity="center"/>-->
-<!--    <Button-->
-<!--        android:id="@+id/testBtn"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="设置为 true"/>-->
+    <!--    <com.live.simple2.view.TestView3-->
+    <!--        android:id="@+id/test2"-->
+    <!--        android:layout_width="100dp"-->
+    <!--        android:layout_height="100dp"-->
+    <!--        android:background="@color/colorPrimary"/>-->
 
-</LinearLayout>
+    <!--    <com.live.simple2.view.TextSwitchView-->
+    <!--        android:id="@+id/sw"-->
+    <!--        android:layout_width="200dp"-->
+    <!--        android:layout_height="60dp"-->
+    <!--        android:layout_gravity="center"/>-->
+    <!--    <Button-->
+    <!--        android:id="@+id/testBtn"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="设置为 true"/>-->
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -8,6 +8,7 @@ import android.os.Looper
 import android.os.MessageQueue
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
 import com.live.simple2.proformance.UiPromanceManager
@@ -19,11 +20,16 @@ class MainActivity : AppCompatActivity() {
     lateinit var testView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.MATCH_PARENT)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<View>(R.id.test).setOnClickListener {
+        testView = findViewById<View>(R.id.test)
+        testView.setOnClickListener {
             Toast.makeText(this, "哈哈",  Toast.LENGTH_SHORT).show()
+        }
+        testView.post {
+            Log.e("sun", "执行 post()")
         }
     }
 }
