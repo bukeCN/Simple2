@@ -4120,7 +4120,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         final int childrenCount = mChildrenCount;
         final View[] children = mChildren;
         int flags = mGroupFlags;
-
+        // 动画逻辑
         if ((flags & FLAG_RUN_ANIMATION) != 0 && canAnimate()) {
             final boolean buildCache = !isHardwareAccelerated();
             for (int i = 0; i < childrenCount; i++) {
@@ -4148,31 +4148,44 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         }
 
         int clipSaveCount = 0;
+
+        /**
+         * 设置剪裁区域，默认情况下限制子控件的绘制限制在自身区域内，超出会被裁剪。
+         * 开发者，可以通过 ViewGroup.setClipToPadding() 修改这一行为。
+         */
         final boolean clipToPadding = (flags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK;
         if (clipToPadding) {
+            // 保存 Canvas 状态
             clipSaveCount = canvas.save(Canvas.CLIP_SAVE_FLAG);
+            // 剪裁绘制区域
             canvas.clipRect(mScrollX + mPaddingLeft, mScrollY + mPaddingTop,
                     mScrollX + mRight - mLeft - mPaddingRight,
                     mScrollY + mBottom - mTop - mPaddingBottom);
         }
 
         // We will draw our child's animation, let's reset the flag
+        // 干，~为java中的'非'运算符，此处用于清除标记。
         mPrivateFlags &= ~PFLAG_DRAW_ANIMATION;
         mGroupFlags &= ~FLAG_INVALIDATE_REQUIRED;
 
         boolean more = false;
+        // 获取当前的时间戳，用于子控件计算其动画参数
         final long drawingTime = getDrawingTime();
 
         if (usingRenderNodeProperties) canvas.insertReorderBarrier();
+        // 瞬时控件？？后面搞清楚。
         final int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
         int transientIndex = transientCount != 0 ? 0 : -1;
         // Only use the preordered list if not HW accelerated, since the HW pipeline will do the
         // draw reordering internally
+        // 搞清楚这个是什么东西
         final ArrayList<View> preorderedList = usingRenderNodeProperties
                 ? null : buildOrderedChildList();
+        // 是否按照自定义绘制顺序
         final boolean customOrder = preorderedList == null
                 && isChildrenDrawingOrderEnabled();
         for (int i = 0; i < childrenCount; i++) {
+            // 绘制瞬时控件？？
             while (transientIndex >= 0 && mTransientIndices.get(transientIndex) == i) {
                 final View transientChild = mTransientViews.get(transientIndex);
                 if ((transientChild.mViewFlags & VISIBILITY_MASK) == VISIBLE ||
@@ -4184,13 +4197,17 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
                     transientIndex = -1;
                 }
             }
-
+            // 获取需要绘制的 View 索引, 如果按照自定义顺序进行绘制会调用 getChildDrawingOrder() 方法获取索引，该方法可以被重写。
+            // 默认就是返回 i 值。按照顺序来。
+            // 后绘制的控件会覆盖先绘制的。后绘制的有被用户看到的优先权。
             final int childIndex = getAndVerifyPreorderedIndex(childrenCount, i, customOrder);
+            // 获取需要绘制的 View
             final View child = getAndVerifyPreorderedView(preorderedList, children, childIndex);
             if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null) {
                 more |= drawChild(canvas, child, drawingTime);
             }
         }
+        // 绘制瞬时控件
         while (transientIndex >= 0) {
             // there may be additional transient views after the normal views
             final View transientChild = mTransientViews.get(transientIndex);
@@ -4205,6 +4222,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         }
         if (preorderedList != null) preorderedList.clear();
 
+        // 后续是带有动画相关。
         // Draw any disappearing views that have animations
         if (mDisappearingChildren != null) {
             final ArrayList<View> disappearingChildren = mDisappearingChildren;

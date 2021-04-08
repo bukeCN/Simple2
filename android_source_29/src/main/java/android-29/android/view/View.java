@@ -21439,6 +21439,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         final int viewFlags = mViewFlags;
         boolean horizontalEdges = (viewFlags & FADING_EDGE_HORIZONTAL) != 0;
         boolean verticalEdges = (viewFlags & FADING_EDGE_VERTICAL) != 0;
+        // 如果边界不需要进入渐变别介，则可以进入简便绘制流程。
+        // 渐变效果：当View可滑动时，如果滑到底部或顶部不能滑动的时候就会绘制渐变效果。
         if (!verticalEdges && !horizontalEdges) {
             // Step 3, draw the content
             onDraw(canvas);
@@ -21946,6 +21948,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
             ListenerInfo li = mListenerInfo;
             if (li != null && li.mOnLayoutChangeListeners != null) {
+                // 可借鉴的代码，复制一份，保证线程安全。
                 ArrayList<OnLayoutChangeListener> listenersCopy =
                         (ArrayList<OnLayoutChangeListener>)li.mOnLayoutChangeListeners.clone();
                 int numListeners = listenersCopy.size();

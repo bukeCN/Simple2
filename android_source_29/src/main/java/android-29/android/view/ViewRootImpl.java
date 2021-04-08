@@ -411,7 +411,7 @@ public final class ViewRootImpl implements ViewParent,
     boolean mFirst;
 
     boolean mReportNextDraw;
-    boolean mFullRedrawNeeded;
+    boolean mFullRedrawNeeded;// 是否需要绘制整个窗口
     boolean mNewSurfaceNeeded;
     boolean mHasHadWindowFocus;
     boolean mLastWasImTarget;
@@ -1832,6 +1832,7 @@ public final class ViewRootImpl implements ViewParent,
                         + host.getMeasuredWidth() + "," + host.getMeasuredHeight()
                         + ") from width spec: " + MeasureSpec.toString(childWidthMeasureSpec)
                         + " and height spec: " + MeasureSpec.toString(childHeightMeasureSpec));
+                // 判断尺寸是否合适
                 if ((host.getMeasuredWidthAndState()&View.MEASURED_STATE_TOO_SMALL) == 0) {
                     goodMeasure = true;
                 } else {
@@ -1984,6 +1985,7 @@ public final class ViewRootImpl implements ViewParent,
         mWillDrawSoon = true;
         boolean windowSizeMayChange = false;
         boolean surfaceChanged = false;
+        // 使用 Window 窗口的参数属性
         WindowManager.LayoutParams lp = mWindowAttributes;
 
         int desiredWindowWidth;
@@ -2000,6 +2002,7 @@ public final class ViewRootImpl implements ViewParent,
                 ((mViewVisibility == View.VISIBLE) != (viewVisibility == View.VISIBLE));
 
         WindowManager.LayoutParams params = null;
+        // 如果窗口参数发生了更改
         if (mWindowAttributesChanged) {
             mWindowAttributesChanged = false;
             surfaceChanged = true;
@@ -2021,6 +2024,8 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         mWindowAttributesChangesFlag = 0;
+
+        /*---------------------预测量流程-----------------------*/
 
         // 计算是否需要重新渲染和布局整个屏幕区域
         Rect frame = mWinFrame;// mWinFrame 表示窗口的最新尺寸
@@ -2102,6 +2107,7 @@ public final class ViewRootImpl implements ViewParent,
 
         boolean layoutRequested = mLayoutRequested && (!mStopped || mReportNextDraw);
         // 首次，肯定为 true ,调用了 requestLayout() 也会 true。
+        // 决定是否进入预测量！！！
         if (layoutRequested) {
 
             final Resources res = mView.getContext().getResources();
@@ -2139,7 +2145,7 @@ public final class ViewRootImpl implements ViewParent,
                         || lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
                     // 强制改变窗口大小
                     windowSizeMayChange = true;
-
+                    // 如果是系统的窗口
                     if (shouldUseDisplaySize(lp)) {
                         // NOTE -- system code, won't try to do compat mode.
                         Point size = new Point();
@@ -2156,7 +2162,7 @@ public final class ViewRootImpl implements ViewParent,
             }
 
             // Ask host how big it wants to be
-            // 进行窗口预测量，已达到更好的显示大小。！！！
+            // 进行View预测量，已达到更好的显示大小。！！！了解 View 适合的尺寸，以便调整窗口尺寸
             windowSizeMayChange |= measureHierarchy(host, lp, res,
                     desiredWindowWidth, desiredWindowHeight);
         }
@@ -2242,7 +2248,7 @@ public final class ViewRootImpl implements ViewParent,
         // bounds.
         windowShouldResize |= mActivityRelaunched;
 
-        // ----------------------------预测量阶段完成，新的部分开始-----------------------------------------
+        // ----------------------------预测量阶段完成，修改窗口尺寸部分开始-----------------------------------------
 
         // Determine whether to compute insets.
         // If there are no inset listeners remaining then we may still need to compute
@@ -2485,7 +2491,7 @@ public final class ViewRootImpl implements ViewParent,
                         return;
                     }
                 }
-
+                // 启动拖动调整大小？？是否是小窗口模式下，可以改变窗口大小。
                 final boolean freeformResizing = (relayoutResult
                         & android.view.WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_FREEFORM) != 0;
                 final boolean dockedResizing = (relayoutResult
@@ -2520,7 +2526,7 @@ public final class ViewRootImpl implements ViewParent,
 
             if (DEBUG_ORIENTATION) Log.v(
                     TAG, "Relayout returned: frame=" + frame + ", surface=" + mSurface);
-            // 布局窗口之后，更新口尺寸
+            // 布局窗口之后，更新窗口尺寸
             mAttachInfo.mWindowLeft = frame.left;
             mAttachInfo.mWindowTop = frame.top;
 
@@ -2662,7 +2668,8 @@ public final class ViewRootImpl implements ViewParent,
 
             // By this point all views have been sized and positioned
             // We can compute the transparent area
-            //
+            // 计算透明区域，为了 SurfaceView 服务。如视频播放
+            // 当控件树种存在 SutfaceView 时，它会通过 ViewParent.requestTransparentRegion() 方法启用这一机制。
             if ((host.mPrivateFlags & View.PFLAG_REQUEST_TRANSPARENT_REGIONS) != 0) {
                 // start out transparent
                 // TODO: AVOID THAT CALL BY CACHING THE RESULT?
@@ -2734,6 +2741,8 @@ public final class ViewRootImpl implements ViewParent,
             }
         }
 
+        /*-------------------绘制阶段开始------------------------*/
+        // 处理焦点
         if (mFirst) {
             if (sAlwaysAssignFocus || !isInTouchMode()) {
                 // handle first focus request
@@ -2809,10 +2818,12 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         // Remember if we must report the next draw.
+        // 确定是否需要向 WMS 发送绘制完成的通知。WMS 仅当窗口状态为 READY_TO_SHOW 时才会显示窗口 ？？？ 这里有点不解。
         if ((relayoutResult & android.view.WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
             reportNextDraw();
         }
-
+        // 确定是否需要绘制
+        // dispatchOnPreDraw() 表示可以通知监听者，绘制即将开始，返回值表示是否需要取消绘制
         boolean cancelDraw = mAttachInfo.mTreeObserver.dispatchOnPreDraw() || !isViewVisible;
 
         if (!cancelDraw) {
@@ -2822,10 +2833,12 @@ public final class ViewRootImpl implements ViewParent,
                 }
                 mPendingTransitions.clear();
             }
-
+            // 绘制整个控件树
             performDraw();
         } else {
             if (isViewVisible) {
+                // 当前 View 是可见的，但是取消了绘制。即 mAttachInfo.mTreeObserver.dispatchOnPreDraw() 为 true。
+                // 那么再下一个 VSYNC 信号中再尝试一次
                 // Try again
                 scheduleTraversals();
             } else if (mPendingTransitions != null && mPendingTransitions.size() > 0) {
@@ -3458,6 +3471,7 @@ public final class ViewRootImpl implements ViewParent,
         mIsDrawing = true;
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "draw");
 
+        // 硬件加速相关处理
         boolean usingAsyncReport = false;
         if (mAttachInfo.mThreadedRenderer != null && mAttachInfo.mThreadedRenderer.isEnabled()) {
             ArrayList<Runnable> commitCallbacks = mAttachInfo.mTreeObserver
@@ -3485,7 +3499,7 @@ public final class ViewRootImpl implements ViewParent,
                         }));
             }
         }
-
+        // 绘制
         try {
             boolean canUseAsync = draw(fullRedrawNeeded);
             if (usingAsyncReport && !canUseAsync) {
@@ -3561,14 +3575,14 @@ public final class ViewRootImpl implements ViewParent,
                 }
             }
         }
-
+        // 通过焦点计算滚动，图 EditText 输入时，拉起的输入法不能遮盖 EditText，需要向上滚动一段距离。
         scrollToRectOrFocus(null, false);
 
         if (mAttachInfo.mViewScrollChanged) {
             mAttachInfo.mViewScrollChanged = false;
             mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
         }
-
+        // 为了保证向上滚动不是那么突兀，因此这里需要利用滚动值进行一个动画。
         boolean animating = mScroller != null && mScroller.computeScrollOffset();
         final int curScrollY;
         if (animating) {
@@ -3587,6 +3601,7 @@ public final class ViewRootImpl implements ViewParent,
         final float appScale = mAttachInfo.mApplicationScale;
         final boolean scalingRequired = mAttachInfo.mScalingRequired;
 
+        // 这里是干嘛的？？不是很清楚。
         final Rect dirty = mDirty;
         if (mSurfaceHolder != null) {
             // The app owns the surface, we won't draw.
@@ -3597,6 +3612,7 @@ public final class ViewRootImpl implements ViewParent,
             return false;
         }
 
+        // 如果需要绘制全部区域，则将脏区域设置为窗口全部大小。
         if (fullRedrawNeeded) {
             dirty.set(0, 0, (int) (mWidth * appScale + 0.5f), (int) (mHeight * appScale + 0.5f));
         }
@@ -3612,6 +3628,7 @@ public final class ViewRootImpl implements ViewParent,
 
         mAttachInfo.mTreeObserver.dispatchOnDraw();
 
+        // 偏移脏区域
         int xOffset = -mCanvasOffsetX;
         int yOffset = -mCanvasOffsetY + curScrollY;
         final WindowManager.LayoutParams params = mWindowAttributes;
@@ -3624,6 +3641,7 @@ public final class ViewRootImpl implements ViewParent,
             dirty.offset(surfaceInsets.left, surfaceInsets.right);
         }
 
+        // 可访问焦点绘制？？是不是绘制焦点效果？？？
         boolean accessibilityFocusDirty = false;
         final Drawable drawable = mAttachInfo.mAccessibilityFocusDrawable;
         if (drawable != null) {
@@ -3642,6 +3660,7 @@ public final class ViewRootImpl implements ViewParent,
 
         boolean useAsyncReport = false;
         if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty) {
+            // 如果窗口采用了硬件加速的绘制方式。
             if (mAttachInfo.mThreadedRenderer != null && mAttachInfo.mThreadedRenderer.isEnabled()) {
                 // If accessibility focus moved, always invalidate the root.
                 boolean invalidateRoot = accessibilityFocusDirty || mInvalidateRootRequested;
@@ -3681,6 +3700,7 @@ public final class ViewRootImpl implements ViewParent,
 
                 mAttachInfo.mThreadedRenderer.draw(mView, mAttachInfo, this);
             } else {
+                // 这里看的不是很清楚????????
                 // If we get here with a disabled & requested hardware renderer, something went
                 // wrong (an invalidate posted right before we destroyed the hardware surface
                 // for instance) so we should just bail out. Locking the surface with software
@@ -3707,6 +3727,7 @@ public final class ViewRootImpl implements ViewParent,
                     return false;
                 }
 
+                // 软件绘制
                 if (!drawSoftware(surface, mAttachInfo, xOffset, yOffset,
                         scalingRequired, dirty, surfaceInsets)) {
                     return false;
@@ -3745,7 +3766,7 @@ public final class ViewRootImpl implements ViewParent,
             final int top = dirty.top;
             final int right = dirty.right;
             final int bottom = dirty.bottom;
-
+            // 获取 canvas , dirty 为之前的脏区域
             canvas = mSurface.lockCanvas(dirty);
 
             // TODO: Do this in native
@@ -3782,7 +3803,7 @@ public final class ViewRootImpl implements ViewParent,
             if (!canvas.isOpaque() || yoff != 0 || xoff != 0) {
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR);
             }
-
+            // 在绘制即将开始之前，首先清空之前所计算的脏区域。这样一来，如果再绘制的过程中执行了 View.invalidate() 则可重新计算脏区域。
             dirty.setEmpty();
             mIsAnimating = false;
             mView.mPrivateFlags |= View.PFLAG_DRAWN;
@@ -3793,17 +3814,19 @@ public final class ViewRootImpl implements ViewParent,
                         ", metrics=" + cxt.getResources().getDisplayMetrics() +
                         ", compatibilityInfo=" + cxt.getResources().getCompatibilityInfo());
             }
+            // 对 Canvas 进行一次便宜，偏移量为之前计算的滚动量。
             canvas.translate(-xoff, -yoff);
             if (mTranslator != null) {
                 mTranslator.translateCanvas(canvas);
             }
             canvas.setScreenDensity(scalingRequired ? mNoncompatDensity : 0);
-
+            // 绘制整个控件树
             mView.draw(canvas);
 
             drawAccessibilityFocusedDrawableIfNeeded(canvas);
         } finally {
             try {
+                // 最后步骤，显示绘制后的内容
                 surface.unlockCanvasAndPost(canvas);
             } catch (IllegalArgumentException e) {
                 Log.e(mTag, "Could not unlock surface", e);
