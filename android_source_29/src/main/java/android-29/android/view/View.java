@@ -20258,12 +20258,21 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     /**
      * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
+     *
+     * 硬件加速绘制重要流程！！
+     * 1. 构建 RecordingCanvas
+     * 2. 完成滚动，计算内容偏移 mScorllX/Y 应用至 Canvas
+     * 3. 调用 draw() 完成绘制
+     * 4. Canvas 完成绘制，构建 DisplayList，并设置到 RenderNode 中
+     *
+     *
      * @hide
      */
     @NonNull
     @UnsupportedAppUsage
     public RenderNode updateDisplayListIfDirty() {
         final RenderNode renderNode = mRenderNode;
+        // 判断 View 是否有创建 DisplayList 的能力，软件绘制也会走到这一步
         if (!canHaveDisplayList()) {
             // can't populate RenderNode, don't try
             return renderNode;
@@ -20272,6 +20281,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if ((mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0
                 || !renderNode.hasDisplayList()
                 || (mRecreateDisplayList)) {
+            // 在 ThreadedRenderer 第二次调用时会进入，直接返回该 RenderNode。
             // Don't need to recreate the display list, just need to tell our
             // children to restore/recreate theirs
             if (renderNode.hasDisplayList()
@@ -20290,10 +20300,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int width = mRight - mLeft;
             int height = mBottom - mTop;
             int layerType = getLayerType();
-
+            // 1. 创建 RecordingCanvas
             final RecordingCanvas canvas = renderNode.beginRecording(width, height);
 
             try {
+                // 判断类型
                 if (layerType == LAYER_TYPE_SOFTWARE) {
                     buildDrawingCache(true);
                     Bitmap cache = getDrawingCache(true);
@@ -20301,14 +20312,16 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                         canvas.drawBitmap(cache, 0, 0, mLayerPaint);
                     }
                 } else {
+                    // 2. 完成滑动，计算 Canvas 偏移量，相对于内容
                     computeScroll();
-
+                    // 应用偏移
                     canvas.translate(-mScrollX, -mScrollY);
                     mPrivateFlags |= PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID;
                     mPrivateFlags &= ~PFLAG_DIRTY_MASK;
 
                     // Fast path for layouts with no backgrounds
                     if ((mPrivateFlags & PFLAG_SKIP_DRAW) == PFLAG_SKIP_DRAW) {
+                        // 对于 ViewGourp 的优化，和软件绘制一样。
                         dispatchDraw(canvas);
                         drawAutofilledHighlight(canvas);
                         if (mOverlay != null && !mOverlay.isEmpty()) {
@@ -20318,11 +20331,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                             debugDrawFocus(canvas);
                         }
                     } else {
+                        // 3. 调用绘制，录制绘制动作
                         draw(canvas);
                     }
                 }
             } finally {
+                // 4. 重点，结束绘制动作录制，将该 View 创建的 DisplayList 保存到该 View 的 RenderNode 中。
                 renderNode.endRecording();
+                // 5. 对 rendernode 应用自身变换和位置坐标变换
                 setDisplayListProperties(renderNode);
             }
         } else {
@@ -21085,18 +21101,23 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * This is where the View specializes rendering behavior based on layer type,
      * and hardware acceleration.
+     * ViewGroup 调用绘制子 view 的方法，里面重要的逻辑有：
+     *  Canvas 是父级给的
+     *  1. Canvas 坐标转换, 此时 canvas 坐标是 ViewGorup 根据内容滚动裁剪之后的坐标。
      */
     boolean draw(Canvas canvas, ViewGroup parent, long drawingTime) {
+        // canvas 是否是用了硬件，即是否是 HardareCanvas
         final boolean hardwareAcceleratedCanvas = canvas.isHardwareAccelerated();
         /* If an attached view draws to a HW canvas, it may use its RenderNode + DisplayList.
          *
          * If a view is dettached, its DisplayList shouldn't exist. If the canvas isn't
          * HW accelerated, it can't handle drawing RenderNodes.
          */
+        // 该标记为是否使用硬件加速的方式进行绘制
         boolean drawingWithRenderNode = mAttachInfo != null
                 && mAttachInfo.mHardwareAccelerated
                 && hardwareAcceleratedCanvas;
-
+        // 用于动画计算，如果动画还没结束则该值会为 true。
         boolean more = false;
         final boolean childHasIdentityMatrix = hasIdentityMatrix();
         final int parentFlags = parent.mGroupFlags;
@@ -21106,6 +21127,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             parent.mGroupFlags &= ~ViewGroup.FLAG_CLEAR_TRANSFORMATION;
         }
 
+        // 动画相关，将动画结果存储于 transformToApply 中。这是进行坐标转换的第一个因素。
         Transformation transformToApply = null;
         boolean concatMatrix = false;
         final boolean scalingRequired = mAttachInfo != null && mAttachInfo.mScalingRequired;
@@ -21158,9 +21180,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             mPrivateFlags &= ~PFLAG_INVALIDATED;
         }
 
+        // 这里要处理硬件绘制 RenderNode
         RenderNode renderNode = null;
         Bitmap cache = null;
         int layerType = getLayerType(); // TODO: signify cache state with just 'cache' local
+        // 软件绘制才会进入，缓存获取
         if (layerType == LAYER_TYPE_SOFTWARE || !drawingWithRenderNode) {
              if (layerType != LAYER_TYPE_NONE) {
                  // If not drawing with RenderNode, treat HW layers as SW
@@ -21170,9 +21194,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             cache = getDrawingCache(true);
         }
 
+        // 硬件绘制
         if (drawingWithRenderNode) {
             // Delay getting the display list until animation-driven alpha values are
             // set up and possibly passed on to the view
+            // 重点！！！使用了硬件绘制，这一步是获取子控件的 RenderNode. // 作用：后续会对该 RenderNode 应用坐标的变换。
             renderNode = updateDisplayListIfDirty();
             if (!renderNode.hasDisplayList()) {
                 // Uncommon, but possible. If a view is removed from the hierarchy during the call
@@ -21183,6 +21209,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             }
         }
 
+
+        /**
+         * 计算控件内容滚动量，计算是通过 computeScroll() 计算完成的，这里思考 Scroller 使用过程。
+         * 这里是进行坐标装换的第二个因素
+         */
         int sx = 0;
         int sy = 0;
         if (!drawingWithRenderNode) {
@@ -21194,10 +21225,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         final boolean drawingWithDrawingCache = cache != null && !drawingWithRenderNode;
         final boolean offsetForScroll = cache == null && !drawingWithRenderNode;
 
+        // 保存当前 Canvas 状态
         int restoreTo = -1;
         if (!drawingWithRenderNode || transformToApply != null) {
             restoreTo = canvas.save();
         }
+        // 第一次变换，对应控件位置和滚动量。注意条件要符合。
+        // mLeft/mTop 是进行坐标变换的第三个因素
         if (offsetForScroll) {
             canvas.translate(mLeft - sx, mTop - sy);
         } else {
@@ -21214,7 +21248,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 canvas.scale(scale, scale);
             }
         }
-
+        /**
+         * 若此控件动画或者通过 View.setScaleX 等方法修改了变换，则进行应用。
+         */
         float alpha = drawingWithRenderNode ? 1 : (getAlpha() * getTransitionAlpha());
         if (transformToApply != null
                 || alpha < 1
@@ -21223,17 +21259,19 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             if (transformToApply != null || !childHasIdentityMatrix) {
                 int transX = 0;
                 int transY = 0;
-
+                // 记录滚动量
                 if (offsetForScroll) {
                     transX = -sx;
                     transY = -sy;
                 }
-
+                // 应用动画变换
                 if (transformToApply != null) {
                     if (concatMatrix) {
                         if (drawingWithRenderNode) {
+                            // 使用了硬件加速。。
                             renderNode.setAnimationMatrix(transformToApply.getMatrix());
                         } else {
+                            // 将动画产生的变换应用到 Canvas 中。
                             // Undo the scroll translation, apply the transformation matrix,
                             // then redo the scroll translate to get the correct result.
                             canvas.translate(-transX, -transY);
@@ -21249,14 +21287,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                         parent.mGroupFlags |= ViewGroup.FLAG_CLEAR_TRANSFORMATION;
                     }
                 }
-
+                // 将控件自身变化应用到 Canvas 中, 控件自身的变换矩阵是进行坐标系变换的第四个因素。
                 if (!childHasIdentityMatrix && !drawingWithRenderNode) {
                     canvas.translate(-transX, -transY);
                     canvas.concat(getMatrix());
                     canvas.translate(transX, transY);
                 }
             }
-
+            // 处理透明度值
             // Deal with alpha if it is or used to be <1
             if (alpha < 1 || (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0) {
                 if (alpha < 1) {
@@ -21284,7 +21322,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             onSetAlpha(255);
             mPrivateFlags &= ~PFLAG_ALPHA_SET;
         }
-
+        // 设置剪裁，如果没有采用硬件绘制
         if (!drawingWithRenderNode) {
             // apply clips directly, since RenderNode won't do it for this draw
             if ((parentFlags & ViewGroup.FLAG_CLIP_CHILDREN) != 0 && cache == null) {
@@ -21298,7 +21336,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                     }
                 }
             }
-
+            // 应用裁剪视图，注意此时 Canvas 已经进过 mScrollX/Y 的变换，位于控件内容坐标系下。
+            // 和老版本 sdk 相比此处对于控件内容的绘制区域做出来优化。集中于 mClipBounds 中。
             if (mClipBounds != null) {
                 // clip bounds ignore scroll
                 canvas.clipRect(mClipBounds);
@@ -21307,11 +21346,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
         if (!drawingWithDrawingCache) {
             if (drawingWithRenderNode) {
+                // 硬件加速
                 mPrivateFlags &= ~PFLAG_DIRTY_MASK;
                 ((RecordingCanvas) canvas).drawRenderNode(renderNode);
             } else {
+                // 使用变换过的 Canvas 进行最终绘制。
                 // Fast path for layouts with no backgrounds
                 if ((mPrivateFlags & PFLAG_SKIP_DRAW) == PFLAG_SKIP_DRAW) {
+                    // 这是对于 ViewGroup 的一种优化，大多数的 ViewGroup 没有自己的内容，则可以直接绘制子 View 内容。
                     mPrivateFlags &= ~PFLAG_DIRTY_MASK;
                     dispatchDraw(canvas);
                 } else {
@@ -21319,6 +21361,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 }
             }
         } else if (cache != null) {
+            // 绘图缓存
             mPrivateFlags &= ~PFLAG_DIRTY_MASK;
             if (layerType == LAYER_TYPE_NONE || mLayerPaint == null) {
                 // no layer paint, use temporary paint to draw bitmap

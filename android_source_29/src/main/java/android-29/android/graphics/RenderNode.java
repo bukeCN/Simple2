@@ -406,8 +406,11 @@ public final class RenderNode {
         }
         RecordingCanvas canvas = mCurrentRecordingCanvas;
         mCurrentRecordingCanvas = null;
+        // 结束录制，获取 Canvas 创建的 Display
         long displayList = canvas.finishRecording();
+        // 将 DisplayList 设置给 Render, 将该 DisplayList 标记为有效的显示列表
         nSetDisplayList(mNativeRenderNode, displayList);
+        // 回收 Canvas
         canvas.recycle();
     }
 

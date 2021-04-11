@@ -4150,7 +4150,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         int clipSaveCount = 0;
 
         /**
-         * 设置剪裁区域，默认情况下限制子控件的绘制限制在自身区域内，超出会被裁剪。
+         * 1. 设置剪裁区域，默认情况下限制子控件的绘制限制在自身区域内，超出会被裁剪。
          * 开发者，可以通过 ViewGroup.setClipToPadding() 修改这一行为。
          */
         final boolean clipToPadding = (flags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK;
@@ -4158,6 +4158,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             // 保存 Canvas 状态
             clipSaveCount = canvas.save(Canvas.CLIP_SAVE_FLAG);
             // 剪裁绘制区域
+            // 这里要注意理解为什么要使用 mScrollX/mScrollY 两个值进行剪裁。
+            // 因为子View的内容是可滑动的，因此范围不能局限于 ViewGroup 本身范围。
             canvas.clipRect(mScrollX + mPaddingLeft, mScrollY + mPaddingTop,
                     mScrollX + mRight - mLeft - mPaddingRight,
                     mScrollY + mBottom - mTop - mPaddingBottom);
@@ -4204,6 +4206,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             // 获取需要绘制的 View
             final View child = getAndVerifyPreorderedView(preorderedList, children, childIndex);
             if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null) {
+                // 调用子 View 的绘制方法
                 more |= drawChild(canvas, child, drawingTime);
             }
         }
@@ -4250,6 +4253,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             invalidate(true);
         }
 
+        // 这里是否是属性动画?????
         if ((flags & FLAG_ANIMATION_DONE) == 0 && (flags & FLAG_NOTIFY_ANIMATION_LISTENER) == 0 &&
                 mLayoutAnimationController.isDone() && !more) {
             // We want to erase the drawing cache and notify the listener after the

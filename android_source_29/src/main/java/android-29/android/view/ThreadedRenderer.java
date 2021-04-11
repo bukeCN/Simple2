@@ -569,15 +569,21 @@ public final class ThreadedRenderer extends HardwareRenderer {
 
     private void updateViewTreeDisplayList(View view) {
         view.mPrivateFlags |= View.PFLAG_DRAWN;
+        // 如果根控件被 invalidate() 过，则标记它随后需要刷新其 DisplayList
         view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED)
                 == View.PFLAG_INVALIDATED;
         view.mPrivateFlags &= ~View.PFLAG_INVALIDATED;
+        // 重点！！更新或构建 DisplayList，最易该 View 是 DecorView
         view.updateDisplayListIfDirty();
         view.mRecreateDisplayList = false;
     }
 
     private void updateRootDisplayList(View view, DrawCallbacks callbacks) {
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "Record View#draw()");
+
+        // 重点！！！
+        // 更新控件树的 DisplayList, 首次会构建 DisplayList，初次也会创建 RecordingCanvas。
+        // 这里会调用 view.draw() 方法，录制绘制的动作，并保存到 DisplayList 中，最终设置到 Render 中。
         updateViewTreeDisplayList(view);
 
         // Consume and set the frame callback after we dispatch draw to the view above, but before
@@ -589,21 +595,35 @@ public final class ThreadedRenderer extends HardwareRenderer {
             setFrameCallback(callback);
         }
 
+        // 进入两个条件,
+        // 1. 脏区域变动，需要重新渲染
+        // 2. 第一次遍历绘制是进入，没有对应的 DisplayList
         if (mRootNodeNeedsUpdate || !mRootNode.hasDisplayList()) {
+            // 获取对应的 Canvas ，区别软件绘制的 Canvas
             RecordingCanvas canvas = mRootNode.beginRecording(mSurfaceWidth, mSurfaceHeight);
             try {
+                // 先保存
                 final int saveCount = canvas.save();
                 canvas.translate(mInsetLeft, mInsetTop);
+                // 异步通知准备绘制了, 告知 ViewRootImpl 可以做些事情.
                 callbacks.onPreDraw(canvas);
 
                 canvas.enableZ();
+                // 再次调用 view.updateDisplayListIfDirty() ,
+                // 目的是第一次调用时录制的数据，输出给这里的 Canvas。
                 canvas.drawRenderNode(view.updateDisplayListIfDirty());
                 canvas.disableZ();
-
+                // 异步通知绘制完成
                 callbacks.onPostDraw(canvas);
                 canvas.restoreToCount(saveCount);
                 mRootNodeNeedsUpdate = false;
             } finally {
+                /**
+                 * 收尾动作，注意 RenderNode 节点的区别
+                 * 1. Canvas 结束，构建对应的 DisplayList
+                 * 2. 将 DisplayList 设置给 mRender
+                 * 3. recycle 回收 Canvas
+                 */
                 mRootNode.endRecording();
             }
         }
@@ -622,7 +642,7 @@ public final class ThreadedRenderer extends HardwareRenderer {
          *
          * @param canvas The Canvas used to render the view.
          */
-        void onPreDraw(RecordingCanvas canvas);
+        void onRPreDraw(RecordingCanvas canvas);
 
         /**
          * Invoked after a view is drawn by a threaded renderer.
@@ -649,12 +669,20 @@ public final class ThreadedRenderer extends HardwareRenderer {
      */
     void draw(View view, AttachInfo attachInfo, DrawCallbacks callbacks) {
         final Choreographer choreographer = attachInfo.mViewRootImpl.mChoreographer;
+        // 标记绘制开始
         choreographer.mFrameInfo.markDrawStart();
 
+        /**
+         * 重点流程
+         * 1. 构建 RenderCanvas
+         * 2. 调用 view.updateDisplayListIfDirty() 录制绘制指令
+         * 3.
+         */
         updateRootDisplayList(view, callbacks);
 
         // register animating rendernodes which started animating prior to renderer
         // creation, which is typical for animators started prior to first draw
+        // 动画处理
         if (attachInfo.mPendingAnimatingRenderNodes != null) {
             final int count = attachInfo.mPendingAnimatingRenderNodes.size();
             for (int i = 0; i < count; i++) {
@@ -666,7 +694,7 @@ public final class ThreadedRenderer extends HardwareRenderer {
             // ViewRootImpl#attachRenderNodeAnimator will go directly to us.
             attachInfo.mPendingAnimatingRenderNodes = null;
         }
-
+        // 最终渲染绘制
         int syncResult = syncAndDrawFrame(choreographer.mFrameInfo);
         if ((syncResult & SYNC_LOST_SURFACE_REWARD_IF_FOUND) != 0) {
             setEnabled(false);

@@ -3668,7 +3668,7 @@ public final class ViewRootImpl implements ViewParent,
 
                 // Draw with hardware renderer.
                 mIsAnimating = false;
-
+                // 脏区域变动，需要重新渲染
                 if (mHardwareYOffset != yOffset || mHardwareXOffset != xOffset) {
                     mHardwareYOffset = yOffset;
                     mHardwareXOffset = xOffset;
@@ -3697,7 +3697,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
 
                 useAsyncReport = true;
-
+                // 采用硬件绘制，注意：硬件绘制时采用录制绘制指令，生成 DisplayList 的方式渲染，要注意这种面向对象模式。
                 mAttachInfo.mThreadedRenderer.draw(mView, mAttachInfo, this);
             } else {
                 // 这里看的不是很清楚????????
@@ -3814,7 +3814,7 @@ public final class ViewRootImpl implements ViewParent,
                         ", metrics=" + cxt.getResources().getDisplayMetrics() +
                         ", compatibilityInfo=" + cxt.getResources().getCompatibilityInfo());
             }
-            // 对 Canvas 进行一次便宜，偏移量为之前计算的滚动量。
+            // 对 Canvas 进行一次偏移，偏移量为之前计算的滚动量。
             canvas.translate(-xoff, -yoff);
             if (mTranslator != null) {
                 mTranslator.translateCanvas(canvas);

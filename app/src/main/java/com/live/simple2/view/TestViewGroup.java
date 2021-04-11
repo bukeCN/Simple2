@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 public class TestViewGroup extends FrameLayout {
+    int i = 0;
+
     public TestViewGroup(Context context) {
         super(context);
     }
@@ -24,28 +26,28 @@ public class TestViewGroup extends FrameLayout {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        Log.e("sun","onMeasure");
+        Log.e("sun", "onMeasure");
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.e("sun","onDraw");
     }
 
     private float x;
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN){
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             x = ev.getX();
-        } else if (ev.getAction() == MotionEvent.ACTION_MOVE){
+        } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
             float moveX = ev.getX();
             float absMove = Math.abs(moveX - x);
-            if (absMove > 200){
-                Log.e("sun","拦截"+moveX);
+            if (absMove > 200) {
+                Log.e("sun", "拦截" + moveX);
                 return true;
             } else {
-                Log.e("sun","不拦截"+moveX);
+                Log.e("sun", "不拦截" + moveX);
             }
         }
         return super.onInterceptTouchEvent(ev);
@@ -53,7 +55,7 @@ public class TestViewGroup extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.e("sun","处理了"+event.getX());
+        Log.e("sun", "处理了" + event.getX());
         return true;
     }
 }
