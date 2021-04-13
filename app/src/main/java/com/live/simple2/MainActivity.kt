@@ -1,5 +1,6 @@
 package com.live.simple2
 
+import android.animation.ValueAnimator
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -16,21 +17,16 @@ import com.live.simple2.proformance.UiPromanceManager
 import com.live.simple2.utils.DialogUtil
 import com.live.simple2.view.RuningAdView
 import com.live.simple2.view.TextSwitchView
+import com.live.simple2.view.animator.TestAnimatorActivity
 
 class MainActivity : AppCompatActivity() {
-
-    lateinit var testView: Button
-    lateinit var tGroup: View
+    lateinit var view: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        testView = findViewById<Button>(R.id.test)
-        tGroup = findViewById<View>(R.id.tGroup)
-        testView.setOnClickListener {
-            testView.text = "你好呀"
-        }
+        ValueAnimator
     }
 }
 

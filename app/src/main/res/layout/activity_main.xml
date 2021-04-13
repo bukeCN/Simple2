@@ -4,11 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorAccent"
-    android:gravity="center"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/toAnimator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="动画"/>
     <!--    <com.live.simple2.view.RuningTextView-->
     <!--        android:layout_width="match_parent"-->
     <!--        android:layout_height="wrap_content"-->
@@ -44,24 +47,20 @@
     <!--            android:text="This is test, now testing"-->
     <!--            android:textSize="30sp"/>-->
     <!--    </com.live.simple2.view.RuningAdView>-->
-    <com.live.simple2.view.TestViewGroup
-        android:id="@+id/tGroup"
-        android:layout_width="wrap_content"
-        android:layout_height="400dp"
-        android:background="#80ff00">
+<!--    <com.live.simple2.view.TestViewGroup-->
+<!--        android:id="@+id/tGroup"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="400dp"-->
+<!--        android:background="#80ff00">-->
 
-        <Button
-            android:id="@+id/test"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="动起来" />
-    </com.live.simple2.view.TestViewGroup>
-    <com.live.simple2.view.TestViewGroup
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:background="#f00">
+<!--        <Button-->
+<!--            android:id="@+id/test"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="动起来"-->
+<!--            />-->
+<!--    </com.live.simple2.view.TestViewGroup>-->
 
-    </com.live.simple2.view.TestViewGroup>
 
 
     <!--    <com.live.simple2.view.TestView3-->

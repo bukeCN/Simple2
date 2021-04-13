@@ -2478,7 +2478,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * child view was invalidated. The flag is used to determine when we need to recreate
      * a view's display list (as opposed to just returning a reference to its existing
      * display list).
-     *
+     * // 标记此控件无效，意思是需要重新绘制此控件
      * @hide
      */
     static final int PFLAG_INVALIDATED                 = 0x80000000;
@@ -20281,13 +20281,15 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if ((mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0
                 || !renderNode.hasDisplayList()
                 || (mRecreateDisplayList)) {
-            // 在 ThreadedRenderer 第二次调用时会进入，直接返回该 RenderNode。
+            // 重点流程判断！！！在 ThreadedRenderer 第二次调用时会进入.
+            // View 本身不需要重新创建显示列表，只需要通知子View去恢复or重新创建
             // Don't need to recreate the display list, just need to tell our
             // children to restore/recreate theirs
             if (renderNode.hasDisplayList()
                     && !mRecreateDisplayList) {
                 mPrivateFlags |= PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID;
                 mPrivateFlags &= ~PFLAG_DIRTY_MASK;
+                // 需要去看,
                 dispatchGetDisplayList();
 
                 return renderNode; // no work needed
@@ -20300,15 +20302,17 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int width = mRight - mLeft;
             int height = mBottom - mTop;
             int layerType = getLayerType();
-            // 1. 创建 RecordingCanvas
+            // 1. 创建 RecordingCanvas > 即创建了 DisplayList
             final RecordingCanvas canvas = renderNode.beginRecording(width, height);
 
             try {
-                // 判断类型
+                // 判断当前 View 的 LayerType ，如果是软件则使用软件绘制的方法绘制该 View。
+                // 然后获取该 View 的缓存 Bitmap ，将该 bitmap 绘制到硬件 Canvas 上。
                 if (layerType == LAYER_TYPE_SOFTWARE) {
                     buildDrawingCache(true);
                     Bitmap cache = getDrawingCache(true);
                     if (cache != null) {
+                        // 将软件层的缓存绘制到硬件 canvas 中
                         canvas.drawBitmap(cache, 0, 0, mLayerPaint);
                     }
                 } else {
@@ -20600,6 +20604,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     /**
      * private, internal implementation of buildDrawingCache, used to enable tracing
+     * 创建目前 View 的一个 Bitmao 快照，考虑了 View 的滑动偏移。会以软件绘制的方式执行绘制动作
      */
     private void buildDrawingCacheImpl(boolean autoScale) {
         mCachingFailed = false;
@@ -20622,6 +20627,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         final long projectedBitmapSize = width * height * (opaque && !use32BitCache ? 2 : 4);
         final long drawingCacheSize =
                 ViewConfiguration.get(mContext).getScaledMaximumDrawingCacheSize();
+        // 宽度和高度有小于等于 0 的则尝试销毁缓存
         if (width <= 0 || height <= 0 || projectedBitmapSize > drawingCacheSize) {
             if (width > 0 && height > 0) {
                 Log.w(VIEW_LOG_TAG, getClass().getSimpleName() + " not displayed because it is"
@@ -20637,6 +20643,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         boolean clear = true;
         Bitmap bitmap = autoScale ? mDrawingCache : mUnscaledDrawingCache;
 
+        // 缓存 bitmao 为空，表示没有缓存。或者缓存的 Bitmap 尺寸不等于目前 View 的尺寸了
         if (bitmap == null || bitmap.getWidth() != width || bitmap.getHeight() != height) {
             Bitmap.Config quality;
             if (!opaque) {
@@ -20706,14 +20713,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             bitmap.eraseColor(drawingCacheBackgroundColor);
         }
 
+        // 应用滑动坐标变换，和比例缩放
         computeScroll();
         final int restoreCount = canvas.save();
-
         if (autoScale && scalingRequired) {
             final float scale = attachInfo.mApplicationScale;
             canvas.scale(scale, scale);
         }
-
         canvas.translate(-mScrollX, -mScrollY);
 
         mPrivateFlags |= PFLAG_DRAWN;
@@ -20723,6 +20729,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         }
 
         // Fast path for layouts with no backgrounds
+        // 去背景优化，参考绘制流程
         if ((mPrivateFlags & PFLAG_SKIP_DRAW) == PFLAG_SKIP_DRAW) {
             mPrivateFlags &= ~PFLAG_DIRTY_MASK;
             dispatchDraw(canvas);
@@ -20997,33 +21004,43 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     /**
      * Utility function, called by draw(canvas, parent, drawingTime) to handle the less common
      * case of an active Animation being run on the view.
+     * @param drawingTime 动画开始时间
+     * @param scalingRequired 当前应用程序是否处于兼容状态
+     * @param a 当前 view 设置的动画
      */
     private boolean applyLegacyAnimation(ViewGroup parent, long drawingTime,
             Animation a, boolean scalingRequired) {
         Transformation invalidationTransform;
         final int flags = parent.mGroupFlags;
+        // 动画是否已经初始化
         final boolean initialized = a.isInitialized();
         if (!initialized) {
+            // 初始化动画, 注意这里传入了 View 本身的矩形
             a.initialize(mRight - mLeft, mBottom - mTop, parent.getWidth(), parent.getHeight());
             a.initializeInvalidateRegion(0, 0, mRight - mLeft, mBottom - mTop);
             if (mAttachInfo != null) a.setListenerHandler(mAttachInfo.mHandler);
+            // 标记动画开始
             onAnimationStart();
         }
-
+        // 获取父控件当前时刻的变换
         final Transformation t = parent.getChildTransformation();
+        // 应用当前动画，并将动画的变换应用在 Transformation 中，more 表示动画是否结束
         boolean more = a.getTransformation(drawingTime, t, 1f);
         if (scalingRequired && mAttachInfo.mApplicationScale != 1f) {
+            // 兼容模式下，控件会进行缩放
             if (parent.mInvalidationTransformation == null) {
                 parent.mInvalidationTransformation = new Transformation();
             }
             invalidationTransform = parent.mInvalidationTransformation;
             a.getTransformation(drawingTime, invalidationTransform, 1f);
         } else {
+            // 不是兼容模式则就使用变换
             invalidationTransform = t;
         }
 
         if (more) {
             if (!a.willChangeBounds()) {
+                // 如果动画不改变控件的边界，则按照控件正常的区域进行重绘
                 if ((flags & (ViewGroup.FLAG_OPTIMIZE_INVALIDATE | ViewGroup.FLAG_ANIMATION_DONE)) ==
                         ViewGroup.FLAG_OPTIMIZE_INVALIDATE) {
                     parent.mGroupFlags |= ViewGroup.FLAG_INVALIDATE_REQUIRED;
@@ -21034,6 +21051,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                     parent.invalidate(mLeft, mTop, mRight, mBottom);
                 }
             } else {
+                // 如果改变了，则对四个边界参数进行修正，并进行 invlidate()
                 if (parent.mInvalidateRegion == null) {
                     parent.mInvalidateRegion = new RectF();
                 }
@@ -21043,10 +21061,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
                 // The child need to draw an animation, potentially offscreen, so
                 // make sure we do not cancel invalidate requests
+                // 标记父 view 绘制动画
                 parent.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
 
                 final int left = mLeft + (int) region.left;
                 final int top = mTop + (int) region.top;
+                // 调用父 view 重绘
                 parent.invalidate(left, top, left + (int) (region.width() + .5f),
                         top + (int) (region.height() + .5f));
             }
@@ -21113,7 +21133,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
          * If a view is dettached, its DisplayList shouldn't exist. If the canvas isn't
          * HW accelerated, it can't handle drawing RenderNodes.
          */
-        // 该标记为是否使用硬件加速的方式进行绘制
+        // 该标记为是否使用硬件加速的方式进行绘制，无声明默认开启硬件加速
         boolean drawingWithRenderNode = mAttachInfo != null
                 && mAttachInfo.mHardwareAccelerated
                 && hardwareAcceleratedCanvas;
@@ -21123,6 +21143,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         final int parentFlags = parent.mGroupFlags;
 
         if ((parentFlags & ViewGroup.FLAG_CLEAR_TRANSFORMATION) != 0) {
+            // 动画注意点，这里会请李
             parent.getChildTransformation().clear();
             parent.mGroupFlags &= ~ViewGroup.FLAG_CLEAR_TRANSFORMATION;
         }
@@ -21131,13 +21152,17 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         Transformation transformToApply = null;
         boolean concatMatrix = false;
         final boolean scalingRequired = mAttachInfo != null && mAttachInfo.mScalingRequired;
+        // 获取当前 View 的动画
         final Animation a = getAnimation();
         if (a != null) {
+            // 应用动画，返回值表示动画是否已经结束
             more = applyLegacyAnimation(parent, drawingTime, a, scalingRequired);
+            // 是否支持矩阵转换
             concatMatrix = a.willChangeTransformationMatrix();
             if (concatMatrix) {
                 mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
             }
+            // 获取最新的装换
             transformToApply = parent.getChildTransformation();
         } else {
             if ((mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_TRANSFORM) != 0) {
@@ -21176,30 +21201,35 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         if (hardwareAcceleratedCanvas) {
             // Clear INVALIDATED flag to allow invalidation to occur during rendering, but
             // retain the flag's value temporarily in the mRecreateDisplayList flag
+            // 硬件加速，是否需要刷新自身的 DisplayList
             mRecreateDisplayList = (mPrivateFlags & PFLAG_INVALIDATED) != 0;
             mPrivateFlags &= ~PFLAG_INVALIDATED;
         }
 
-        // 这里要处理硬件绘制 RenderNode
+        // 缓存
         RenderNode renderNode = null;
         Bitmap cache = null;
+        // 获取缓存类型, 默认值为 LAYER_TYPE_NONE
         int layerType = getLayerType(); // TODO: signify cache state with just 'cache' local
-        // 软件绘制才会进入，缓存获取
+        // 软件绘制才会进入，缓存获取。这里和以前版本有差距，软件绘制时缓存总是开启的
         if (layerType == LAYER_TYPE_SOFTWARE || !drawingWithRenderNode) {
              if (layerType != LAYER_TYPE_NONE) {
                  // If not drawing with RenderNode, treat HW layers as SW
                  layerType = LAYER_TYPE_SOFTWARE;
+                 // 创建缓存，缓存的重要方法！！！
                  buildDrawingCache(true);
             }
+             // 获取缓存，获取之前的缓冲
             cache = getDrawingCache(true);
         }
 
-        // 硬件绘制
+        // 4.0 默认开启了硬件加速，因此默认这里会进入。
         if (drawingWithRenderNode) {
             // Delay getting the display list until animation-driven alpha values are
             // set up and possibly passed on to the view
             // 重点！！！使用了硬件绘制，这一步是获取子控件的 RenderNode. // 作用：后续会对该 RenderNode 应用坐标的变换。
             renderNode = updateDisplayListIfDirty();
+            // 判断是否存在 DisplayList
             if (!renderNode.hasDisplayList()) {
                 // Uncommon, but possible. If a view is removed from the hierarchy during the call
                 // to getDisplayList(), the display list will be marked invalid and we should not
@@ -21361,7 +21391,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 }
             }
         } else if (cache != null) {
-            // 绘图缓存
+            // 使用缓存进行绘图
             mPrivateFlags &= ~PFLAG_DIRTY_MASK;
             if (layerType == LAYER_TYPE_NONE || mLayerPaint == null) {
                 // no layer paint, use temporary paint to draw bitmap
@@ -21394,6 +21424,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             if (!hardwareAcceleratedCanvas && !a.getFillAfter()) {
                 onSetAlpha(255);
             }
+            // 如果动画结束了，这里
             parent.finishAnimatingView(this, a);
         }
 
@@ -24916,9 +24947,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @param animation the animation to start now
      */
     public void startAnimation(Animation animation) {
+        // 将动画开始时间设置为 -1
         animation.setStartTime(Animation.START_ON_FIRST_FRAME);
+        // 保存动画
         setAnimation(animation);
+        // 将父控件的标记需要重绘
         invalidateParentCaches();
+        // 调用请求重绘
         invalidate(true);
     }
 

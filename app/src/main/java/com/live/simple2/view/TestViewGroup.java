@@ -32,6 +32,7 @@ public class TestViewGroup extends FrameLayout {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        throw new NullPointerException("");
     }
 
     private float x;

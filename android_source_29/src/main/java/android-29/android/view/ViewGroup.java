@@ -4395,7 +4395,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      * display lists. It is called by getDisplayList() when the parent ViewGroup does not need
      * to recreate its own display list, which would happen if it went through the normal
      * draw/dispatchDraw mechanisms.
-     *
+     * 当父视图不需要更新时，调用通知子视图去刷新他们的的 DisplayList
      * @hide
      */
     @Override
@@ -7020,25 +7020,35 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
     /**
      * Cleanup a view when its animation is done. This may mean removing it from
      * the list of disappearing views.
-     *
+     *  如果移除子控件时需要执行动画，在将其从 mChildren 中移除后，会同时会将其加入 mDiappearingChildren 数组中，
+     *  等待动画结束后在将其移除，这时才会执行子控件的 onDetachedFromWindow() 函数。这是应为将其移除之后动画仍需要
+     *  进行绘制。
      * @param view The view whose animation has finished
      * @param animation The animation, cannot be null
      */
     void finishAnimatingView(final View view, Animation animation) {
         final ArrayList<View> disappearingChildren = mDisappearingChildren;
         if (disappearingChildren != null) {
+            // 如果该 View 包含在需要被移除的控件组中，则需要执行移除过程
             if (disappearingChildren.contains(view)) {
+                // 移除该 View
                 disappearingChildren.remove(view);
 
                 if (view.mAttachInfo != null) {
+                    // 回调其从窗口移除函数
                     view.dispatchDetachedFromWindow();
                 }
-
+                // 清理动画
                 view.clearAnimation();
                 mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
             }
         }
 
+        /**
+         * cleatAnimation() 会终止动画，并将 mCurrentAnimation 置位 null ，下次重绘时没有 mCurrentAnimation
+         * 则不会产生动画变换，因而恢复到执行前的状态。但仅仅在 Animation.getFillAfter() 为 false 时才会执行，
+         * 其为 true 时，控件会停留在动画的最后一帧。
+         */
         if (animation != null && !animation.getFillAfter()) {
             view.clearAnimation();
         }

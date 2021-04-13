@@ -3575,8 +3575,9 @@ public final class ViewRootImpl implements ViewParent,
                 }
             }
         }
-        // 通过焦点计算滚动，图 EditText 输入时，拉起的输入法不能遮盖 EditText，需要向上滚动一段距离。
-        scrollToRectOrFocus(null, false);
+        // 通过焦点计算滚动，如 EditText 输入时，拉起的输入法不能遮盖 EditText，需要向上滚动一段距离。
+        // 使用 Scroller 进行滚动，false 表示不是即时的。
+        scrollToRectOrocus(null, false);
 
         if (mAttachInfo.mViewScrollChanged) {
             mAttachInfo.mViewScrollChanged = false;
@@ -3593,6 +3594,7 @@ public final class ViewRootImpl implements ViewParent,
         if (mCurScrollY != curScrollY) {
             mCurScrollY = curScrollY;
             fullRedrawNeeded = true;
+            // RootViewSurfaceTaker 即为 DecorView ，应用滚动。
             if (mView instanceof RootViewSurfaceTaker) {
                 ((RootViewSurfaceTaker) mView).onRootViewScrollYChanged(mCurScrollY);
             }
@@ -3605,6 +3607,7 @@ public final class ViewRootImpl implements ViewParent,
         final Rect dirty = mDirty;
         if (mSurfaceHolder != null) {
             // The app owns the surface, we won't draw.
+            // 将脏区域值空
             dirty.setEmpty();
             if (animating && mScroller != null) {
                 mScroller.abortAnimation();
@@ -4063,6 +4066,7 @@ public final class ViewRootImpl implements ViewParent,
             if (DEBUG_INPUT_RESIZE) Log.v(mTag, "Pan scroll changed: old="
                     + mScrollY + " , new=" + scrollY);
             if (!immediate) {
+                // 使用 Scroller 滚动到指定位置。
                 if (mScroller == null) {
                     mScroller = new Scroller(mView.getContext());
                 }
