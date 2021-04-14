@@ -70,7 +70,7 @@ import java.util.HashMap;
  * </div>
  */
 @SuppressWarnings("unchecked")
-public class ValueAnimator extends Animator implements AnimationHandler.AnimationFrameCallback {
+public class ValueAnimator extends Animator implements android.animation.AnimationHandler.AnimationFrameCallback {
     private static final String TAG = "ValueAnimator";
     private static final boolean DEBUG = false;
 
@@ -817,7 +817,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
      * @return the requested time between frames, in milliseconds
      */
     public static long getFrameDelay() {
-        return AnimationHandler.getInstance().getFrameDelay();
+        return android.animation.AnimationHandler.getInstance().getFrameDelay();
     }
 
     /**
@@ -837,7 +837,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
      * @param frameDelay the requested time between frames, in milliseconds
      */
     public static void setFrameDelay(long frameDelay) {
-        AnimationHandler.getInstance().setFrameDelay(frameDelay);
+        android.animation.AnimationHandler.getInstance().setFrameDelay(frameDelay);
     }
 
     /**
@@ -1038,9 +1038,11 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
      * thread for that view hierarchy.</p>
      *
      * @param playBackwards Whether the ValueAnimator should start playing in reverse.
+     *                      参数表示是否动画是在反向播放
      */
     private void start(boolean playBackwards) {
         if (Looper.myLooper() == null) {
+            // 动画运行需要依赖 Looper
             throw new AndroidRuntimeException("Animators may only be run on Looper threads");
         }
         mReversing = playBackwards;
@@ -1065,6 +1067,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
         mLastFrameTime = -1;
         mFirstFrameTime = -1;
         mStartTime = -1;
+        // 重要方法，向 Choreographer 添加 FrameCallback 监听 VSYNC 回调。
         addAnimationCallback(0);
 
         if (mStartDelay == 0 || mSeekFraction >= 0 || mReversing) {
@@ -1430,12 +1433,14 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
         if (mStartTime < 0) {
             // First frame. If there is start delay, start delay count down will happen *after* this
             // frame.
+            // 记录动画第一帧开始时间
             mStartTime = mReversing
                     ? frameTime
                     : frameTime + (long) (mStartDelay * resolveDurationScale());
         }
 
         // Handle pause/resume
+        // 处理暂停和继续播放
         if (mPaused) {
             mPauseTime = frameTime;
             removeAnimationCallback();
@@ -1447,7 +1452,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
                 mStartTime += (frameTime - mPauseTime);
             }
         }
-
+        // 动画没有在运行
         if (!mRunning) {
             // If not running, that means the animation is in the start delay phase of a forward
             // running animation. In the case of reversing, we want to run start delay in the end.
@@ -1624,7 +1629,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
      * @hide
      */
     public static int getCurrentAnimationsCount() {
-        return AnimationHandler.getAnimationCount();
+        return android.animation.AnimationHandler.getAnimationCount();
     }
 
     @Override
@@ -1681,7 +1686,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
      * @return The {@link AnimationHandler} that will be used to schedule updates for this animator.
      * @hide
      */
-    public AnimationHandler getAnimationHandler() {
-        return AnimationHandler.getInstance();
+    public android.animation.AnimationHandler getAnimationHandler() {
+        return android.animation.AnimationHandler.getInstance();
     }
 }

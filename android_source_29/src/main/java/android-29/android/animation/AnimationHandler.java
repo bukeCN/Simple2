@@ -91,13 +91,16 @@ public class AnimationHandler {
      * Register to get a callback on the next frame after the delay.
      */
     public void addAnimationFrameCallback(final AnimationFrameCallback callback, long delay) {
+        // 如果动画回调中为空，则立刻向 Chroreogradpher 添加 mFrameCallback 回调
         if (mAnimationCallbacks.size() == 0) {
             getProvider().postFrameCallback(mFrameCallback);
         }
+        // 将回调加入 list 中。
         if (!mAnimationCallbacks.contains(callback)) {
             mAnimationCallbacks.add(callback);
         }
 
+        // 如果是延迟触发的，那么将其加入延迟触发集合
         if (delay > 0) {
             mDelayedCallbackStartTime.put(callback, (SystemClock.uptimeMillis() + delay));
         }
@@ -142,7 +145,9 @@ public class AnimationHandler {
             if (callback == null) {
                 continue;
             }
+            // 不是延迟执行的进入
             if (isCallbackDue(callback, currentTime)) {
+                // 执行 ValueAnimator 回调
                 callback.doAnimationFrame(frameTime);
                 if (mCommitCallbacks.contains(callback)) {
                     getProvider().postCommitCallback(new Runnable() {
