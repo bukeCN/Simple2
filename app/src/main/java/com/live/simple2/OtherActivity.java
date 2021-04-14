@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -27,33 +28,19 @@ public class OtherActivity extends AppCompatActivity {
         setContentView(R.layout.other_activity);
         button = findViewById(R.id.test);
 
-
-        button.setOnClickListener( view -> {
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    startActivity(new Intent(OtherActivity.this, StartActivity.class));
-                }
-            });
-            thread.start();
-        });
-
-
-        View view = new View(this);
-
         ValueAnimator valueAnimator = new ValueAnimator();
         valueAnimator.setFloatValues(10, 100);
         valueAnimator.setDuration(200);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-
+                Log.e("sun", "动画**" + animation.getAnimatedValue());
             }
         });
         valueAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-
+                throw new NullPointerException("");
             }
 
             @Override
@@ -71,7 +58,11 @@ public class OtherActivity extends AppCompatActivity {
 
             }
         });
-        valueAnimator.start();
+
+        button.setOnClickListener( view -> {
+            valueAnimator.start();
+        });
+
 
     }
 }

@@ -93,6 +93,7 @@ public class AnimationHandler {
     public void addAnimationFrameCallback(final AnimationFrameCallback callback, long delay) {
         // 如果动画回调中为空，则立刻向 Chroreogradpher 添加 mFrameCallback 回调
         if (mAnimationCallbacks.size() == 0) {
+            // 注意这一步可能是异步的
             getProvider().postFrameCallback(mFrameCallback);
         }
         // 将回调加入 list 中。
@@ -138,7 +139,9 @@ public class AnimationHandler {
     }
 
     private void doAnimationFrame(long frameTime) {
+        // 获取当前事件
         long currentTime = SystemClock.uptimeMillis();
+        // 需要执行动画的个数
         final int size = mAnimationCallbacks.size();
         for (int i = 0; i < size; i++) {
             final AnimationFrameCallback callback = mAnimationCallbacks.get(i);
@@ -159,6 +162,7 @@ public class AnimationHandler {
                 }
             }
         }
+        // 如果需要移除所有动画回调则删除。
         cleanUpList();
     }
 

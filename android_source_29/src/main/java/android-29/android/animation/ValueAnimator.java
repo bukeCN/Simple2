@@ -566,6 +566,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
      */
     @CallSuper
     void initAnimation() {
+        // 构建关键帧
         if (!mInitialized) {
             int numValues = mValues.length;
             for (int i = 0; i < numValues; ++i) {
@@ -665,7 +666,9 @@ public class ValueAnimator extends Animator implements android.animation.Animati
      * the correct range.
      */
     public void setCurrentFraction(float fraction) {
+        // 公共方法，保证动画初始化了
         initAnimation();
+        // 获取东湖进度
         fraction = clampFraction(fraction);
         mStartTimeCommitted = true; // do not allow start time to be compensated for jank
         if (isPulsingInternal()) {
@@ -1264,6 +1267,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
         }
 
         mAnimationEndRequested = false;
+        // 初始化动画,主要就是构建关键帧
         initAnimation();
         mRunning = true;
         if (mSeekFraction >= 0) {
@@ -1272,6 +1276,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
             mOverallFraction = 0f;
         }
         if (mListeners != null) {
+            // 通知监听启动
             notifyStartListeners();
         }
     }
