@@ -725,6 +725,8 @@ public interface WindowManager extends ViewManager {
          * this is used by the system to display something until the
          * application can show its own windows.
          * In multiuser systems shows on all users' windows.
+         * 当应用程序开始，不提供给应用程序本身使用，被系统应用来显示一些东西。
+         * 猜测：可能就是在多任务界面中，提供应用本身快照使用的。
          */
         public static final int TYPE_APPLICATION_STARTING = 3;
 
@@ -3287,7 +3289,7 @@ public interface WindowManager extends ViewManager {
 
         /** @hide */
         @Override
-        protected void encodeProperties(@NonNull ViewHierarchyEncoder encoder) {
+        protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder encoder) {
             super.encodeProperties(encoder);
 
             encoder.addProperty("x", x);

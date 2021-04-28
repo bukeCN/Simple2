@@ -77,8 +77,8 @@ import java.util.Objects;
 public final class SurfaceControl implements Parcelable {
     private static final String TAG = "SurfaceControl";
 
-    private static native long nativeCreate(SurfaceSession session, String name,
-            int w, int h, int format, int flags, long parentObject, Parcel metadata)
+    private static native long nativeCreate(android.view.SurfaceSession session, String name,
+                                            int w, int h, int format, int flags, long parentObject, Parcel metadata)
             throws OutOfResourcesException;
     private static native long nativeReadFromParcel(Parcel in);
     private static native long nativeCopyFromSurfaceControl(long nativeObject);
@@ -190,7 +190,7 @@ public final class SurfaceControl implements Parcelable {
     private static native Display.HdrCapabilities nativeGetHdrCapabilities(IBinder displayToken);
 
     private static native void nativeSetInputWindowInfo(long transactionObj, long nativeObject,
-            InputWindowHandle handle);
+            android.view.InputWindowHandle handle);
     private static native void nativeTransferTouchFocus(long transactionObj, IBinder fromToken,
             IBinder toToken);
     private static native boolean nativeGetProtectedContentSupport();
@@ -489,7 +489,7 @@ public final class SurfaceControl implements Parcelable {
      * It is necessary to set at least a name via {@link Builder#setName}
      */
     public static class Builder {
-        private SurfaceSession mSession;
+        private android.view.SurfaceSession mSession;
         private int mFlags = HIDDEN;
         private int mWidth;
         private int mHeight;
@@ -504,7 +504,7 @@ public final class SurfaceControl implements Parcelable {
          * @param session The {@link SurfaceSession} with which to eventually construct the surface.
          * @hide
          */
-        public Builder(SurfaceSession session) {
+        public Builder(android.view.SurfaceSession session) {
             mSession = session;
         }
 
@@ -759,8 +759,8 @@ public final class SurfaceControl implements Parcelable {
      *
      * @throws throws OutOfResourcesException If the SurfaceControl cannot be created.
      */
-    private SurfaceControl(SurfaceSession session, String name, int w, int h, int format, int flags,
-            SurfaceControl parent, SparseIntArray metadata)
+    private SurfaceControl(android.view.SurfaceSession session, String name, int w, int h, int format, int flags,
+                           SurfaceControl parent, SparseIntArray metadata)
                     throws OutOfResourcesException, IllegalArgumentException {
         if (name == null) {
             throw new IllegalArgumentException("name must not be null");
@@ -790,6 +790,7 @@ public final class SurfaceControl implements Parcelable {
                 }
                 metaParcel.setDataPosition(0);
             }
+            //
             mNativeObject = nativeCreate(session, name, w, h, format, flags,
                     parent != null ? parent.mNativeObject : 0, metaParcel);
         } finally {
@@ -2255,7 +2256,7 @@ public final class SurfaceControl implements Parcelable {
         /**
          * @hide
          */
-        public Transaction setInputWindowInfo(SurfaceControl sc, InputWindowHandle handle) {
+        public Transaction setInputWindowInfo(SurfaceControl sc, android.view.InputWindowHandle handle) {
             sc.checkNotReleased();
             nativeSetInputWindowInfo(mNativeObject, sc.mNativeObject, handle);
             return this;

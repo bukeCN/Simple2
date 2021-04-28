@@ -32,10 +32,11 @@ import com.android.server.policy.WindowManagerPolicy.StartingSurface;
  * Holds the contents of a splash screen starting window, i.e. the {@link DecorView} of a
  * {@link PhoneWindow}. This is just a wrapper such that we can return it from
  * {@link WindowManagerPolicy#addSplashScreen}.
+ * 保留初始屏幕启动窗口的内容
  */
 class SplashScreenSurface implements StartingSurface {
 
-    private static final String TAG = PhoneWindowManager.TAG;
+    private static final String TAG = com.android.server.policy.PhoneWindowManager.TAG;
     private final View mView;
     private final IBinder mAppToken;
 

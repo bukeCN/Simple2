@@ -451,7 +451,7 @@ public final class ViewRootImpl implements ViewParent,
     // These can be accessed by any thread, must be protected with a lock.
     // Surface can never be reassigned or cleared (use Surface.clear()).
     @UnsupportedAppUsage
-    public final Surface mSurface = new Surface();
+    public final Surface mSurface = new Surface();// 初始化的时候还没有和 C++ 的对象关联，此时还是一个无效的绘图表面
     private final SurfaceControl mSurfaceControl = new SurfaceControl();
 
     /**
@@ -589,6 +589,7 @@ public final class ViewRootImpl implements ViewParent,
 
     public ViewRootImpl(Context context, Display display) {
         mContext = context;
+        // 获取 WMS 的连接一个应用程序只会调用一次
         mWindowSession = android.view.WindowManagerGlobal.getWindowSession();
         mDisplay = display;
         mBasePackageName = context.getBasePackageName();
@@ -851,6 +852,7 @@ public final class ViewRootImpl implements ViewParent,
                 // Schedule the first layout -before- adding to the window
                 // manager, to make sure we do the relayout before receiving
                 // any other events from the system.
+                // 目的是在此 setView() 流程执行完毕之后，立马执行三大步骤。
                 requestLayout();
                 if ((mWindowAttributes.inputFeatures
                         & WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) == 0) {
@@ -862,6 +864,7 @@ public final class ViewRootImpl implements ViewParent,
                     mOrigWindowType = mWindowAttributes.type;
                     mAttachInfo.mRecomputeGlobalAttributes = true;
                     collectViewAttributes();
+                    // 和 WMS 交互，添加窗口
                     res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
                             getHostVisibility(), mDisplay.getDisplayId(), mTmpFrame,
                             mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
@@ -2026,7 +2029,7 @@ public final class ViewRootImpl implements ViewParent,
         mWindowAttributesChangesFlag = 0;
 
         /*---------------------预测量流程-----------------------*/
-
+        // todo 留意进入预测量流程的条件
         // 计算是否需要重新渲染和布局整个屏幕区域
         Rect frame = mWinFrame;// mWinFrame 表示窗口的最新尺寸
         if (mFirst) {
@@ -7033,7 +7036,8 @@ public final class ViewRootImpl implements ViewParent,
         if (mSurface.isValid()) {
             frameNumber = mSurface.getNextFrameNumber();
         }
-        // 注意看输出项
+        // 注意看输出项，如果是首次进行窗口布局，relayout() 之后才会得到一块 Surface。
+        // 会输出给到 mSurfaceControl 对象。
         int relayoutResult = mWindowSession.relayout(mWindow, mSeq, params,
                 (int) (mView.getMeasuredWidth() * appScale + 0.5f),
                 (int) (mView.getMeasuredHeight() * appScale + 0.5f), viewVisibility,
@@ -7041,7 +7045,7 @@ public final class ViewRootImpl implements ViewParent,
                 mTmpFrame, mPendingOverscanInsets, mPendingContentInsets, mPendingVisibleInsets,
                 mPendingStableInsets, mPendingOutsets, mPendingBackDropFrame, mPendingDisplayCutout,
                 mPendingMergedConfiguration, mSurfaceControl, mTempInsets);
-        // 判断 sutface 是否有效
+        // 判断 sutface 是否有效, 将得到的 SurfaceFlinger 的 Layer 的 binder 代理对象给到 mSurface
         if (mSurfaceControl.isValid()) {
             mSurface.copyFrom(mSurfaceControl);
         } else {

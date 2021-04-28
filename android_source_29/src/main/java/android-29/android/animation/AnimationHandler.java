@@ -51,7 +51,11 @@ public class AnimationHandler {
     private final Choreographer.FrameCallback mFrameCallback = new Choreographer.FrameCallback() {
         @Override
         public void doFrame(long frameTimeNanos) {
+            // getFrameTime() 获取该 vsync 信号到来的时间。
+            // 调用 doAnimationFrame() 函数
             doAnimationFrame(getProvider().getFrameTime());
+            // addAnimationCallback() 中将动画回调加入了该集合中，因此 mAnimationCallback 不为空。
+            // 滑动被取消或者动画结束都会重集合中移除
             if (mAnimationCallbacks.size() > 0) {
                 getProvider().postFrameCallback(this);
             }
@@ -96,7 +100,7 @@ public class AnimationHandler {
             // 注意这一步可能是异步的
             getProvider().postFrameCallback(mFrameCallback);
         }
-        // 将回调加入 list 中。
+        // 将回调加入 list 中。注意是否延迟都加入了。
         if (!mAnimationCallbacks.contains(callback)) {
             mAnimationCallbacks.add(callback);
         }
@@ -148,9 +152,9 @@ public class AnimationHandler {
             if (callback == null) {
                 continue;
             }
-            // 不是延迟执行的进入
+            // 不是延迟执行的进入, 延迟的如果时间到了也会执行
             if (isCallbackDue(callback, currentTime)) {
-                // 执行 ValueAnimator 回调
+                // 执行 ValueAnimator 回调，即 ValueAnimatior 类中的函数。
                 callback.doAnimationFrame(frameTime);
                 if (mCommitCallbacks.contains(callback)) {
                     getProvider().postCommitCallback(new Runnable() {

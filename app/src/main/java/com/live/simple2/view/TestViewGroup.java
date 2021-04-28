@@ -24,6 +24,18 @@ public class TestViewGroup extends FrameLayout {
     }
 
     @Override
+    public void requestLayout() {
+        super.requestLayout();
+        Log.e("sun", "requestLayout");
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        Log.e("sun", "onLayout");
+    }
+
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         Log.e("sun", "onMeasure");

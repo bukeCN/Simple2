@@ -24,7 +24,7 @@ import com.android.server.policy.WindowManagerPolicy.StartingSurface;
 /**
  * Represents starting data for splash screens, i.e. "traditional" starting windows.
  */
-class SplashScreenStartingData extends StartingData {
+class SplashScreenStartingData extends com.android.server.wm.StartingData {
 
     private final String mPkg;
     private final int mTheme;
@@ -36,9 +36,9 @@ class SplashScreenStartingData extends StartingData {
     private final int mWindowFlags;
     private final Configuration mMergedOverrideConfiguration;
 
-    SplashScreenStartingData(WindowManagerService service, String pkg, int theme,
-            CompatibilityInfo compatInfo, CharSequence nonLocalizedLabel, int labelRes, int icon,
-            int logo, int windowFlags, Configuration mergedOverrideConfiguration) {
+    SplashScreenStartingData(com.android.server.wm.WindowManagerService service, String pkg, int theme,
+                             CompatibilityInfo compatInfo, CharSequence nonLocalizedLabel, int labelRes, int icon,
+                             int logo, int windowFlags, Configuration mergedOverrideConfiguration) {
         super(service);
         mPkg = pkg;
         mTheme = theme;
@@ -52,7 +52,8 @@ class SplashScreenStartingData extends StartingData {
     }
 
     @Override
-    StartingSurface createStartingSurface(AppWindowToken atoken) {
+    StartingSurface createStartingSurface(com.android.server.wm.AppWindowToken atoken) {
+        // mPolicy 实现 > PhoneWindowManager
         return mService.mPolicy.addSplashScreen(atoken.token, mPkg, mTheme, mCompatInfo,
                 mNonLocalizedLabel, mLabelRes, mIcon, mLogo, mWindowFlags,
                 mMergedOverrideConfiguration, atoken.getDisplayContent().getDisplayId());

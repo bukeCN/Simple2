@@ -87,15 +87,15 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 /** Root {@link WindowContainer} for the device. */
-class RootWindowContainer extends WindowContainer<DisplayContent>
-        implements ConfigurationContainerListener {
+class RootWindowContainer extends com.android.server.wm.WindowContainer<com.android.server.wm.DisplayContent>
+        implements com.android.server.wm.ConfigurationContainerListener {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "RootWindowContainer" : TAG_WM;
 
     private static final int SET_SCREEN_BRIGHTNESS_OVERRIDE = 1;
     private static final int SET_USER_ACTIVITY_TIMEOUT = 2;
 
     // TODO: Remove after object merge with RootActivityContainer.
-    private RootActivityContainer mRootActivityContainer;
+    private com.android.server.wm.RootActivityContainer mRootActivityContainer;
 
     private Object mLastWindowFreezeSource = null;
     private Session mHoldScreen = null;
@@ -130,7 +130,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     private int mTopFocusedDisplayId = INVALID_DISPLAY;
 
     // Map from the PID to the top most app which has a focused window of the process.
-    final HashMap<Integer, AppWindowToken> mTopFocusedAppByProcess = new HashMap<>();
+    final HashMap<Integer, com.android.server.wm.AppWindowToken> mTopFocusedAppByProcess = new HashMap<>();
 
     // Only a separate transaction until we separate the apply surface changes
     // transaction from the global transaction.
@@ -146,18 +146,18 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     };
 
     private static final Consumer<WindowState> sRemoveReplacedWindowsConsumer = w -> {
-        final AppWindowToken aToken = w.mAppToken;
+        final com.android.server.wm.AppWindowToken aToken = w.mAppToken;
         if (aToken != null) {
             aToken.removeReplacedWindowIfNeeded(w);
         }
     };
 
-    RootWindowContainer(WindowManagerService service) {
+    RootWindowContainer(com.android.server.wm.WindowManagerService service) {
         super(service);
         mHandler = new MyHandler(service.mH.getLooper());
     }
 
-    void setRootActivityContainer(RootActivityContainer container) {
+    void setRootActivityContainer(com.android.server.wm.RootActivityContainer container) {
         mRootActivityContainer = container;
         if (container != null) {
             container.registerConfigurationChangeListener(this);
@@ -169,7 +169,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         boolean changed = false;
         int topFocusedDisplayId = INVALID_DISPLAY;
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
             changed |= dc.updateFocusedWindowLocked(mode, updateInputWindows, topFocusedDisplayId);
             final WindowState newFocus = dc.mCurrentFocus;
             if (newFocus != null) {
@@ -200,8 +200,8 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         return changed;
     }
 
-    DisplayContent getTopFocusedDisplayContent() {
-        final DisplayContent dc = getDisplayContent(mTopFocusedDisplayId);
+    com.android.server.wm.DisplayContent getTopFocusedDisplayContent() {
+        final com.android.server.wm.DisplayContent dc = getDisplayContent(mTopFocusedDisplayId);
         return dc != null ? dc : getDisplayContent(DEFAULT_DISPLAY);
     }
 
@@ -211,9 +211,9 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 !mWmService.mPerDisplayFocusEnabled /* updateInputWindows */);
     }
 
-    DisplayContent getDisplayContent(int displayId) {
+    com.android.server.wm.DisplayContent getDisplayContent(int displayId) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent current = mChildren.get(i);
+            final com.android.server.wm.DisplayContent current = mChildren.get(i);
             if (current.getDisplayId() == displayId) {
                 return current;
             }
@@ -221,13 +221,13 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         return null;
     }
 
-    DisplayContent createDisplayContent(final Display display, ActivityDisplay activityDisplay) {
+    com.android.server.wm.DisplayContent createDisplayContent(final Display display, com.android.server.wm.ActivityDisplay activityDisplay) {
         final int displayId = display.getDisplayId();
 
         // In select scenarios, it is possible that a DisplayContent will be created on demand
         // rather than waiting for the controller. In this case, associate the controller and return
         // the existing display.
-        final DisplayContent existing = getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent existing = getDisplayContent(displayId);
 
         if (existing != null) {
             existing.mAcitvityDisplay = activityDisplay;
@@ -235,7 +235,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
             return existing;
         }
 
-        final DisplayContent dc = new DisplayContent(display, mWmService, activityDisplay);
+        final com.android.server.wm.DisplayContent dc = new com.android.server.wm.DisplayContent(display, mWmService, activityDisplay);
 
         if (DEBUG_DISPLAY) Slog.v(TAG_WM, "Adding display=" + display);
 
@@ -259,7 +259,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     void onSettingsRetrieved() {
         final int numDisplays = mChildren.size();
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             final boolean changed = mWmService.mDisplayWindowSettings.updateSettingsForDisplay(
                     displayContent);
             if (!changed) {
@@ -284,7 +284,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     boolean isLayoutNeeded() {
         final int numDisplays = mChildren.size();
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             if (displayContent.isLayoutNeeded()) {
                 return true;
             }
@@ -332,10 +332,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
      * NOTE: Only one AppWindowToken is allowed to exist in the system for a binder token, since
      * AppWindowToken represents an activity which can only exist on one display.
      */
-    AppWindowToken getAppWindowToken(IBinder binder) {
+    com.android.server.wm.AppWindowToken getAppWindowToken(IBinder binder) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent dc = mChildren.get(i);
-            final AppWindowToken atoken = dc.getAppWindowToken(binder);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.AppWindowToken atoken = dc.getAppWindowToken(binder);
             if (atoken != null) {
                 return atoken;
             }
@@ -344,10 +344,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     /** Returns the window token for the input binder if it exist in the system. */
-    WindowToken getWindowToken(IBinder binder) {
+    com.android.server.wm.WindowToken getWindowToken(IBinder binder) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent dc = mChildren.get(i);
-            final WindowToken wtoken = dc.getWindowToken(binder);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.WindowToken wtoken = dc.getWindowToken(binder);
             if (wtoken != null) {
                 return wtoken;
             }
@@ -356,14 +356,14 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     /** Returns the display object the input window token is currently mapped on. */
-    DisplayContent getWindowTokenDisplay(WindowToken token) {
+    com.android.server.wm.DisplayContent getWindowTokenDisplay(com.android.server.wm.WindowToken token) {
         if (token == null) {
             return null;
         }
 
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent dc = mChildren.get(i);
-            final WindowToken current = dc.getWindowToken(token.token);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.WindowToken current = dc.getWindowToken(token.token);
             if (current == token) {
                 return dc;
             }
@@ -377,7 +377,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
      * will also be updated.
      */
     void setDisplayOverrideConfigurationIfNeeded(Configuration newConfiguration,
-            @NonNull DisplayContent displayContent) {
+            @NonNull com.android.server.wm.DisplayContent displayContent) {
 
         final Configuration currentConfig = displayContent.getRequestedOverrideConfiguration();
         final boolean configChanged = currentConfig.diff(newConfiguration) != 0;
@@ -416,7 +416,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
 
     TaskStack getStack(int windowingMode, int activityType) {
         for (int i = mChildren.size() - 1; i >= 0; i--) {
-            final DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
             final TaskStack stack = dc.getStack(windowingMode, activityType);
             if (stack != null) {
                 return stack;
@@ -468,12 +468,12 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         }
     }
 
-    boolean hasPendingLayoutChanges(WindowAnimator animator) {
+    boolean hasPendingLayoutChanges(com.android.server.wm.WindowAnimator animator) {
         boolean hasChanges = false;
 
         final int count = mChildren.size();
         for (int i = 0; i < count; ++i) {
-            final DisplayContent dc = mChildren.get(i);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(i);
             final int pendingChanges = animator.getPendingLayoutChanges(dc.getDisplayId());
             if ((pendingChanges & FINISH_LAYOUT_REDO_WALLPAPER) != 0) {
                 animator.mBulkUpdateParams |= SET_WALLPAPER_ACTION_PENDING;
@@ -486,9 +486,9 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         return hasChanges;
     }
 
-    boolean reclaimSomeSurfaceMemory(WindowStateAnimator winAnimator, String operation,
-            boolean secure) {
-        final WindowSurfaceController surfaceController = winAnimator.mSurfaceController;
+    boolean reclaimSomeSurfaceMemory(com.android.server.wm.WindowStateAnimator winAnimator, String operation,
+                                     boolean secure) {
+        final com.android.server.wm.WindowSurfaceController surfaceController = winAnimator.mSurfaceController;
         boolean leakedSurface = false;
         boolean killedApps = false;
 
@@ -514,7 +514,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                         if (mWmService.mForceRemoves.contains(w)) {
                             return;
                         }
-                        final WindowStateAnimator wsa = w.mWinAnimator;
+                        final com.android.server.wm.WindowStateAnimator wsa = w.mWinAnimator;
                         if (wsa.mSurfaceController != null) {
                             pidCandidates.append(wsa.mSession.mPid, wsa.mSession.mPid);
                         }
@@ -584,29 +584,33 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                     UPDATE_FOCUS_WILL_PLACE_SURFACES, false /*updateInputWindows*/);
         }
 
-        // Initialize state of exiting tokens.
+        // Initialize state of exiting ens.
+        // 将所有tui退出状态的 Token 标记为不可见。
         final int numDisplays = mChildren.size();
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             displayContent.setExitingTokensHasVisible(false);
         }
 
-        mHoldScreen = null;
-        mScreenBrightness = -1;
-        mUserActivityTimeout = -1;
+        // 保存一些状态变量
+        mHoldScreen = null;// Session 类型的变量，保存了要求保持屏幕唤醒状态的窗口所在的进程
+        mScreenBrightness = -1;// 0-1 float，保存了完成布局后的屏幕亮度
+        mUserActivityTimeout = -1;// 以毫秒为单位，表示了输入事件在此窗口上发生 ANT 的时候
         mObscureApplicationContentOnSecondaryDisplays = false;
         mSustainedPerformanceModeCurrent = false;
         mWmService.mTransactionSequence++;
 
         // TODO(multi-display): recents animation & wallpaper need support multi-display.
-        final DisplayContent defaultDisplay = mWmService.getDefaultDisplayContentLocked();
-        final WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
+        // 获取手机屏幕的宽高尺寸
+        final com.android.server.wm.DisplayContent defaultDisplay = mWmService.getDefaultDisplayContentLocked();
+        final com.android.server.wm.WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
 
         if (SHOW_LIGHT_TRANSACTIONS) Slog.i(TAG,
                 ">>> OPEN TRANSACTION performLayoutAndPlaceSurfaces");
         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "applySurfaceChanges");
         mWmService.openSurfaceTransaction();
         try {
+            // 重点，继续布局
             applySurfaceChangesTransaction(recoveringMemory);
         } catch (RuntimeException e) {
             Slog.wtf(TAG, "Unhandled exception in Window Manager", e);
@@ -616,19 +620,23 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
             if (SHOW_LIGHT_TRANSACTIONS) Slog.i(TAG,
                     "<<< CLOSE TRANSACTION performLayoutAndPlaceSurfaces");
         }
+        // ----------------------- 布局之后的处理！！！！！！------------------------------------------
+        // 动画处理
         mWmService.mAnimator.executeAfterPrepareSurfacesRunnables();
 
+        // 这里对 Surface 的擦偶作有点看不懂。
         checkAppTransitionReady(surfacePlacer);
 
         // Defer starting the recents animation until the wallpaper has drawn
-        final RecentsAnimationController recentsAnimationController =
+        // 动画需要等壁纸绘制好
+        final com.android.server.wm.RecentsAnimationController recentsAnimationController =
                 mWmService.getRecentsAnimationController();
         if (recentsAnimationController != null) {
             recentsAnimationController.checkAnimationReady(defaultDisplay.mWallpaperController);
         }
 
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             if (displayContent.mWallpaperMayChange) {
                 if (DEBUG_WALLPAPER_LIGHT) Slog.v(TAG, "Wallpaper may change!  Adjusting");
                 displayContent.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
@@ -638,19 +646,22 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 }
             }
         }
-
+        // 如果窗口焦点发生改变
         if (mWmService.mFocusMayChange) {
             mWmService.mFocusMayChange = false;
+            // 处理焦点改变
             mWmService.updateFocusedWindowLocked(UPDATE_FOCUS_PLACING_SURFACES,
                     false /*updateInputWindows*/);
         }
 
+        // 如果有屏幕需要布局，
         if (isLayoutNeeded()) {
+            // 标记默认的屏幕尺寸要发生改变
             defaultDisplay.pendingLayoutChanges |= FINISH_LAYOUT_REDO_LAYOUT;
             if (DEBUG_LAYOUT_REPEATS) surfacePlacer.debugLayoutRepeats("mLayoutNeeded",
                     defaultDisplay.pendingLayoutChanges);
         }
-
+        // 处理窗口尺寸改变。这里会通知窗口客户端，其布局发生变化
         handleResizingWindows();
 
         if (DEBUG_ORIENTATION && mWmService.mDisplayFrozen) Slog.v(TAG,
@@ -665,13 +676,14 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         }
 
         // Destroy the surface of any windows that are no longer visible.
+        // 销毁不在可见的窗口 surface
         i = mWmService.mDestroySurface.size();
         if (i > 0) {
             do {
                 i--;
                 WindowState win = mWmService.mDestroySurface.get(i);
                 win.mDestroying = false;
-                final DisplayContent displayContent = win.getDisplayContent();
+                final com.android.server.wm.DisplayContent displayContent = win.getDisplayContent();
                 if (displayContent.mInputMethodWindow == win) {
                     displayContent.setInputMethodWindowLocked(null);
                 }
@@ -686,12 +698,12 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
 
         // Time to remove any exiting tokens?
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             displayContent.removeExistingTokensIfPossible();
         }
 
         for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             if (displayContent.pendingLayoutChanges != 0) {
                 displayContent.setLayoutNeeded();
             }
@@ -733,18 +745,18 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
             }
             mWmService.mPendingRemove.toArray(mWmService.mPendingRemoveTmp);
             mWmService.mPendingRemove.clear();
-            ArrayList<DisplayContent> displayList = new ArrayList();
+            ArrayList<com.android.server.wm.DisplayContent> displayList = new ArrayList();
             for (i = 0; i < N; i++) {
                 final WindowState w = mWmService.mPendingRemoveTmp[i];
                 w.removeImmediately();
-                final DisplayContent displayContent = w.getDisplayContent();
+                final com.android.server.wm.DisplayContent displayContent = w.getDisplayContent();
                 if (displayContent != null && !displayList.contains(displayContent)) {
                     displayList.add(displayContent);
                 }
             }
 
             for (int j = displayList.size() - 1; j >= 0; --j) {
-                final DisplayContent dc = displayList.get(j);
+                final com.android.server.wm.DisplayContent dc = displayList.get(j);
                 dc.assignWindowLayers(true /*setLayoutNeeded*/);
             }
         }
@@ -764,6 +776,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         // be enabled, because the window obscured flags have changed.
         mWmService.enableScreenIfNeededLocked();
 
+        // 启动动画？
         mWmService.scheduleAnimationLocked();
 
         if (DEBUG_WINDOW_TRACE) Slog.e(TAG,
@@ -771,10 +784,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                         + mWmService.mAnimator.isAnimating());
     }
 
-    private void checkAppTransitionReady(WindowSurfacePlacer surfacePlacer) {
+    private void checkAppTransitionReady(com.android.server.wm.WindowSurfacePlacer surfacePlacer) {
         // Trace all displays app transition by Z-order for pending layout change.
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent curDisplay = mChildren.get(i);
+            final com.android.server.wm.DisplayContent curDisplay = mChildren.get(i);
 
             // If we are ready to perform an app transition, check through all of the app tokens
             // to be shown and see if they are ready to go.
@@ -808,10 +821,11 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         mObscuringWindow = null;
 
         // TODO(multi-display): Support these features on secondary screens.
-        final DisplayContent defaultDc = mWmService.getDefaultDisplayContentLocked();
+        final com.android.server.wm.DisplayContent defaultDc = mWmService.getDefaultDisplayContentLocked();
         final DisplayInfo defaultInfo = defaultDc.getDisplayInfo();
         final int defaultDw = defaultInfo.logicalWidth;
         final int defaultDh = defaultInfo.logicalHeight;
+        // 布局水印和 StrictMode 警告框
         if (mWmService.mWatermark != null) {
             mWmService.mWatermark.positionSurface(defaultDw, defaultDh);
         }
@@ -827,9 +841,10 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                     mWmService.getDefaultDisplayRotation());
         }
 
+        // 遍历所有屏幕，对屏幕所包含的窗口进行布局
         final int count = mChildren.size();
         for (int j = 0; j < count; ++j) {
-            final DisplayContent dc = mChildren.get(j);
+            final com.android.server.wm.DisplayContent dc = mChildren.get(j);
             dc.applySurfaceChangesTransaction(recoveringMemory);
         }
 
@@ -850,6 +865,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 // complete configuration.
                 continue;
             }
+            // 改变窗口尺寸，这里会回调对应用程序端的 ViewRootImpl 中的回调。
             win.reportResized();
             mWmService.mResizingWindows.remove(i);
         }
@@ -901,7 +917,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
             final int type = attrs.type;
             // This function assumes that the contents of the default display are processed first
             // before secondary displays.
-            final DisplayContent displayContent = w.getDisplayContent();
+            final com.android.server.wm.DisplayContent displayContent = w.getDisplayContent();
             if (displayContent != null && displayContent.isDefaultDisplay) {
                 // While a dream or keyguard is showing, obscure ordinary application content on
                 // secondary displays (by forcibly enabling mirroring unless there is other content
@@ -927,7 +943,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     boolean updateRotationUnchecked() {
         boolean changed = false;
         for (int i = mChildren.size() - 1; i >= 0; i--) {
-            final DisplayContent displayContent = mChildren.get(i);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(i);
             if (displayContent.updateRotationAndSendNewConfigIfNeeded()) {
                 changed = true;
             }
@@ -992,7 +1008,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         if (mWmService.mDisplayReady) {
             final int count = mChildren.size();
             for (int i = 0; i < count; ++i) {
-                final DisplayContent displayContent = mChildren.get(i);
+                final com.android.server.wm.DisplayContent displayContent = mChildren.get(i);
                 displayContent.dump(pw, "  ", true /* dumpAll */);
             }
         } else {
@@ -1011,7 +1027,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         pw.print("  mLayoutNeeded on displays=");
         final int count = mChildren.size();
         for (int displayNdx = 0; displayNdx < count; ++displayNdx) {
-            final DisplayContent displayContent = mChildren.get(displayNdx);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(displayNdx);
             if (displayContent.isLayoutNeeded()) {
                 pw.print(displayContent.getDisplayId());
             }
@@ -1040,8 +1056,8 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     @CallSuper
     @Override
     public void writeToProto(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 
@@ -1050,11 +1066,11 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         if (mWmService.mDisplayReady) {
             final int count = mChildren.size();
             for (int i = 0; i < count; ++i) {
-                final DisplayContent displayContent = mChildren.get(i);
+                final com.android.server.wm.DisplayContent displayContent = mChildren.get(i);
                 displayContent.writeToProto(proto, DISPLAYS, logLevel);
             }
         }
-        if (logLevel == WindowTraceLogLevel.ALL) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.ALL) {
             forAllWindows((w) -> {
                 w.writeIdentifierToProto(proto, WINDOWS);
             }, true);
@@ -1068,14 +1084,14 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     @Override
-    void positionChildAt(int position, DisplayContent child, boolean includingParents) {
+    void positionChildAt(int position, com.android.server.wm.DisplayContent child, boolean includingParents) {
         super.positionChildAt(position, child, includingParents);
         if (mRootActivityContainer != null) {
             mRootActivityContainer.onChildPositionChanged(child.mAcitvityDisplay, position);
         }
     }
 
-    void positionChildAt(int position, DisplayContent child) {
+    void positionChildAt(int position, com.android.server.wm.DisplayContent child) {
         // Only called from controller so no need to notify the change to controller.
         super.positionChildAt(position, child, false /* includingParents */);
     }
@@ -1086,7 +1102,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     @Override
-    protected void removeChild(DisplayContent dc) {
+    protected void removeChild(com.android.server.wm.DisplayContent dc) {
         super.removeChild(dc);
         if (mTopFocusedDisplayId == dc.getDisplayId()) {
             mWmService.updateFocusedWindowLocked(
@@ -1099,13 +1115,13 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
      *
      * @param callback Callback to be called for every display.
      */
-    void forAllDisplays(Consumer<DisplayContent> callback) {
+    void forAllDisplays(Consumer<com.android.server.wm.DisplayContent> callback) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
             callback.accept(mChildren.get(i));
         }
     }
 
-    void forAllDisplayPolicies(Consumer<DisplayPolicy> callback) {
+    void forAllDisplayPolicies(Consumer<com.android.server.wm.DisplayPolicy> callback) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
             callback.accept(mChildren.get(i).getDisplayPolicy());
         }
@@ -1117,7 +1133,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
      */
     WindowState getCurrentInputMethodWindow() {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
-            final DisplayContent displayContent = mChildren.get(i);
+            final com.android.server.wm.DisplayContent displayContent = mChildren.get(i);
             if (displayContent.mInputMethodWindow != null) {
                 return displayContent.mInputMethodWindow;
             }

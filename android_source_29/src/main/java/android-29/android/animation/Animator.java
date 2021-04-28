@@ -114,6 +114,7 @@ public abstract class Animator implements Cloneable {
         if (isStarted() && !mPaused) {
             mPaused = true;
             if (mPauseListeners != null) {
+                // 这里使用了对象克隆，因此没有线程安全隐患。
                 ArrayList<AnimatorPauseListener> tmpListeners =
                         (ArrayList<AnimatorPauseListener>) mPauseListeners.clone();
                 int numListeners = tmpListeners.size();

@@ -61,7 +61,7 @@ import java.util.function.Predicate;
  * The test class is {@link WindowContainerTests} which must be kept up-to-date and ran anytime
  * changes are made to this class.
  */
-class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<E>
+class WindowContainer<E extends WindowContainer> extends com.android.server.wm.ConfigurationContainer<E>
         implements Comparable<WindowContainer>, Animatable {
 
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowContainer" : TAG_WM;
@@ -98,7 +98,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
 
     // List of children for this window container. List is in z-order as the children appear on
     // screen with the top-most window container at the tail of the list.
-    protected final WindowList<E> mChildren = new WindowList<E>();
+    protected final com.android.server.wm.WindowList<E> mChildren = new com.android.server.wm.WindowList<E>();// 保存了所有的窗口，按照 z 轴来的
 
     // The specified orientation for this window container.
     protected int mOrientation = SCREEN_ORIENTATION_UNSPECIFIED;
@@ -107,10 +107,10 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
             new Pools.SynchronizedPool<>(3);
 
     // The owner/creator for this container. No controller if null.
-    WindowContainerController mController;
+    com.android.server.wm.WindowContainerController mController;
 
     // The display this window container is on.
-    protected DisplayContent mDisplayContent;
+    protected com.android.server.wm.DisplayContent mDisplayContent;
 
     protected SurfaceControl mSurfaceControl;
     private int mLastLayer = 0;
@@ -122,8 +122,8 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
     /**
      * Applied as part of the animation pass in "prepareSurfaces".
      */
-    protected final SurfaceAnimator mSurfaceAnimator;
-    protected final WindowManagerService mWmService;
+    protected final com.android.server.wm.SurfaceAnimator mSurfaceAnimator;
+    protected final com.android.server.wm.WindowManagerService mWmService;
 
     private final Point mTmpPos = new Point();
     protected final Point mLastSurfacePosition = new Point();
@@ -137,10 +137,10 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      */
     private boolean mCommittedReparentToAnimationLeash;
 
-    WindowContainer(WindowManagerService wms) {
+    WindowContainer(com.android.server.wm.WindowManagerService wms) {
         mWmService = wms;
         mPendingTransaction = wms.mTransactionFactory.make();
-        mSurfaceAnimator = new SurfaceAnimator(this, this::onAnimationFinished, wms);
+        mSurfaceAnimator = new com.android.server.wm.SurfaceAnimator(this, this::onAnimationFinished, wms);
     }
 
     @Override
@@ -238,6 +238,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         onChildAdded(child);
 
         // Set the parent after we've actually added a child in case a subclass depends on this.
+        // 添加其父窗口
         child.setParent(this);
     }
 
@@ -512,7 +513,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      *
      * @param dc The display this container is on after changes.
      */
-    void onDisplayChanged(DisplayContent dc) {
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
         mDisplayContent = dc;
         if (dc != null && dc != this) {
             dc.getPendingTransaction().merge(mPendingTransaction);
@@ -523,7 +524,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         }
     }
 
-    DisplayContent getDisplayContent() {
+    com.android.server.wm.DisplayContent getDisplayContent() {
         return mDisplayContent;
     }
 
@@ -718,7 +719,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      * @return {@code true} if handled; {@code false} otherwise.
      */
     boolean onDescendantOrientationChanged(@Nullable IBinder freezeDisplayToken,
-            @Nullable ConfigurationContainer requestingContainer) {
+            @Nullable com.android.server.wm.ConfigurationContainer requestingContainer) {
         final WindowContainer parent = getParent();
         if (parent == null) {
             return false;
@@ -766,7 +767,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      *                            to ensure it gets correct configuration.
      */
     void setOrientation(int orientation, @Nullable IBinder freezeDisplayToken,
-            @Nullable ConfigurationContainer requestingContainer) {
+            @Nullable com.android.server.wm.ConfigurationContainer requestingContainer) {
         final boolean changed = mOrientation != orientation;
         mOrientation = orientation;
         if (!changed) {
@@ -866,8 +867,10 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      *          {@link ToBooleanFunction#apply} returning true.
      */
     boolean forAllWindows(ToBooleanFunction<WindowState> callback, boolean traverseTopToBottom) {
+        // 这里的 mChildren 即为 WindowState
         if (traverseTopToBottom) {
             for (int i = mChildren.size() - 1; i >= 0; --i) {
+                // 看 WindowState
                 if (mChildren.get(i).forAllWindows(callback, traverseTopToBottom)) {
                     return true;
                 }
@@ -889,7 +892,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         wrapper.release();
     }
 
-    void forAllAppWindows(Consumer<AppWindowToken> callback) {
+    void forAllAppWindows(Consumer<com.android.server.wm.AppWindowToken> callback) {
         for (int i = mChildren.size() - 1; i >= 0; --i) {
             mChildren.get(i).forAllAppWindows(callback);
         }
@@ -928,7 +931,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         }
 
         if (mParent != null && mParent == other.mParent) {
-            final WindowList<WindowContainer> list = mParent.mChildren;
+            final com.android.server.wm.WindowList<WindowContainer> list = mParent.mChildren;
             return list.indexOf(this) > list.indexOf(other) ? 1 : -1;
         }
 
@@ -965,7 +968,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
 
             // The position of the first non-common ancestor in the common ancestor list determines
             // which is greater the which.
-            final WindowList<WindowContainer> list = commonAncestor.mChildren;
+            final com.android.server.wm.WindowList<WindowContainer> list = commonAncestor.mChildren;
             return list.indexOf(thisParentChain.peekLast()) > list.indexOf(otherParentChain.peekLast())
                     ? 1 : -1;
         } finally {
@@ -983,11 +986,11 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         } while (current != null);
     }
 
-    WindowContainerController getController() {
+    com.android.server.wm.WindowContainerController getController() {
         return mController;
     }
 
-    void setController(WindowContainerController controller) {
+    void setController(com.android.server.wm.WindowContainerController controller) {
         if (mController != null && controller != null) {
             throw new IllegalArgumentException("Can't set controller=" + mController
                     + " for container=" + this + " Already set to=" + mController);
@@ -1134,9 +1137,9 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
     @CallSuper
     @Override
     public void writeToProto(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         boolean isVisible = isVisible();
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible) {
             return;
         }
 
@@ -1231,7 +1234,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
 
     @Override
     public Transaction getPendingTransaction() {
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         if (displayContent != null && displayContent != this) {
             return displayContent.getPendingTransaction();
         }
@@ -1249,7 +1252,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
      * @param hidden Whether our container is currently hidden. TODO This should use isVisible at
      *               some point but the meaning is too weird to work for all containers.
      */
-    void startAnimation(Transaction t, AnimationAdapter anim, boolean hidden) {
+    void startAnimation(Transaction t, com.android.server.wm.AnimationAdapter anim, boolean hidden) {
         if (DEBUG_ANIM) Slog.v(TAG, "Starting animation on " + this + ": " + anim);
 
         // TODO: This should use isVisible() but because isVisible has a really weird meaning at
@@ -1320,7 +1323,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
     /**
      * @return The currently running animation, if any, or {@code null} otherwise.
      */
-    AnimationAdapter getAnimation() {
+    com.android.server.wm.AnimationAdapter getAnimation() {
         return mSurfaceAnimator.getAnimation();
     }
 
@@ -1395,7 +1398,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
         }
     }
 
-    Dimmer getDimmer() {
+    com.android.server.wm.Dimmer getDimmer() {
         if (mParent == null) {
             return null;
         }

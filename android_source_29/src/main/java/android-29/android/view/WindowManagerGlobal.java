@@ -140,7 +140,7 @@ public final class WindowManagerGlobal {
     @UnsupportedAppUsage
     private static IWindowManager sWindowManagerService;
     @UnsupportedAppUsage
-    private static IWindowSession sWindowSession;
+    private static IWindowSession sWindowSession;// 注意这里是静态成员函数
 
     @UnsupportedAppUsage
     private final Object mLock = new Object();
@@ -148,7 +148,7 @@ public final class WindowManagerGlobal {
     @UnsupportedAppUsage
     private final ArrayList<View> mViews = new ArrayList<View>();
     @UnsupportedAppUsage
-    private final ArrayList<ViewRootImpl> mRoots = new ArrayList<ViewRootImpl>();
+    private final ArrayList<android.view.ViewRootImpl> mRoots = new ArrayList<android.view.ViewRootImpl>();
     @UnsupportedAppUsage
     private final ArrayList<WindowManager.LayoutParams> mParams =
             new ArrayList<WindowManager.LayoutParams>();
@@ -189,6 +189,7 @@ public final class WindowManagerGlobal {
                     throw e.rethrowFromSystemServer();
                 }
             }
+            return sWindowManagerService;
             return sWindowManagerService;
         }
     }
@@ -238,8 +239,8 @@ public final class WindowManagerGlobal {
     }
 
     @UnsupportedAppUsage
-    public ArrayList<ViewRootImpl> getRootViews(IBinder token) {
-        ArrayList<ViewRootImpl> views = new ArrayList<>();
+    public ArrayList<android.view.ViewRootImpl> getRootViews(IBinder token) {
+        ArrayList<android.view.ViewRootImpl> views = new ArrayList<>();
         synchronized (mLock) {
             final int numRoots = mRoots.size();
             for (int i = 0; i < numRoots; ++i) {
@@ -298,7 +299,7 @@ public final class WindowManagerGlobal {
     public View getRootView(String name) {
         synchronized (mLock) {
             for (int i = mRoots.size() - 1; i >= 0; --i) {
-                final ViewRootImpl root = mRoots.get(i);
+                final android.view.ViewRootImpl root = mRoots.get(i);
                 if (name.equals(getWindowName(root))) return root.getView();
             }
         }
@@ -332,7 +333,7 @@ public final class WindowManagerGlobal {
             }
         }
 
-        ViewRootImpl root;
+        android.view.ViewRootImpl root;
         View panelParentView = null;
 
         synchronized (mLock) {
@@ -374,7 +375,7 @@ public final class WindowManagerGlobal {
                 }
             }
 
-            root = new ViewRootImpl(view.getContext(), display);
+            root = new android.view.ViewRootImpl(view.getContext(), display);
 
             view.setLayoutParams(wparams);
 
@@ -409,7 +410,7 @@ public final class WindowManagerGlobal {
 
         synchronized (mLock) {
             int index = findViewLocked(view, true);
-            ViewRootImpl root = mRoots.get(index);
+            android.view.ViewRootImpl root = mRoots.get(index);
             mParams.remove(index);
             mParams.add(index, wparams);
             root.setLayoutParams(wparams, false);
@@ -461,7 +462,7 @@ public final class WindowManagerGlobal {
             for (int i = 0; i < count; i++) {
                 if ((view == null || mViews.get(i) != view)
                         && (token == null || mParams.get(i).token == token)) {
-                    ViewRootImpl root = mRoots.get(i);
+                    android.view.ViewRootImpl root = mRoots.get(i);
 
                     if (who != null) {
                         WindowLeaked leak = new WindowLeaked(
@@ -478,7 +479,7 @@ public final class WindowManagerGlobal {
     }
 
     private void removeViewLocked(int index, boolean immediate) {
-        ViewRootImpl root = mRoots.get(index);
+        android.view.ViewRootImpl root = mRoots.get(index);
         View view = root.getView();
 
         if (view != null) {
@@ -496,7 +497,7 @@ public final class WindowManagerGlobal {
         }
     }
 
-    void doRemoveView(ViewRootImpl root) {
+    void doRemoveView(android.view.ViewRootImpl root) {
         synchronized (mLock) {
             final int index = mRoots.indexOf(root);
             if (index >= 0) {
@@ -506,7 +507,7 @@ public final class WindowManagerGlobal {
                 mDyingViews.remove(view);
             }
         }
-        if (ThreadedRenderer.sTrimForeground && ThreadedRenderer.isAvailable()) {
+        if (android.view.ThreadedRenderer.sTrimForeground && android.view.ThreadedRenderer.isAvailable()) {
             doTrimForeground();
         }
     }
@@ -534,7 +535,7 @@ public final class WindowManagerGlobal {
 
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
     public void trimMemory(int level) {
-        if (ThreadedRenderer.isAvailable()) {
+        if (android.view.ThreadedRenderer.isAvailable()) {
             if (shouldDestroyEglContext(level)) {
                 // Destroy all hardware surfaces and resources associated to
                 // known windows
@@ -547,16 +548,16 @@ public final class WindowManagerGlobal {
                 level = ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
             }
 
-            ThreadedRenderer.trimMemory(level);
+            android.view.ThreadedRenderer.trimMemory(level);
 
-            if (ThreadedRenderer.sTrimForeground) {
+            if (android.view.ThreadedRenderer.sTrimForeground) {
                 doTrimForeground();
             }
         }
     }
 
     public static void trimForeground() {
-        if (ThreadedRenderer.sTrimForeground && ThreadedRenderer.isAvailable()) {
+        if (android.view.ThreadedRenderer.sTrimForeground && android.view.ThreadedRenderer.isAvailable()) {
             WindowManagerGlobal wm = WindowManagerGlobal.getInstance();
             wm.doTrimForeground();
         }
@@ -566,7 +567,7 @@ public final class WindowManagerGlobal {
         boolean hasVisibleWindows = false;
         synchronized (mLock) {
             for (int i = mRoots.size() - 1; i >= 0; --i) {
-                final ViewRootImpl root = mRoots.get(i);
+                final android.view.ViewRootImpl root = mRoots.get(i);
                 if (root.mView != null && root.getHostVisibility() == View.VISIBLE
                         && root.mAttachInfo.mThreadedRenderer != null) {
                     hasVisibleWindows = true;
@@ -576,7 +577,7 @@ public final class WindowManagerGlobal {
             }
         }
         if (!hasVisibleWindows) {
-            ThreadedRenderer.trimMemory(
+            android.view.ThreadedRenderer.trimMemory(
                     ComponentCallbacks2.TRIM_MEMORY_COMPLETE);
         }
     }
@@ -591,11 +592,11 @@ public final class WindowManagerGlobal {
                 pw.println("Profile data in ms:");
 
                 for (int i = 0; i < count; i++) {
-                    ViewRootImpl root = mRoots.get(i);
+                    android.view.ViewRootImpl root = mRoots.get(i);
                     String name = getWindowName(root);
                     pw.printf("\n\t%s (visibility=%d)", name, root.getHostVisibility());
 
-                    ThreadedRenderer renderer =
+                    android.view.ThreadedRenderer renderer =
                             root.getView().mAttachInfo.mThreadedRenderer;
                     if (renderer != null) {
                         renderer.dumpGfxInfo(pw, fd, args);
@@ -609,7 +610,7 @@ public final class WindowManagerGlobal {
                 int[] info = new int[2];
 
                 for (int i = 0; i < count; i++) {
-                    ViewRootImpl root = mRoots.get(i);
+                    android.view.ViewRootImpl root = mRoots.get(i);
                     root.dumpGfxInfo(info);
 
                     String name = getWindowName(root);
@@ -630,18 +631,18 @@ public final class WindowManagerGlobal {
         }
     }
 
-    private static String getWindowName(ViewRootImpl root) {
+    private static String getWindowName(android.view.ViewRootImpl root) {
         return root.mWindowAttributes.getTitle() + "/" +
                 root.getClass().getName() + '@' + Integer.toHexString(root.hashCode());
     }
 
     public void setStoppedState(IBinder token, boolean stopped) {
-        ArrayList<ViewRootImpl> nonCurrentThreadRoots = null;
+        ArrayList<android.view.ViewRootImpl> nonCurrentThreadRoots = null;
         synchronized (mLock) {
             int count = mViews.size();
             for (int i = count - 1; i >= 0; i--) {
                 if (token == null || mParams.get(i).token == token) {
-                    ViewRootImpl root = mRoots.get(i);
+                    android.view.ViewRootImpl root = mRoots.get(i);
                     // Client might remove the view by "stopped" event.
                     if (root.mThread == Thread.currentThread()) {
                         root.setWindowStopped(stopped);
@@ -664,7 +665,7 @@ public final class WindowManagerGlobal {
         // paths from setWindowStopped to WindowManagerGlobal which may cause deadlocks.
         if (nonCurrentThreadRoots != null) {
             for (int i = nonCurrentThreadRoots.size() - 1; i >= 0; i--) {
-                ViewRootImpl root = nonCurrentThreadRoots.get(i);
+                android.view.ViewRootImpl root = nonCurrentThreadRoots.get(i);
                 root.mHandler.runWithScissors(() -> root.setWindowStopped(stopped), 0);
             }
         }
@@ -675,7 +676,7 @@ public final class WindowManagerGlobal {
             int count = mViews.size();
             config = new Configuration(config);
             for (int i=0; i < count; i++) {
-                ViewRootImpl root = mRoots.get(i);
+                android.view.ViewRootImpl root = mRoots.get(i);
                 root.requestUpdateConfiguration(config);
             }
         }

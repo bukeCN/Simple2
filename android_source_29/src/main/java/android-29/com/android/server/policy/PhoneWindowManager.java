@@ -167,6 +167,7 @@ import android.service.dreams.IDreamManager;
 import android.service.vr.IPersistentVrStateCallbacks;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.MutableBoolean;
@@ -240,7 +241,7 @@ import java.util.List;
  * can be acquired with either the Lw and Li lock held, so has the restrictions
  * of both of those when held.
  */
-public class PhoneWindowManager implements WindowManagerPolicy {
+public class PhoneWindowManager implements com.android.server.policy.WindowManagerPolicy {
     static final String TAG = "WindowManager";
     static final boolean localLOGV = false;
     static final boolean DEBUG_INPUT = false;
@@ -380,8 +381,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Vibrator mVibrator; // Vibrator for giving feedback of orientation changes
     SearchManager mSearchManager;
     AccessibilityManager mAccessibilityManager;
-    BurnInProtectionHelper mBurnInProtectionHelper;
-    private DisplayFoldController mDisplayFoldController;
+    com.android.server.policy.BurnInProtectionHelper mBurnInProtectionHelper;
+    private com.android.server.policy.DisplayFoldController mDisplayFoldController;
     AppOpsManager mAppOpsManager;
     private boolean mHasFeatureWatch;
     private boolean mHasFeatureLeanback;
@@ -600,7 +601,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private int mCurrentUserId;
 
     // Maps global key codes to the components that will handle them.
-    private GlobalKeyManager mGlobalKeyManager;
+    private com.android.server.policy.GlobalKeyManager mGlobalKeyManager;
 
     // Fallback actions by key code.
     private final SparseArray<KeyCharacterMap.FallbackAction> mFallbackActions =
@@ -797,7 +798,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
-    class MyWakeGestureListener extends WakeGestureListener {
+    class MyWakeGestureListener extends com.android.server.policy.WakeGestureListener {
         MyWakeGestureListener(Context context, Handler handler) {
             super(context, handler);
         }
@@ -1786,7 +1787,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 maxRadius = resources.getInteger(
                         com.android.internal.R.integer.config_burnInProtectionMaxRadius);
             }
-            mBurnInProtectionHelper = new BurnInProtectionHelper(
+            mBurnInProtectionHelper = new com.android.server.policy.BurnInProtectionHelper(
                     context, minHorizontal, maxHorizontal, minVertical, maxVertical, maxRadius);
         }
 
@@ -1885,9 +1886,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         readConfigurationDependentBehaviors();
 
         if (mLidControlsDisplayFold) {
-            mDisplayFoldController = DisplayFoldController.create(context, DEFAULT_DISPLAY);
+            mDisplayFoldController = com.android.server.policy.DisplayFoldController.create(context, DEFAULT_DISPLAY);
         } else if (SystemProperties.getBoolean("persist.debug.force_foldable", false)) {
-            mDisplayFoldController = DisplayFoldController.createWithProxSensor(context,
+            mDisplayFoldController = com.android.server.policy.DisplayFoldController.createWithProxSensor(context,
                     DEFAULT_DISPLAY);
         }
 
@@ -1929,15 +1930,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mScreenshotChordEnabled = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_enableScreenshotChord);
 
-        mGlobalKeyManager = new GlobalKeyManager(mContext);
+        mGlobalKeyManager = new com.android.server.policy.GlobalKeyManager(mContext);
 
         // Controls rotation and the like.
         initializeHdmiState();
 
         // Match current screen state.
         if (!mPowerManager.isInteractive()) {
-            startedGoingToSleep(WindowManagerPolicy.OFF_BECAUSE_OF_USER);
-            finishedGoingToSleep(WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+            startedGoingToSleep(com.android.server.policy.WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+            finishedGoingToSleep(com.android.server.policy.WindowManagerPolicy.OFF_BECAUSE_OF_USER);
         }
 
         mWindowManagerInternal.registerAppTransitionListener(new AppTransitionListener() {
@@ -2389,7 +2390,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 typedArray.recycle();
             }
-
+            // 这里创建和 Activity 那里创建有什么不同？
             final PhoneWindow win = new PhoneWindow(context);
             win.setIsStartingWindow(true);
 
@@ -2400,7 +2401,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             } else {
                 win.setTitle(nonLocalizedLabel, false);
             }
-
+            // 设置窗口类型为启动窗口，该类型窗口不是给 App 本身使用的
             win.setType(
                 WindowManager.LayoutParams.TYPE_APPLICATION_STARTING);
 
@@ -2448,6 +2449,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             params.setTitle("Splash Screen " + packageName);
+            // 添加启动画面内容....
             addSplashscreenContent(win, context);
 
             wm = (WindowManager) context.getSystemService(WINDOW_SERVICE);
@@ -2455,12 +2457,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             if (DEBUG_SPLASH_SCREEN) Slog.d(TAG, "Adding splash screen window for "
                 + packageName + " / " + appToken + ": " + (view.getParent() != null ? view : null));
-
+            // 添加 view，会走视图添加流程，即 ViewRootImpl.setView() 流程。
             wm.addView(view, params);
 
             // Only return the view if it was successfully added to the
             // window manager... which we can tell by it having a parent.
-            return view.getParent() != null ? new SplashScreenSurface(view, appToken) : null;
+            // 当窗口成功添加到 WMS ，则返回该对象，该对象保存了初始屏幕启动窗口的内容
+            return view.getParent() != null ? new com.android.server.policy.SplashScreenSurface(view, appToken) : null;
         } catch (WindowManager.BadTokenException e) {
             // ignore
             Log.w(TAG, appToken + " already running, starting window not displayed. " +
@@ -3661,7 +3664,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final int keyCode = event.getKeyCode();
         final int displayId = event.getDisplayId();
 
-        final boolean isInjected = (policyFlags & WindowManagerPolicy.FLAG_INJECTED) != 0;
+        final boolean isInjected = (policyFlags & com.android.server.policy.WindowManagerPolicy.FLAG_INJECTED) != 0;
 
         // If screen is off then we treat the case where the keyguard is open but hidden
         // the same as if it were open and in front.
@@ -3680,7 +3683,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
-        boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
+        boolean isWakeKey = (policyFlags & com.android.server.policy.WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
@@ -3733,7 +3736,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // virtual key such as a navigation bar button, only vibrate if flag is enabled.
         final boolean isNavBarVirtKey = ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0);
         boolean useHapticFeedback = down
-                && (policyFlags & WindowManagerPolicy.FLAG_VIRTUAL) != 0
+                && (policyFlags & com.android.server.policy.WindowManagerPolicy.FLAG_VIRTUAL) != 0
                 && (!isNavBarVirtKey || mNavBarVirtualKeyHapticFeedbackEnabled)
                 && event.getRepeatCount() == 0;
 
@@ -5209,7 +5212,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (dock != null) {
             try {
                 if (fromHomeKey) {
-                    dock.putExtra(WindowManagerPolicy.EXTRA_FROM_HOME_KEY, fromHomeKey);
+                    dock.putExtra(com.android.server.policy.WindowManagerPolicy.EXTRA_FROM_HOME_KEY, fromHomeKey);
                 }
                 startActivityAsUser(dock, UserHandle.CURRENT);
                 return;

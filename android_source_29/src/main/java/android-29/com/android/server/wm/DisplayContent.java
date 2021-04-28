@@ -224,7 +224,7 @@ import java.util.function.Predicate;
  * Utility class for keeping track of the WindowStates and other pertinent contents of a
  * particular Display.
  */
-class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowContainer>
+class DisplayContent extends com.android.server.wm.WindowContainer<DisplayContent.DisplayChildWindowContainer>
         implements WindowManagerPolicy.DisplayContentInfo {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "DisplayContent" : TAG_WM;
 
@@ -244,7 +244,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     private final int mDisplayId;
 
     // TODO: Remove once unification is complete.
-    ActivityDisplay mAcitvityDisplay;
+    com.android.server.wm.ActivityDisplay mAcitvityDisplay;
 
     /** The containers below are the only child containers the display can have. */
     // Contains all window containers that are related to apps (Activities)
@@ -271,15 +271,15 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     private boolean mTmpInitial;
     private int mMaxUiWidth;
 
-    final AppTransition mAppTransition;
-    final AppTransitionController mAppTransitionController;
+    final com.android.server.wm.AppTransition mAppTransition;
+    final com.android.server.wm.AppTransitionController mAppTransitionController;
     boolean mSkipAppTransitionAnimation = false;
 
-    final ArraySet<AppWindowToken> mOpeningApps = new ArraySet<>();
-    final ArraySet<AppWindowToken> mClosingApps = new ArraySet<>();
-    final ArraySet<AppWindowToken> mChangingApps = new ArraySet<>();
-    final UnknownAppVisibilityController mUnknownAppVisibilityController;
-    BoundsAnimationController mBoundsAnimationController;
+    final ArraySet<com.android.server.wm.AppWindowToken> mOpeningApps = new ArraySet<>();
+    final ArraySet<com.android.server.wm.AppWindowToken> mClosingApps = new ArraySet<>();
+    final ArraySet<com.android.server.wm.AppWindowToken> mChangingApps = new ArraySet<>();
+    final com.android.server.wm.UnknownAppVisibilityController mUnknownAppVisibilityController;
+    com.android.server.wm.BoundsAnimationController mBoundsAnimationController;
 
     private MetricsLogger mMetricsLogger;
 
@@ -290,7 +290,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     final List<IBinder> mNoAnimationNotifyOnTransitionFinished = new ArrayList<>();
 
     // Mapping from a token IBinder to a WindowToken object on this display.
-    private final HashMap<IBinder, WindowToken> mTokenMap = new HashMap();
+    private final HashMap<IBinder, com.android.server.wm.WindowToken> mTokenMap = new HashMap();
 
     // Initial display metrics.
     int mInitialDisplayWidth = 0;
@@ -323,9 +323,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     private final DisplayInfo mDisplayInfo = new DisplayInfo();
     private final Display mDisplay;
     private final DisplayMetrics mDisplayMetrics = new DisplayMetrics();
-    private final DisplayPolicy mDisplayPolicy;
-    private DisplayRotation mDisplayRotation;
-    DisplayFrames mDisplayFrames;
+    private final com.android.server.wm.DisplayPolicy mDisplayPolicy;
+    private com.android.server.wm.DisplayRotation mDisplayRotation;
+    com.android.server.wm.DisplayFrames mDisplayFrames;
 
     private final RemoteCallbackList<ISystemGestureExclusionListener>
             mSystemGestureExclusionListeners = new RemoteCallbackList<>();
@@ -427,11 +427,11 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     boolean mShouldOverrideDisplayConfiguration = true;
 
     /** Window tokens that are in the process of exiting, but still on screen for animations. */
-    final ArrayList<WindowToken> mExitingTokens = new ArrayList<>();
+    final ArrayList<com.android.server.wm.WindowToken> mExitingTokens = new ArrayList<>();
 
     /** Detect user tapping outside of current focused task bounds .*/
     @VisibleForTesting
-    final TaskTapPointerEventListener mTapDetector;
+    final com.android.server.wm.TaskTapPointerEventListener mTapDetector;
 
     /** Detect user tapping outside of current focused stack bounds .*/
     private Region mTouchExcludeRegion = new Region();
@@ -451,8 +451,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     /** Remove this display when animation on it has completed. */
     private boolean mDeferredRemoval;
 
-    final DockedStackDividerController mDividerControllerLocked;
-    final PinnedStackController mPinnedStackControllerLocked;
+    final com.android.server.wm.DockedStackDividerController mDividerControllerLocked;
+    final com.android.server.wm.PinnedStackController mPinnedStackControllerLocked;
 
     final ArrayList<WindowState> mTapExcludedWindows = new ArrayList<>();
     /** A collection of windows that provide tap exclude regions inside of them. */
@@ -463,7 +463,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     private boolean mHaveWallpaper = false;
     private boolean mHaveKeyguard = true;
 
-    private final LinkedList<AppWindowToken> mTmpUpdateAllDrawn = new LinkedList();
+    private final LinkedList<com.android.server.wm.AppWindowToken> mTmpUpdateAllDrawn = new LinkedList();
 
     private final TaskForResizePointSearchResult mTmpTaskForResizePointSearchResult =
             new TaskForResizePointSearchResult();
@@ -477,7 +477,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     // {@code false} if this display is in the processing of being created.
     private boolean mDisplayReady = false;
 
-    WallpaperController mWallpaperController;
+    com.android.server.wm.WallpaperController mWallpaperController;
 
     boolean mWallpaperMayChange = false;
 
@@ -505,7 +505,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * the user taps on the area outside of the task of the focused app, we will notify AM about the
      * new task the user wants to interact with.
      */
-    AppWindowToken mFocusedApp = null;
+    com.android.server.wm.AppWindowToken mFocusedApp = null;
 
     /** Windows added since {@link #mCurrentFocus} was set to null. Used for ANR blaming. */
     final ArrayList<WindowState> mWinAddedSinceNullFocus = new ArrayList<>();
@@ -563,9 +563,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     /** If true hold off on modifying the animation layer of mInputMethodTarget */
     boolean mInputMethodTargetWaitingAnim;
 
-    private final PointerEventDispatcher mPointerEventDispatcher;
+    private final com.android.server.wm.PointerEventDispatcher mPointerEventDispatcher;
 
-    private final InsetsStateController mInsetsStateController;
+    private final com.android.server.wm.InsetsStateController mInsetsStateController;
 
     /** @see #getParentWindow() */
     private WindowState mParentWindow;
@@ -583,8 +583,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     private final float mWindowCornerRadius;
 
     private final Consumer<WindowState> mUpdateWindowsForAnimator = w -> {
-        WindowStateAnimator winAnimator = w.mWinAnimator;
-        final AppWindowToken atoken = w.mAppToken;
+        com.android.server.wm.WindowStateAnimator winAnimator = w.mWinAnimator;
+        final com.android.server.wm.AppWindowToken atoken = w.mAppToken;
         if (winAnimator.mDrawState == READY_TO_SHOW) {
             if (atoken == null || atoken.canShowWindows()) {
                 if (w.performShowLocked()) {
@@ -599,13 +599,13 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     };
 
     private final Consumer<WindowState> mUpdateWallpaperForAnimator = w -> {
-        final WindowStateAnimator winAnimator = w.mWinAnimator;
+        final com.android.server.wm.WindowStateAnimator winAnimator = w.mWinAnimator;
         if (winAnimator.mSurfaceController == null || !winAnimator.hasSurface()) {
             return;
         }
 
         // If this window is animating, ensure the animation background is set.
-        final AnimationAdapter anim = w.mAppToken != null
+        final com.android.server.wm.AnimationAdapter anim = w.mAppToken != null
                 ? w.mAppToken.getAnimation()
                 : w.getAnimation();
         if (anim != null) {
@@ -631,7 +631,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     };
 
     private final ToBooleanFunction<WindowState> mFindFocusedWindow = w -> {
-        final AppWindowToken focusedApp = mFocusedApp;
+        final com.android.server.wm.AppWindowToken focusedApp = mFocusedApp;
         if (DEBUG_FOCUS) Slog.v(TAG_WM, "Looking for focus: " + w
                 + ", flags=" + w.mAttrs.flags + ", canReceive=" + w.canReceiveKeys());
 
@@ -639,7 +639,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             return false;
         }
 
-        final AppWindowToken wtoken = w.mAppToken;
+        final com.android.server.wm.AppWindowToken wtoken = w.mAppToken;
 
         // If this window's application has been removed, just skip it.
         if (wtoken != null && (wtoken.removed || wtoken.sendingToBottom)) {
@@ -690,7 +690,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             Slog.v(TAG, "1ST PASS " + w + ": gone=" + gone + " mHaveFrame=" + w.mHaveFrame
                     + " mLayoutAttached=" + w.mLayoutAttached
                     + " config reported=" + w.isLastConfigReportedToClient());
-            final AppWindowToken atoken = w.mAppToken;
+            final com.android.server.wm.AppWindowToken atoken = w.mAppToken;
             if (gone) Slog.v(TAG, "  GONE: mViewVisibility=" + w.mViewVisibility
                     + " mRelayoutCalled=" + w.mRelayoutCalled + " hidden=" + w.mToken.isHidden()
                     + " hiddenRequested=" + (atoken != null && atoken.hiddenRequested)
@@ -716,6 +716,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             w.mLayoutNeeded = false;
             w.prelayout();
             final boolean firstLayout = !w.isLaidOut();
+            // 计算步骤
             getDisplayPolicy().layoutWindowLw(w, null, mDisplayFrames);
             w.mLayoutSeq = mLayoutSeq;
 
@@ -778,10 +779,10 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
                     mInputMethodTarget);
 
     private final Consumer<WindowState> mApplySurfaceChangesTransaction = w -> {
-        final WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
+        final com.android.server.wm.WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
         final boolean obscuredChanged = w.mObscured !=
                 mTmpApplySurfaceChangesTransactionState.obscured;
-        final RootWindowContainer root = mWmService.mRoot;
+        final com.android.server.wm.RootWindowContainer root = mWmService.mRoot;
 
         // Update effect.
         w.mObscured = mTmpApplySurfaceChangesTransactionState.obscured;
@@ -828,7 +829,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
         w.handleWindowMovedIfNeeded();
 
-        final WindowStateAnimator winAnimator = w.mWinAnimator;
+        final com.android.server.wm.WindowStateAnimator winAnimator = w.mWinAnimator;
 
         //Slog.i(TAG, "Window " + this + " clearing mContentChanged - done placing");
         w.resetContentChanged();
@@ -863,7 +864,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             }
         }
 
-        final AppWindowToken atoken = w.mAppToken;
+        final com.android.server.wm.AppWindowToken atoken = w.mAppToken;
         if (atoken != null) {
             atoken.updateLetterboxSurface(w);
             final boolean updateAllDrawn = atoken.updateDrawnWindowStates(w);
@@ -886,8 +887,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * @param service You know.
      * @param activityDisplay The ActivityDisplay for the display container.
      */
-    DisplayContent(Display display, WindowManagerService service,
-            ActivityDisplay activityDisplay) {
+    DisplayContent(Display display, com.android.server.wm.WindowManagerService service,
+            com.android.server.wm.ActivityDisplay activityDisplay) {
         super(service);
         mAcitvityDisplay = activityDisplay;
         if (service.mRoot.getDisplayContent(display.getDisplayId()) != null) {
@@ -898,33 +899,33 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
         mDisplay = display;
         mDisplayId = display.getDisplayId();
-        mWallpaperController = new WallpaperController(mWmService, this);
+        mWallpaperController = new com.android.server.wm.WallpaperController(mWmService, this);
         display.getDisplayInfo(mDisplayInfo);
         display.getMetrics(mDisplayMetrics);
         mSystemGestureExclusionLimit = mWmService.mSystemGestureExclusionLimitDp
                 * mDisplayMetrics.densityDpi / DENSITY_DEFAULT;
         isDefaultDisplay = mDisplayId == DEFAULT_DISPLAY;
-        mDisplayFrames = new DisplayFrames(mDisplayId, mDisplayInfo,
+        mDisplayFrames = new com.android.server.wm.DisplayFrames(mDisplayId, mDisplayInfo,
                 calculateDisplayCutoutForRotation(mDisplayInfo.rotation));
         initializeDisplayBaseInfo();
 
-        mAppTransition = new AppTransition(service.mContext, service, this);
+        mAppTransition = new com.android.server.wm.AppTransition(service.mContext, service, this);
         mAppTransition.registerListenerLocked(service.mActivityManagerAppTransitionNotifier);
-        mAppTransitionController = new AppTransitionController(service, this);
-        mUnknownAppVisibilityController = new UnknownAppVisibilityController(service, this);
+        mAppTransitionController = new com.android.server.wm.AppTransitionController(service, this);
+        mUnknownAppVisibilityController = new com.android.server.wm.UnknownAppVisibilityController(service, this);
 
         AnimationHandler animationHandler = new AnimationHandler();
-        mBoundsAnimationController = new BoundsAnimationController(service.mContext,
+        mBoundsAnimationController = new com.android.server.wm.BoundsAnimationController(service.mContext,
                 mAppTransition, AnimationThread.getHandler(), animationHandler);
 
         final InputChannel inputChannel = mWmService.mInputManager.monitorInput(
                 "PointerEventDispatcher" + mDisplayId, mDisplayId);
-        mPointerEventDispatcher = new PointerEventDispatcher(inputChannel);
+        mPointerEventDispatcher = new com.android.server.wm.PointerEventDispatcher(inputChannel);
 
         // Tap Listeners are supported for:
         // 1. All physical displays (multi-display).
         // 2. VirtualDisplays on VR, AA (and everything else).
-        mTapDetector = new TaskTapPointerEventListener(mWmService, this);
+        mTapDetector = new com.android.server.wm.TaskTapPointerEventListener(mWmService, this);
         registerPointerEventListener(mTapDetector);
         registerPointerEventListener(mWmService.mMousePositionTracker);
         if (mWmService.mAtmService.getRecentTasks() != null) {
@@ -932,8 +933,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
                     mWmService.mAtmService.getRecentTasks().getInputListener());
         }
 
-        mDisplayPolicy = new DisplayPolicy(service, this);
-        mDisplayRotation = new DisplayRotation(service, this);
+        mDisplayPolicy = new com.android.server.wm.DisplayPolicy(service, this);
+        mDisplayRotation = new com.android.server.wm.DisplayRotation(service, this);
         mCloseToSquareMaxAspectRatio = service.mContext.getResources().getFloat(
                 com.android.internal.R.dimen.config_closeToSquareDisplayMaxAspectRatio);
         if (isDefaultDisplay) {
@@ -948,8 +949,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             mDisplayPolicy.systemReady();
         }
         mWindowCornerRadius = mDisplayPolicy.getWindowCornerRadius();
-        mDividerControllerLocked = new DockedStackDividerController(service, this);
-        mPinnedStackControllerLocked = new PinnedStackController(service, this);
+        mDividerControllerLocked = new com.android.server.wm.DockedStackDividerController(service, this);
+        mPinnedStackControllerLocked = new com.android.server.wm.PinnedStackController(service, this);
 
         final SurfaceControl.Builder b = mWmService.makeSurfaceBuilder(mSession)
                 .setOpaque(true)
@@ -980,7 +981,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
         mWmService.mAnimator.addDisplayLocked(mDisplayId);
         mInputMonitor = new InputMonitor(service, mDisplayId);
-        mInsetsStateController = new InsetsStateController(this);
+        mInsetsStateController = new com.android.server.wm.InsetsStateController(this);
     }
 
     boolean isReady() {
@@ -996,19 +997,19 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         return mWindowCornerRadius;
     }
 
-    WindowToken getWindowToken(IBinder binder) {
+    com.android.server.wm.WindowToken getWindowToken(IBinder binder) {
         return mTokenMap.get(binder);
     }
 
-    AppWindowToken getAppWindowToken(IBinder binder) {
-        final WindowToken token = getWindowToken(binder);
+    com.android.server.wm.AppWindowToken getAppWindowToken(IBinder binder) {
+        final com.android.server.wm.WindowToken token = getWindowToken(binder);
         if (token == null) {
             return null;
         }
         return token.asAppWindowToken();
     }
 
-    private void addWindowToken(IBinder binder, WindowToken token) {
+    private void addWindowToken(IBinder binder, com.android.server.wm.WindowToken token) {
         final DisplayContent dc = mWmService.mRoot.getWindowTokenDisplay(token);
         if (dc != null) {
             // We currently don't support adding a window token to the display if the display
@@ -1047,8 +1048,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
     }
 
-    WindowToken removeWindowToken(IBinder binder) {
-        final WindowToken token = mTokenMap.remove(binder);
+    com.android.server.wm.WindowToken removeWindowToken(IBinder binder) {
+        final com.android.server.wm.WindowToken token = mTokenMap.remove(binder);
         if (token != null && token.asAppWindowToken() == null) {
             token.setExiting();
         }
@@ -1056,7 +1057,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     }
 
     /** Changes the display the input window token is housed on to this one. */
-    void reParentWindowToken(WindowToken token) {
+    void reParentWindowToken(com.android.server.wm.WindowToken token) {
         final DisplayContent prevDc = token.getDisplayContent();
         if (prevDc == this) {
             return;
@@ -1078,13 +1079,13 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     }
 
     void removeAppToken(IBinder binder) {
-        final WindowToken token = removeWindowToken(binder);
+        final com.android.server.wm.WindowToken token = removeWindowToken(binder);
         if (token == null) {
             Slog.w(TAG_WM, "removeAppToken: Attempted to remove non-existing token: " + binder);
             return;
         }
 
-        final AppWindowToken appToken = token.asAppWindowToken();
+        final com.android.server.wm.AppWindowToken appToken = token.asAppWindowToken();
 
         if (appToken == null) {
             Slog.w(TAG_WM, "Attempted to remove non-App token: " + binder + " token=" + token);
@@ -1107,12 +1108,12 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         return mDisplayMetrics;
     }
 
-    DisplayPolicy getDisplayPolicy() {
+    com.android.server.wm.DisplayPolicy getDisplayPolicy() {
         return mDisplayPolicy;
     }
 
     @Override
-    public DisplayRotation getDisplayRotation() {
+    public com.android.server.wm.DisplayRotation getDisplayRotation() {
         return mDisplayRotation;
     }
 
@@ -1125,16 +1126,16 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      *                      the window should be taken.
      */
     void setInsetProvider(@InternalInsetType int type, WindowState win,
-            @Nullable TriConsumer<DisplayFrames, WindowState, Rect> frameProvider) {
+            @Nullable TriConsumer<com.android.server.wm.DisplayFrames, WindowState, Rect> frameProvider) {
         mInsetsStateController.getSourceProvider(type).setWindow(win, frameProvider);
     }
 
-    InsetsStateController getInsetsStateController() {
+    com.android.server.wm.InsetsStateController getInsetsStateController() {
         return mInsetsStateController;
     }
 
     @VisibleForTesting
-    void setDisplayRotation(DisplayRotation displayRotation) {
+    void setDisplayRotation(com.android.server.wm.DisplayRotation displayRotation) {
         mDisplayRotation = displayRotation;
     }
 
@@ -1220,7 +1221,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
     @Override
     boolean onDescendantOrientationChanged(IBinder freezeDisplayToken,
-            ConfigurationContainer requestingContainer) {
+            com.android.server.wm.ConfigurationContainer requestingContainer) {
         final Configuration config = updateOrientationFromAppTokens(
                 getRequestedOverrideConfiguration(), freezeDisplayToken, false);
         // If display rotation class tells us that it doesn't consider app requested orientation,
@@ -1231,8 +1232,8 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             return handled;
         }
 
-        if (handled && requestingContainer instanceof ActivityRecord) {
-            final ActivityRecord activityRecord = (ActivityRecord) requestingContainer;
+        if (handled && requestingContainer instanceof com.android.server.wm.ActivityRecord) {
+            final com.android.server.wm.ActivityRecord activityRecord = (com.android.server.wm.ActivityRecord) requestingContainer;
             final boolean kept = mWmService.mAtmService.updateDisplayOverrideConfigurationLocked(
                     config, activityRecord, false /* deferResume */, getDisplayId());
             activityRecord.frozenBeforeDestroy = true;
@@ -1284,7 +1285,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             // If we changed the orientation but mOrientationChangeComplete is already true,
             // we used seamless rotation, and we don't need to freeze the screen.
             if (freezeDisplayToken != null && !mWmService.mRoot.mOrientationChangeComplete) {
-                final AppWindowToken atoken = getAppWindowToken(freezeDisplayToken);
+                final com.android.server.wm.AppWindowToken atoken = getAppWindowToken(freezeDisplayToken);
                 if (atoken != null) {
                     atoken.startFreezingScreen();
                 }
@@ -1364,7 +1365,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      *         UNFREEZE THE SCREEN.
      */
     boolean updateRotationUnchecked(boolean forceUpdate) {
-        ScreenRotationAnimation screenRotationAnimation;
+        com.android.server.wm.ScreenRotationAnimation screenRotationAnimation;
         if (!forceUpdate) {
             if (mDeferredRotationPauseCount > 0) {
                 // Rotation updates have been paused temporarily.  Defer the update until
@@ -1452,7 +1453,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         mRotation = rotation;
 
         mWmService.mWindowsFreezingScreen = WINDOWS_FREEZING_SCREENS_ACTIVE;
-        mWmService.mH.sendNewMessageDelayed(WindowManagerService.H.WINDOW_FREEZE_TIMEOUT,
+        mWmService.mH.sendNewMessageDelayed(com.android.server.wm.WindowManagerService.H.WINDOW_FREEZE_TIMEOUT,
                 this, WINDOW_FREEZE_TIMEOUT_DURATION);
 
         setLayoutNeeded();
@@ -1483,7 +1484,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     void applyRotationLocked(final int oldRotation, final int rotation) {
         mDisplayRotation.setRotation(rotation);
         final boolean rotateSeamlessly = mWmService.isRotatingSeamlessly();
-        ScreenRotationAnimation screenRotationAnimation = rotateSeamlessly
+        com.android.server.wm.ScreenRotationAnimation screenRotationAnimation = rotateSeamlessly
                 ? null : mWmService.mAnimator.getScreenRotationAnimationLocked(mDisplayId);
         // We need to update our screen size information to match the new rotation. If the rotation
         // has actually changed then this method will return true and, according to the comment at
@@ -1522,12 +1523,12 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }, true /* traverseTopToBottom */);
 
         if (rotateSeamlessly) {
-            mWmService.mH.sendNewMessageDelayed(WindowManagerService.H.SEAMLESS_ROTATION_TIMEOUT,
+            mWmService.mH.sendNewMessageDelayed(com.android.server.wm.WindowManagerService.H.SEAMLESS_ROTATION_TIMEOUT,
                     this, SEAMLESS_ROTATION_TIMEOUT_DURATION);
         }
 
         for (int i = mWmService.mRotationWatchers.size() - 1; i >= 0; i--) {
-            final WindowManagerService.RotationWatcher rotationWatcher
+            final com.android.server.wm.WindowManagerService.RotationWatcher rotationWatcher
                     = mWmService.mRotationWatchers.get(i);
             if (rotationWatcher.mDisplayId == mDisplayId) {
                 try {
@@ -1960,11 +1961,11 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
     }
 
-    DockedStackDividerController getDockedDividerController() {
+    com.android.server.wm.DockedStackDividerController getDockedDividerController() {
         return mDividerControllerLocked;
     }
 
-    PinnedStackController getPinnedStackController() {
+    com.android.server.wm.PinnedStackController getPinnedStackController() {
         return mPinnedStackControllerLocked;
     }
 
@@ -2074,13 +2075,13 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * should be called from there instead of DisplayContent's onConfigurationChanged.
      */
     void preOnConfigurationChanged() {
-        final DockedStackDividerController dividerController = getDockedDividerController();
+        final com.android.server.wm.DockedStackDividerController dividerController = getDockedDividerController();
 
         if (dividerController != null) {
             getDockedDividerController().onConfigurationChanged();
         }
 
-        final PinnedStackController pinnedStackController = getPinnedStackController();
+        final com.android.server.wm.PinnedStackController pinnedStackController = getPinnedStackController();
 
         if (pinnedStackController != null) {
             getPinnedStackController().onConfigurationChanged();
@@ -2118,7 +2119,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * In split-screen mode we process the IME containers above the docked divider
      * rather than directly above their target.
      */
-    private boolean skipTraverseChild(WindowContainer child) {
+    private boolean skipTraverseChild(com.android.server.wm.WindowContainer child) {
         if (child == mImeWindowsContainers && mInputMethodTarget != null
                 && !hasSplitScreenPrimaryStack()) {
             return true;
@@ -2766,9 +2767,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     @CallSuper
     @Override
     public void writeToProto(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         // Critical log level logs only visible elements to mitigate performance overheard
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 
@@ -2782,21 +2783,21 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         mDividerControllerLocked.writeToProto(proto, DOCKED_STACK_DIVIDER_CONTROLLER);
         mPinnedStackControllerLocked.writeToProto(proto, PINNED_STACK_CONTROLLER);
         for (int i = mAboveAppWindowsContainers.getChildCount() - 1; i >= 0; --i) {
-            final WindowToken windowToken = mAboveAppWindowsContainers.getChildAt(i);
+            final com.android.server.wm.WindowToken windowToken = mAboveAppWindowsContainers.getChildAt(i);
             windowToken.writeToProto(proto, ABOVE_APP_WINDOWS, logLevel);
         }
         for (int i = mBelowAppWindowsContainers.getChildCount() - 1; i >= 0; --i) {
-            final WindowToken windowToken = mBelowAppWindowsContainers.getChildAt(i);
+            final com.android.server.wm.WindowToken windowToken = mBelowAppWindowsContainers.getChildAt(i);
             windowToken.writeToProto(proto, BELOW_APP_WINDOWS, logLevel);
         }
         for (int i = mImeWindowsContainers.getChildCount() - 1; i >= 0; --i) {
-            final WindowToken windowToken = mImeWindowsContainers.getChildAt(i);
+            final com.android.server.wm.WindowToken windowToken = mImeWindowsContainers.getChildAt(i);
             windowToken.writeToProto(proto, IME_WINDOWS, logLevel);
         }
         proto.write(DPI, mBaseDisplayDensity);
         mDisplayInfo.writeToProto(proto, DISPLAY_INFO);
         proto.write(ROTATION, mRotation);
-        final ScreenRotationAnimation screenRotationAnimation =
+        final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                 mWmService.mAnimator.getScreenRotationAnimationLocked(mDisplayId);
         if (screenRotationAnimation != null) {
             screenRotationAnimation.writeToProto(proto, SCREEN_ROTATION_ANIMATION);
@@ -2903,7 +2904,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             pw.println();
             pw.println("  Exiting tokens:");
             for (int i = mExitingTokens.size() - 1; i >= 0; i--) {
-                final WindowToken token = mExitingTokens.get(i);
+                final com.android.server.wm.WindowToken token = mExitingTokens.get(i);
                 pw.print("  Exiting #"); pw.print(i);
                 pw.print(' '); pw.print(token);
                 pw.println(':');
@@ -3143,7 +3144,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * @param newFocus the new focused AppWindowToken.
      * @return true if the focused app is changed.
      */
-    boolean setFocusedApp(AppWindowToken newFocus) {
+    boolean setFocusedApp(com.android.server.wm.AppWindowToken newFocus) {
         if (newFocus != null) {
             final DisplayContent appDisplay = newFocus.getDisplayContent();
             if (appDisplay != this) {
@@ -3198,7 +3199,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // Used to indicate that a surface was leaked.
         mTmpWindow = null;
         forAllWindows(w -> {
-            final WindowStateAnimator wsa = w.mWinAnimator;
+            final com.android.server.wm.WindowStateAnimator wsa = w.mWinAnimator;
             if (wsa.mSurfaceController == null) {
                 return;
             }
@@ -3274,7 +3275,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // to be on top of it, but it is not -really- where input will go. So look down below
         // for a real window to target...
         if (target != null && target.mAttrs.type == TYPE_APPLICATION_STARTING) {
-            final AppWindowToken token = target.mAppToken;
+            final com.android.server.wm.AppWindowToken token = target.mAppToken;
             if (token != null) {
                 final WindowState betterTarget = token.getImeTargetBelowWindow(target);
                 if (betterTarget != null) {
@@ -3310,7 +3311,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
 
         if (updateImeTarget) {
-            AppWindowToken token = curTarget == null ? null : curTarget.mAppToken;
+            com.android.server.wm.AppWindowToken token = curTarget == null ? null : curTarget.mAppToken;
             if (token != null) {
 
                 // Now some fun for dealing with window animations that modify the Z order. We need
@@ -3346,7 +3347,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * Calling {@link #computeImeTarget(boolean)} to update the input method target window in
      * the candidate app window token if needed.
      */
-    void computeImeTargetIfNeeded(AppWindowToken candidate) {
+    void computeImeTargetIfNeeded(com.android.server.wm.AppWindowToken candidate) {
         if (mInputMethodTarget != null && mInputMethodTarget.mAppToken == candidate) {
             computeImeTarget(true /* updateImeTarget */);
         }
@@ -3448,9 +3449,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             return;
         }
         pw.println("  Display #" + mDisplayId);
-        final Iterator<WindowToken> it = mTokenMap.values().iterator();
+        final Iterator<com.android.server.wm.WindowToken> it = mTokenMap.values().iterator();
         while (it.hasNext()) {
-            final WindowToken token = it.next();
+            final com.android.server.wm.WindowToken token = it.next();
             pw.print("  ");
             pw.print(token);
             if (dumpAll) {
@@ -3480,7 +3481,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     void dumpWindowAnimators(PrintWriter pw, String subPrefix) {
         final int[] index = new int[1];
         forAllWindows(w -> {
-            final WindowStateAnimator wAnim = w.mWinAnimator;
+            final com.android.server.wm.WindowStateAnimator wAnim = w.mWinAnimator;
             pw.println(subPrefix + "Window #" + index[0] + ": " + wAnim);
             index[0] = index[0] + 1;
         }, false /* traverseTopToBottom */);
@@ -3683,7 +3684,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
     // TODO: Super crazy long method that should be broken down...
     void applySurfaceChangesTransaction(boolean recoveringMemory) {
-        final WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
+        final com.android.server.wm.WindowSurfacePlacer surfacePlacer = mWmService.mWindowPlacerLocked;
 
         mTmpUpdateAllDrawn.clear();
 
@@ -3716,7 +3717,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             }
 
             // FIRST LOOP: Perform a layout, if needed.
+            // 超过四次就不在执行
             if (repeats < LAYOUT_REPEAT_THRESHOLD) {
+                // 重点，布局屏幕下的窗口
                 performLayout(repeats == 1, false /* updateInputWindows */);
             } else {
                 Slog.w(TAG, "Layout repeat skipped after too many iterations");
@@ -3764,7 +3767,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
 
         while (!mTmpUpdateAllDrawn.isEmpty()) {
-            final AppWindowToken atoken = mTmpUpdateAllDrawn.removeLast();
+            final com.android.server.wm.AppWindowToken atoken = mTmpUpdateAllDrawn.removeLast();
             // See if any windows have been drawn, so they (and others associated with them)
             // can now be shown.
             atoken.updateAllDrawn();
@@ -3821,6 +3824,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     void performLayout(boolean initial, boolean updateInputWindows) {
         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "performLayout");
         try {
+            // 继续
             performLayoutNoTrace(initial, updateInputWindows);
         } finally {
             Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
@@ -3833,6 +3837,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
         clearLayoutNeeded();
 
+        // 获取当前屏幕尺寸信息
         final int dw = mDisplayInfo.logicalWidth;
         final int dh = mDisplayInfo.logicalHeight;
         if (DEBUG_LAYOUT) {
@@ -3846,6 +3851,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // TODO: Not sure if we really need to set the rotation here since we are updating from
         // the display info above...
         mDisplayFrames.mRotation = mRotation;
+        // 重点 1，为即将开始的布局操作做准备，计算布局需要的参数。
         mDisplayPolicy.beginLayoutLw(mDisplayFrames, getConfiguration().uiMode);
 
         int seq = mLayoutSeq + 1;
@@ -3858,6 +3864,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         mTmpInitial = initial;
 
         // First perform layout of any root windows (not attached to another window).
+        // 首先执行顶级窗口的布局, 布局操作看回调
         forAllWindows(mPerformLayout, true /* traverseTopToBottom */);
 
         // Used to indicate that we have processed the dream window and all additional attached
@@ -3868,15 +3875,17 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // Now perform layout of attached windows, which usually depend on the position of the
         // window they are attached to. XXX does not deal with windows that are attached to windows
         // that are themselves attached.
+        // 然后执行附加窗口的布局， 布局操作看回调
         forAllWindows(mPerformLayoutAttached, true /* traverseTopToBottom */);
 
         // Window frames may have changed. Tell the input dispatcher about it.
+        // 布局完成后，窗口的尺寸和位置可能发生变化，此时，需要输入系统更新窗口的状态。
         mInputMonitor.layoutInputConsumers(dw, dh);
         mInputMonitor.setUpdateInputWindowsNeededLw();
         if (updateInputWindows) {
             mInputMonitor.updateInputWindowsLw(false /*force*/);
         }
-
+        // 通知 WMS 布局已经完成
         mWmService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
     }
 
@@ -3914,7 +3923,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // crop to SurfaceFlinger's portrait orientation.
         convertCropForSurfaceFlinger(frame, rot, dw, dh);
 
-        final ScreenRotationAnimation screenRotationAnimation =
+        final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                 mWmService.mAnimator.getScreenRotationAnimationLocked(DEFAULT_DISPLAY);
         final boolean inRotation = screenRotationAnimation != null &&
                 screenRotationAnimation.isAnimating();
@@ -3990,7 +3999,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
     void removeExistingTokensIfPossible() {
         for (int i = mExitingTokens.size() - 1; i >= 0; i--) {
-            final WindowToken token = mExitingTokens.get(i);
+            final com.android.server.wm.WindowToken token = mExitingTokens.get(i);
             if (!token.hasVisible) {
                 mExitingTokens.remove(i);
             }
@@ -4066,9 +4075,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * homogeneous children type which is currently required by sub-classes of
      * {@link WindowContainer} class.
      */
-    static class DisplayChildWindowContainer<E extends WindowContainer> extends WindowContainer<E> {
+    static class DisplayChildWindowContainer<E extends com.android.server.wm.WindowContainer> extends com.android.server.wm.WindowContainer<E> {
 
-        DisplayChildWindowContainer(WindowManagerService service) {
+        DisplayChildWindowContainer(com.android.server.wm.WindowManagerService service) {
             super(service);
         }
 
@@ -4116,7 +4125,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         private TaskStack mPinnedStack = null;
         private TaskStack mSplitScreenPrimaryStack = null;
 
-        TaskStackContainers(WindowManagerService service) {
+        TaskStackContainers(com.android.server.wm.WindowManagerService service) {
             super(service);
         }
 
@@ -4378,7 +4387,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             // in-order.
             if (traverseTopToBottom) {
                 for (int i = mChildren.size() - 1; i >= 0; --i) {
-                    final AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
+                    final com.android.server.wm.AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
                     for (int j = appTokens.size() - 1; j >= 0; --j) {
                         if (appTokens.get(j).forAllWindowsUnchecked(callback,
                                 traverseTopToBottom)) {
@@ -4389,7 +4398,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             } else {
                 final int count = mChildren.size();
                 for (int i = 0; i < count; ++i) {
-                    final AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
+                    final com.android.server.wm.AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
                     final int appTokensCount = appTokens.size();
                     for (int j = 0; j < appTokensCount; j++) {
                         if (appTokens.get(j).forAllWindowsUnchecked(callback,
@@ -4404,7 +4413,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
         void setExitingTokensHasVisible(boolean hasVisible) {
             for (int i = mChildren.size() - 1; i >= 0; --i) {
-                final AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
+                final com.android.server.wm.AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
                 for (int j = appTokens.size() - 1; j >= 0; --j) {
                     appTokens.get(j).hasVisible = hasVisible;
                 }
@@ -4413,9 +4422,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
 
         void removeExistingAppTokensIfPossible() {
             for (int i = mChildren.size() - 1; i >= 0; --i) {
-                final AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
+                final com.android.server.wm.AppTokenList appTokens = mChildren.get(i).mExitingAppTokens;
                 for (int j = appTokens.size() - 1; j >= 0; --j) {
-                    final AppWindowToken token = appTokens.get(j);
+                    final com.android.server.wm.AppWindowToken token = appTokens.get(j);
                     if (!token.hasVisible && !mClosingApps.contains(token)
                             && (!token.mIsExiting || token.isEmpty())) {
                         // Make sure there is no animation running on this token, so any windows
@@ -4592,14 +4601,14 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     }
 
     private final class AboveAppWindowContainers extends NonAppWindowContainers {
-        AboveAppWindowContainers(String name, WindowManagerService service) {
+        AboveAppWindowContainers(String name, com.android.server.wm.WindowManagerService service) {
             super(name, service);
         }
 
         @Override
-        SurfaceControl.Builder makeChildSurface(WindowContainer child) {
+        SurfaceControl.Builder makeChildSurface(com.android.server.wm.WindowContainer child) {
             final SurfaceControl.Builder builder = super.makeChildSurface(child);
-            if (child instanceof WindowToken && ((WindowToken) child).mRoundedCornerOverlay) {
+            if (child instanceof com.android.server.wm.WindowToken && ((com.android.server.wm.WindowToken) child).mRoundedCornerOverlay) {
                 // To draw above the ColorFade layer during the screen off transition, the
                 // rounded corner overlays need to be at the root of the surface hierarchy.
                 // TODO: move the ColorLayer into the display overlay layer such that this is not
@@ -4614,11 +4623,11 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             assignChildLayers(t, null /* imeContainer */);
         }
 
-        void assignChildLayers(SurfaceControl.Transaction t, WindowContainer imeContainer) {
+        void assignChildLayers(SurfaceControl.Transaction t, com.android.server.wm.WindowContainer imeContainer) {
             boolean needAssignIme = imeContainer != null
                     && imeContainer.getSurfaceControl() != null;
             for (int j = 0; j < mChildren.size(); ++j) {
-                final WindowToken wt = mChildren.get(j);
+                final com.android.server.wm.WindowToken wt = mChildren.get(j);
 
                 // See {@link mSplitScreenDividerAnchor}
                 if (wt.windowType == TYPE_DOCK_DIVIDER) {
@@ -4651,12 +4660,12 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * Window container class that contains all containers on this display that are not related to
      * Apps. E.g. status bar.
      */
-    private class NonAppWindowContainers extends DisplayChildWindowContainer<WindowToken> {
+    private class NonAppWindowContainers extends DisplayChildWindowContainer<com.android.server.wm.WindowToken> {
         /**
          * Compares two child window tokens returns -1 if the first is lesser than the second in
          * terms of z-order and 1 otherwise.
          */
-        private final Comparator<WindowToken> mWindowComparator = (token1, token2) ->
+        private final Comparator<com.android.server.wm.WindowToken> mWindowComparator = (token1, token2) ->
                 // Tokens with higher base layer are z-ordered on-top.
                 mWmService.mPolicy.getWindowLayerFromTypeLw(token1.windowType,
                         token1.mOwnerCanManageAppTokens)
@@ -4676,15 +4685,15 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         };
 
         private final String mName;
-        private final Dimmer mDimmer = new Dimmer(this);
+        private final com.android.server.wm.Dimmer mDimmer = new com.android.server.wm.Dimmer(this);
         private final Rect mTmpDimBoundsRect = new Rect();
 
-        NonAppWindowContainers(String name, WindowManagerService service) {
+        NonAppWindowContainers(String name, com.android.server.wm.WindowManagerService service) {
             super(service);
             mName = name;
         }
 
-        void addChild(WindowToken token) {
+        void addChild(com.android.server.wm.WindowToken token) {
             addChild(token, mWindowComparator);
         }
 
@@ -4729,7 +4738,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         }
 
         @Override
-        Dimmer getDimmer() {
+        com.android.server.wm.Dimmer getDimmer() {
             return mDimmer;
         }
 
@@ -4756,7 +4765,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     }
 
     @Override
-    SurfaceControl.Builder makeChildSurface(WindowContainer child) {
+    SurfaceControl.Builder makeChildSurface(com.android.server.wm.WindowContainer child) {
         SurfaceSession s = child != null ? child.getSession() : getSession();
         final SurfaceControl.Builder b = mWmService.makeSurfaceBuilder(s).setContainerLayer();
         if (child == null) {
@@ -4868,7 +4877,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
      * somehow. We do this by relatively ordering children of the target to the IME in cooperation
      * with {@link WindowState#assignLayer}
      */
-    void assignRelativeLayerForImeTargetChild(SurfaceControl.Transaction t, WindowContainer child) {
+    void assignRelativeLayerForImeTargetChild(SurfaceControl.Transaction t, com.android.server.wm.WindowContainer child) {
         child.assignRelativeLayer(t, mImeWindowsContainers.getSurfaceControl(), 1);
     }
 
@@ -4876,7 +4885,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
     void prepareSurfaces() {
         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "prepareSurfaces");
         try {
-            final ScreenRotationAnimation screenRotationAnimation =
+            final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                     mWmService.mAnimator.getScreenRotationAnimationLocked(mDisplayId);
             final Transaction transaction = getPendingTransaction();
             if (screenRotationAnimation != null && screenRotationAnimation.isAnimating()) {

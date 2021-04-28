@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,6 +23,17 @@ public class OtherActivity extends AppCompatActivity {
     Button button;
 
     StringBuilder str = new StringBuilder();
+    boolean pause = false;
+
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            Log.e("sun","处理消息");
+                button.requestLayout();
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,8 +41,8 @@ public class OtherActivity extends AppCompatActivity {
         button = findViewById(R.id.test);
 
         ValueAnimator valueAnimator = new ValueAnimator();
-        valueAnimator.setFloatValues(10, 100);
-        valueAnimator.setDuration(200);
+        valueAnimator.setFloatValues(0, 100);
+        valueAnimator.setDuration(6000*10);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -40,7 +52,7 @@ public class OtherActivity extends AppCompatActivity {
         valueAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-                throw new NullPointerException("");
+
             }
 
             @Override
@@ -58,11 +70,47 @@ public class OtherActivity extends AppCompatActivity {
 
             }
         });
-
+//        valueAnimator.start();
+//        valueAnimator.cancel();
         button.setOnClickListener( view -> {
-            valueAnimator.start();
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    handler.sendEmptyMessage(1);
+//                    Looper.prepare();
+//                    Handler handler = new Handler(Looper.myLooper()){
+//                        @Override
+//                        public void handleMessage(@NonNull Message msg) {
+//                            super.handleMessage(msg);
+////                            if (!pause){
+////                                valueAnimator.pause();
+////                                pause = true;
+////                            } else {
+////                                valueAnimator.resume();
+////                            }
+//                        }
+//                    };
+//                    handler.sendEmptyMessageDelayed(0, 3000);
+//                    Looper.loop();
+                }
+            });
+            thread.start();
         });
-
-
     }
+
+    public static void printStackTrace(){
+        StackTraceElement[] stackElements = Thread.currentThread().getStackTrace();
+        if (stackElements != null) {
+            for (int i = 0; i < stackElements.length; i++) {
+                System.out.println(stackElements[i].getFileName() + "." + stackElements[i].getMethodName() + "()");
+            }
+            System.out.println("-----------------------------------");
+        }
+    }
+
 }

@@ -645,6 +645,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
      */
     public void setCurrentPlayTime(long playTime) {
         float fraction = mDuration > 0 ? (float) playTime / mDuration : 1;
+        // 设置动画进度
         setCurrentFraction(fraction);
     }
 
@@ -668,10 +669,11 @@ public class ValueAnimator extends Animator implements android.animation.Animati
     public void setCurrentFraction(float fraction) {
         // 公共方法，保证动画初始化了
         initAnimation();
-        // 获取东湖进度
+        // 获取动画进度
         fraction = clampFraction(fraction);
         mStartTimeCommitted = true; // do not allow start time to be compensated for jank
         if (isPulsingInternal()) {
+            // 动画循环进入
             long seekTime = (long) (getScaledDuration() * fraction);
             long currentTime = AnimationUtils.currentAnimationTimeMillis();
             // Only modify the start time when the animation is running. Seek fraction will ensure
@@ -683,7 +685,9 @@ public class ValueAnimator extends Animator implements android.animation.Animati
             mSeekFraction = fraction;
         }
         mOverallFraction = fraction;
+        // 获取现在动画进度
         final float currentIterationFraction = getCurrentIterationFraction(fraction, mReversing);
+        // 动画数值计算
         animateValue(currentIterationFraction);
     }
 
@@ -1077,6 +1081,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
             // If there's no start delay, init the animation and notify start listeners right away
             // to be consistent with the previous behavior. Otherwise, postpone this until the first
             // frame after the start delay.
+            // 这里简单，再次保证初始化，回调动画开始监听
             startAnimation();
             if (mSeekFraction == -1) {
                 // No seek, start at play time 0. Note that the reason we are not using fraction 0
@@ -1168,7 +1173,9 @@ public class ValueAnimator extends Animator implements android.animation.Animati
     @Override
     public void pause() {
         boolean previouslyPaused = mPaused;
+        // 回调暂停监听
         super.pause();
+        // 标记暂停
         if (!previouslyPaused && mPaused) {
             mPauseTime = -1;
             mResumed = false;
@@ -1225,11 +1232,13 @@ public class ValueAnimator extends Animator implements android.animation.Animati
         if (mAnimationEndRequested) {
             return;
         }
+        // 移除 AnimationHandler 中该动画的 vsync 回调。
         removeAnimationCallback();
 
         mAnimationEndRequested = true;
         mPaused = false;
         boolean notify = (mStarted || mRunning) && mListeners != null;
+        // 为什么动画结束了还有调用一次回调，后续可是就直接结束了呀。为了保证短时间动画效果？？？
         if (notify && !mRunning) {
             // If it's not yet running, then start listeners weren't called. Call them now.
             notifyStartListeners();
@@ -1240,6 +1249,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
         mLastFrameTime = -1;
         mFirstFrameTime = -1;
         mStartTime = -1;
+        // 回调结束监听
         if (notify && mListeners != null) {
             ArrayList<AnimatorListener> tmpListeners =
                     (ArrayList<AnimatorListener>) mListeners.clone();
@@ -1354,6 +1364,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
             mOverallFraction = clampFraction(fraction);
             float currentIterationFraction = getCurrentIterationFraction(
                     mOverallFraction, mReversing);
+            // 进行动画数值计算，并回调动画数值改变进度。
             animateValue(currentIterationFraction);
         }
         return done;
@@ -1448,10 +1459,13 @@ public class ValueAnimator extends Animator implements android.animation.Animati
         // 处理暂停和继续播放
         if (mPaused) {
             mPauseTime = frameTime;
+            // 移除 vsync 回调
             removeAnimationCallback();
             return false;
         } else if (mResumed) {
+            // 继续播放
             mResumed = false;
+            // 偏移时间，以保证从暂停处继续
             if (mPauseTime > 0) {
                 // Offset by the duration that the animation was paused
                 mStartTime += (frameTime - mPauseTime);
@@ -1470,6 +1484,7 @@ public class ValueAnimator extends Animator implements android.animation.Animati
                 // If mRunning is not set by now, that means non-zero start delay,
                 // no seeking, not reversing. At this point, start delay has passed.
                 mRunning = true;
+                // 执行动画
                 startAnimation();
             }
         }
@@ -1487,7 +1502,9 @@ public class ValueAnimator extends Animator implements android.animation.Animati
         // an animation.  The "current time" must always be on or after the start
         // time to avoid animating frames at negative time intervals.  In practice, this
         // is very rare and only happens when seeking backwards.
+        // 目前时间，和 vsync 事件对比，保证以最接近目前的时候进行动画。
         final long currentTime = Math.max(frameTime, mStartTime);
+        // 计算动画数值，返回值表示动画是否结束。
         boolean finished = animateBasedOnTime(currentTime);
 
         if (finished) {
@@ -1556,12 +1573,16 @@ public class ValueAnimator extends Animator implements android.animation.Animati
     @CallSuper
     @UnsupportedAppUsage
     void animateValue(float fraction) {
+        // 差值器计算动画
         fraction = mInterpolator.getInterpolation(fraction);
+        // 动画赋值给现在动画进度
         mCurrentFraction = fraction;
         int numValues = mValues.length;
+        // 给关键帧设置动画数值？？这里是动画数值有关键帧提供？
         for (int i = 0; i < numValues; ++i) {
             mValues[i].calculateValue(fraction);
         }
+        // 回调动画监听监听
         if (mUpdateListeners != null) {
             int numListeners = mUpdateListeners.size();
             for (int i = 0; i < numListeners; ++i) {

@@ -97,14 +97,14 @@ class WindowStateAnimator {
     static final int STACK_CLIP_NONE = 2;
 
     // Unchanging local convenience fields.
-    final WindowManagerService mService;
+    final com.android.server.wm.WindowManagerService mService;
     final WindowState mWin;
-    final WindowAnimator mAnimator;
+    final com.android.server.wm.WindowAnimator mAnimator;
     final Session mSession;
     final WindowManagerPolicy mPolicy;
     final Context mContext;
     final boolean mIsWallpaper;
-    private final WallpaperController mWallpaperControllerLocked;
+    private final com.android.server.wm.WallpaperController mWallpaperControllerLocked;
 
     boolean mAnimationIsEntrance;
 
@@ -118,8 +118,8 @@ class WindowStateAnimator {
      * the surface has been resized since last time.
      */
     boolean mReportSurfaceResized;
-    WindowSurfaceController mSurfaceController;
-    private WindowSurfaceController mPendingDestroySurface;
+    com.android.server.wm.WindowSurfaceController mSurfaceController;
+    private com.android.server.wm.WindowSurfaceController mPendingDestroySurface;
 
     /**
      * Set if the client has asked that the destroy of its surface be delayed
@@ -234,7 +234,7 @@ class WindowStateAnimator {
     private final Point mTmpPos = new Point();
 
     WindowStateAnimator(final WindowState win) {
-        final WindowManagerService service = win.mWmService;
+        final com.android.server.wm.WindowManagerService service = win.mWmService;
 
         mService = service;
         mAnimator = service.mAnimator;
@@ -256,7 +256,7 @@ class WindowStateAnimator {
                         + (mWin.mAppToken != null ? mWin.mAppToken.reportedVisible : false));
 
         mWin.checkPolicyVisibilityChange();
-        final DisplayContent displayContent = mWin.getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = mWin.getDisplayContent();
         if (mAttrType == LayoutParams.TYPE_STATUS_BAR && mWin.isVisibleByPolicy()) {
             // Upon completion of a not-visible to visible status bar animation a relayout is
             // required.
@@ -340,7 +340,7 @@ class WindowStateAnimator {
         }
         mDrawState = READY_TO_SHOW;
         boolean result = false;
-        final AppWindowToken atoken = mWin.mAppToken;
+        final com.android.server.wm.AppWindowToken atoken = mWin.mAppToken;
         if (atoken == null || atoken.canShowWindows()
                 || mWin.mAttrs.type == TYPE_APPLICATION_STARTING) {
             result = mWin.performShowLocked();
@@ -362,7 +362,7 @@ class WindowStateAnimator {
             mSurfaceDestroyDeferred = true;
             return;
         }
-        if (SHOW_TRANSACTIONS) WindowManagerService.logSurface(mWin, "SET FREEZE LAYER", false);
+        if (SHOW_TRANSACTIONS) com.android.server.wm.WindowManagerService.logSurface(mWin, "SET FREEZE LAYER", false);
         if (mSurfaceController != null) {
             // Our SurfaceControl is always at layer 0 within the parent Surface managed by
             // window-state. We want this old Surface to stay on top of the new one
@@ -423,7 +423,13 @@ class WindowStateAnimator {
         }
     }
 
-    WindowSurfaceController createSurfaceLocked(int windowType, int ownerUid) {
+    /**
+     * 利用 SurfaceSession 和 SurfaceFlinger 交互，请求创建一个绘图表面 SurfaceLayer
+     * @param windowType 窗口类型
+     * @param ownerUid 窗口所有者进程 id，即应用程序 id。
+     * @return
+     */
+    com.android.server.wm.WindowSurfaceController createSurfaceLocked(int windowType, int ownerUid) {
         final WindowState w = mWin;
 
         if (mSurfaceController != null) {
@@ -483,8 +489,8 @@ class WindowStateAnimator {
                     && !w.isDragResizing()) {
                 flags |= SurfaceControl.OPAQUE;
             }
-
-            mSurfaceController = new WindowSurfaceController(mSession.mSurfaceSession,
+            // 重点，创建一个 WindowSurfaceController
+            mSurfaceController = new com.android.server.wm.WindowSurfaceController(mSession.mSurfaceSession,
                     attrs.getTitle().toString(), width, height, format, flags, this,
                     windowType, ownerUid);
             mSurfaceController.setColorSpaceAgnostic((attrs.privateFlags
@@ -515,19 +521,19 @@ class WindowStateAnimator {
             return null;
         }
 
-        if (WindowManagerService.localLOGV) Slog.v(TAG, "Got surface: " + mSurfaceController
+        if (com.android.server.wm.WindowManagerService.localLOGV) Slog.v(TAG, "Got surface: " + mSurfaceController
                 + ", set left=" + w.getFrameLw().left + " top=" + w.getFrameLw().top);
 
         if (SHOW_LIGHT_TRANSACTIONS) {
             Slog.i(TAG, ">>> OPEN TRANSACTION createSurfaceLocked");
-            WindowManagerService.logSurface(w, "CREATE pos=("
+            com.android.server.wm.WindowManagerService.logSurface(w, "CREATE pos=("
                     + w.getFrameLw().left + "," + w.getFrameLw().top + ") ("
                     + width + "x" + height + ")" + " HIDE", false);
         }
 
         mLastHidden = true;
 
-        if (WindowManagerService.localLOGV) Slog.v(TAG, "Created surface " + this);
+        if (com.android.server.wm.WindowManagerService.localLOGV) Slog.v(TAG, "Created surface " + this);
         return mSurfaceController;
     }
 
@@ -570,7 +576,7 @@ class WindowStateAnimator {
     }
 
     void destroySurfaceLocked() {
-        final AppWindowToken wtoken = mWin.mAppToken;
+        final com.android.server.wm.AppWindowToken wtoken = mWin.mAppToken;
         if (wtoken != null) {
             if (mWin == wtoken.startingWindow) {
                 wtoken.startingDisplayed = false;
@@ -596,7 +602,7 @@ class WindowStateAnimator {
                 if (mSurfaceController != null && mPendingDestroySurface != mSurfaceController) {
                     if (mPendingDestroySurface != null) {
                         if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) {
-                            WindowManagerService.logSurface(mWin, "DESTROY PENDING", true);
+                            com.android.server.wm.WindowManagerService.logSurface(mWin, "DESTROY PENDING", true);
                         }
                         mPendingDestroySurface.destroyNotInTransaction();
                     }
@@ -604,7 +610,7 @@ class WindowStateAnimator {
                 }
             } else {
                 if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) {
-                    WindowManagerService.logSurface(mWin, "DESTROY", true);
+                    com.android.server.wm.WindowManagerService.logSurface(mWin, "DESTROY", true);
                 }
                 destroySurface();
             }
@@ -633,7 +639,7 @@ class WindowStateAnimator {
         try {
             if (mPendingDestroySurface != null) {
                 if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) {
-                    WindowManagerService.logSurface(mWin, "DESTROY PENDING", true);
+                    com.android.server.wm.WindowManagerService.logSurface(mWin, "DESTROY PENDING", true);
                 }
                 mPendingDestroySurface.destroyNotInTransaction();
                 // Don't hide wallpaper if we're destroying a deferred surface
@@ -653,7 +659,7 @@ class WindowStateAnimator {
 
     void computeShownFrameLocked() {
         final int displayId = mWin.getDisplayId();
-        final ScreenRotationAnimation screenRotationAnimation =
+        final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                 mAnimator.getScreenRotationAnimationLocked(displayId);
         final boolean windowParticipatesInScreenRotationAnimation =
                 !mWin.mForceSeamlesslyRotate;
@@ -725,7 +731,7 @@ class WindowStateAnimator {
                 //Slog.i(TAG_WM, "Not applying alpha transform");
             }
 
-            if ((DEBUG_ANIM || WindowManagerService.localLOGV)
+            if ((DEBUG_ANIM || com.android.server.wm.WindowManagerService.localLOGV)
                     && (mShownAlpha == 1.0 || mShownAlpha == 0.0)) Slog.v(
                     TAG, "computeShownFrameLocked: Animating " + this + " mAlpha=" + mAlpha
                     + " screen=" + (screenAnimation ?
@@ -742,7 +748,7 @@ class WindowStateAnimator {
             return;
         }
 
-        if (WindowManagerService.localLOGV) Slog.v(
+        if (com.android.server.wm.WindowManagerService.localLOGV) Slog.v(
                 TAG, "computeShownFrameLocked: " + this +
                 " not attached, mAlpha=" + mAlpha);
 
@@ -760,7 +766,7 @@ class WindowStateAnimator {
      */
     private boolean calculateCrop(Rect clipRect) {
         final WindowState w = mWin;
-        final DisplayContent displayContent = w.getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = w.getDisplayContent();
         clipRect.setEmpty();
 
         if (displayContent == null) {
@@ -1119,7 +1125,7 @@ class WindowStateAnimator {
             mLastDtDy = mDtDy;
             w.mLastHScale = w.mHScale;
             w.mLastVScale = w.mVScale;
-            if (SHOW_TRANSACTIONS) WindowManagerService.logSurface(w,
+            if (SHOW_TRANSACTIONS) com.android.server.wm.WindowManagerService.logSurface(w,
                     "controller=" + mSurfaceController +
                     "alpha=" + mShownAlpha
                     + " matrix=[" + mDsDx + "*" + w.mHScale

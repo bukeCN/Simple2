@@ -105,14 +105,14 @@ class WindowToken extends WindowContainer<WindowState> {
         return isFirstChildWindowGreaterThanSecond(newWindow, existingWindow) ? 1 : -1;
     };
 
-    WindowToken(WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
-            DisplayContent dc, boolean ownerCanManageAppTokens) {
+    WindowToken(com.android.server.wm.WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
+                com.android.server.wm.DisplayContent dc, boolean ownerCanManageAppTokens) {
         this(service, _token, type, persistOnEmpty, dc, ownerCanManageAppTokens,
                 false /* roundedCornersOverlay */);
     }
 
-    WindowToken(WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
-            DisplayContent dc, boolean ownerCanManageAppTokens, boolean roundedCornerOverlay) {
+    WindowToken(com.android.server.wm.WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
+                com.android.server.wm.DisplayContent dc, boolean ownerCanManageAppTokens, boolean roundedCornerOverlay) {
         super(service);
         token = _token;
         windowType = type;
@@ -206,7 +206,9 @@ class WindowToken extends WindowContainer<WindowState> {
         }
         if (!mChildren.contains(win)) {
             if (DEBUG_ADD_REMOVE) Slog.v(TAG_WM, "Adding " + win + " to " + this);
+            // 按照顺序添加窗口, 排序规则看排序器
             addChild(win, mWindowComparator);
+            // 标记窗口数量以改变
             mWmService.mWindowsChanged = true;
             // TODO: Should we also be setting layout needed here and other places?
         }
@@ -240,7 +242,7 @@ class WindowToken extends WindowContainer<WindowState> {
         return false;
     }
 
-    AppWindowToken asAppWindowToken() {
+    com.android.server.wm.AppWindowToken asAppWindowToken() {
         // TODO: Not sure if this is the best way to handle this vs. using instanceof and casting.
         // I am not an app window token!
         return null;
@@ -257,7 +259,7 @@ class WindowToken extends WindowContainer<WindowState> {
     }
 
     @Override
-    void onDisplayChanged(DisplayContent dc) {
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
         dc.reParentWindowToken(this);
 
         // TODO(b/36740756): One day this should perhaps be hooked
@@ -271,8 +273,8 @@ class WindowToken extends WindowContainer<WindowState> {
     @CallSuper
     @Override
     public void writeToProto(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 

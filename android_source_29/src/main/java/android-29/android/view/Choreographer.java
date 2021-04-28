@@ -268,11 +268,11 @@ public final class Choreographer {
             mCallbackQueues[i] = new CallbackQueue();
         }
         // b/68769804: For low FPS experiments.
-        setFPSDivisor(SystemProperties.getInt(ThreadedRenderer.DEBUG_FPS_DIVISOR, 1));
+        setFPSDivisor(SystemProperties.getInt(android.view.ThreadedRenderer.DEBUG_FPS_DIVISOR, 1));
     }
 
     private static float getRefreshRate() {
-        DisplayInfo di = DisplayManagerGlobal.getInstance().getDisplayInfo(
+        android.view.DisplayInfo di = DisplayManagerGlobal.getInstance().getDisplayInfo(
                 Display.DEFAULT_DISPLAY);
         return di.getMode().getRefreshRate();
     }
@@ -460,11 +460,13 @@ public final class Choreographer {
         synchronized (mLock) {
             final long now = SystemClock.uptimeMillis();
             final long dueTime = now + delayMillis;
+            // 将需要执行的回调保存到对应的回调组中
             mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);
-
             if (dueTime <= now) {
+                // 立即请求 VSYNC 信号进行处理
                 scheduleFrameLocked(now);
             } else {
+                // 需要延时执行，发送延迟消息。注意，该消息是异步的。
                 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action);
                 msg.arg1 = callbackType;
                 msg.setAsynchronous(true);
@@ -656,7 +658,7 @@ public final class Choreographer {
     void setFPSDivisor(int divisor) {
         if (divisor <= 0) divisor = 1;
         mFPSDivisor = divisor;
-        ThreadedRenderer.setFPSDivisor(divisor);
+        android.view.ThreadedRenderer.setFPSDivisor(divisor);
     }
 
     @UnsupportedAppUsage
@@ -672,12 +674,17 @@ public final class Choreographer {
                 Log.d(TAG, "Frame time delta: "
                         + ((frameTimeNanos - mLastFrameTimeNanos) * 0.000001f) + " ms");
             }
-
+            // 预期执行时间
             long intendedFrameTimeNanos = frameTimeNanos;
+            // 当前事件
             startNanos = System.nanoTime();
+
             final long jitterNanos = startNanos - frameTimeNanos;
+            // 超时事件是否超过一帧时间
             if (jitterNanos >= mFrameIntervalNanos) {
+                // 计算掉帧数
                 final long skippedFrames = jitterNanos / mFrameIntervalNanos;
+                // 超过 30 帧打印此 log
                 if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) {
                     Log.i(TAG, "Skipped " + skippedFrames + " frames!  "
                             + "The application may be doing too much work on its main thread.");
@@ -698,6 +705,8 @@ public final class Choreographer {
                     Log.d(TAG, "Frame time appears to be going backwards.  May be due to a "
                             + "previously skipped frame.  Waiting for next vsync.");
                 }
+                // 未知原因，居然小于最后一帧的时间
+                // 重新申请VSYNC信号
                 scheduleVsyncLocked();
                 return;
             }
@@ -711,7 +720,9 @@ public final class Choreographer {
             }
 
             mFrameInfo.setVsync(intendedFrameTimeNanos, frameTimeNanos);
+            // Frame标志位恢复
             mFrameScheduled = false;
+            // 记录最后一帧时间
             mLastFrameTimeNanos = frameTimeNanos;
         }
 
@@ -903,19 +914,22 @@ public final class Choreographer {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_DO_FRAME:
+                    // 当 VSYNC 来临时处理
                     doFrame(System.nanoTime(), 0);
                     break;
                 case MSG_DO_SCHEDULE_VSYNC:
+                    // 申请 VSYNC 信号
                     doScheduleVsync();
                     break;
                 case MSG_DO_SCHEDULE_CALLBACK:
+                    // 需要延迟的任务，就是构造了一个延时执行的 Message ，最后还是调用了上面两个。
                     doScheduleCallback(msg.arg1);
                     break;
             }
         }
     }
 
-    private final class FrameDisplayEventReceiver extends DisplayEventReceiver
+    private final class FrameDisplayEventReceiver extends android.view.DisplayEventReceiver
             implements Runnable {
         private boolean mHavePendingVsync;
         private long mTimestampNanos;

@@ -37,7 +37,7 @@ import java.io.PrintWriter;
  */
 class WindowSurfacePlacer {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowSurfacePlacer" : TAG_WM;
-    private final WindowManagerService mService;
+    private final com.android.server.wm.WindowManagerService mService;
 
     private boolean mInLayout = false;
 
@@ -55,7 +55,7 @@ class WindowSurfacePlacer {
 
     private final Runnable mPerformSurfacePlacement;
 
-    public WindowSurfacePlacer(WindowManagerService service) {
+    public WindowSurfacePlacer(com.android.server.wm.WindowManagerService service) {
         mService = service;
         mPerformSurfacePlacement = () -> {
             synchronized (mService.mGlobalLock) {
@@ -99,6 +99,7 @@ class WindowSurfacePlacer {
         if (mDeferDepth > 0 && !force) {
             return;
         }
+        // 为什么这里会有六次循环？一次可能不会完成布局，但是不能超过 6 次。
         int loopCount = 6;
         do {
             mTraversalScheduled = false;
@@ -120,7 +121,7 @@ class WindowSurfacePlacer {
         }
 
         // TODO(multi-display):
-        final DisplayContent defaultDisplay = mService.getDefaultDisplayContentLocked();
+        final com.android.server.wm.DisplayContent defaultDisplay = mService.getDefaultDisplayContentLocked();
         if (defaultDisplay.mWaitingForConfig) {
             // Our configuration has changed (most likely rotation), but we
             // don't yet have the complete configuration to report to
@@ -136,9 +137,10 @@ class WindowSurfacePlacer {
         Trace.traceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "wmLayout");
         mInLayout = true;
 
+        // 在重新布局之前，清理僵尸窗口，释放它们所持有的 Surface。 和 Java GC 很类型，
         boolean recoveringMemory = false;
         if (!mService.mForceRemoves.isEmpty()) {
-            recoveringMemory = true;
+            recoveringMemory = true;// 标记此次布局已经完成内存回收
             // Wait a little bit for things to settle down, and off we go.
             while (!mService.mForceRemoves.isEmpty()) {
                 final WindowState ws = mService.mForceRemoves.remove(0);
@@ -156,12 +158,15 @@ class WindowSurfacePlacer {
         }
 
         try {
+            // 重点哦! 继续布局
             mService.mRoot.performSurfacePlacement(recoveringMemory);
 
             mInLayout = false;
 
+            // 遍历 DisplayContent ，只要有一个 DisplayContent 需要布局，这里就会返回 true. 可能就是在布局中有屏幕发生变化了
             if (mService.mRoot.isLayoutNeeded()) {
                 if (++mLayoutRepeatCount < 6) {
+                    // 注意此方法调用哦，会改变上一步循环的节奏
                     requestTraversal();
                 } else {
                     Slog.e(TAG, "Performed 6 layouts in a row. Skipping");
@@ -171,6 +176,7 @@ class WindowSurfacePlacer {
                 mLayoutRepeatCount = 0;
             }
 
+            // 通知监听者，窗口布局发生了变化。
             if (mService.mWindowsChanged && !mService.mWindowChangeListeners.isEmpty()) {
                 mService.mH.removeMessages(REPORT_WINDOWS_CHANGE);
                 mService.mH.sendEmptyMessage(REPORT_WINDOWS_CHANGE);
