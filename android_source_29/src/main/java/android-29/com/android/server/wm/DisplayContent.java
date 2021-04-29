@@ -587,7 +587,9 @@ class DisplayContent extends com.android.server.wm.WindowContainer<DisplayConten
         final com.android.server.wm.AppWindowToken atoken = w.mAppToken;
         if (winAnimator.mDrawState == READY_TO_SHOW) {
             if (atoken == null || atoken.canShowWindows()) {
+                // 执行布局动作
                 if (w.performShowLocked()) {
+                    // 返回 true 表示动画没完需要继续执行。
                     pendingLayoutChanges |= FINISH_LAYOUT_REDO_ANIM;
                     if (DEBUG_LAYOUT_REPEATS) {
                         mWmService.mWindowPlacerLocked.debugLayoutRepeats(

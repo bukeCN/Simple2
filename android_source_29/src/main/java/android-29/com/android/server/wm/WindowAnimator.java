@@ -44,7 +44,7 @@ import java.util.ArrayList;
 public class WindowAnimator {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowAnimator" : TAG_WM;
 
-    final WindowManagerService mService;
+    final com.android.server.wm.WindowManagerService mService;
     final Context mContext;
     final WindowManagerPolicy mPolicy;
 
@@ -85,7 +85,7 @@ public class WindowAnimator {
 
     private final SurfaceControl.Transaction mTransaction = new SurfaceControl.Transaction();
 
-    WindowAnimator(final WindowManagerService service) {
+    WindowAnimator(final com.android.server.wm.WindowManagerService service) {
         mService = service;
         mContext = service.mContext;
         mPolicy = service.mPolicy;
@@ -96,6 +96,7 @@ public class WindowAnimator {
             synchronized (mService.mGlobalLock) {
                 mAnimationFrameCallbackScheduled = false;
             }
+            // 渲染一帧动画
             animate(frameTimeNs);
         };
     }
@@ -152,14 +153,17 @@ public class WindowAnimator {
                 final AccessibilityController accessibilityController =
                         mService.mAccessibilityController;
                 final int numDisplays = mDisplayContentsAnimators.size();
+                // 遍历处理旋转和窗口动画
                 for (int i = 0; i < numDisplays; i++) {
                     final int displayId = mDisplayContentsAnimators.keyAt(i);
-                    final DisplayContent dc = mService.mRoot.getDisplayContent(displayId);
+                    final com.android.server.wm.DisplayContent dc = mService.mRoot.getDisplayContent(displayId);
                     DisplayContentsAnimator displayAnimator = mDisplayContentsAnimators.valueAt(i);
 
-                    final ScreenRotationAnimation screenRotationAnimation =
+                    // 屏幕旋转动画
+                    final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                             displayAnimator.mScreenRotationAnimation;
                     if (screenRotationAnimation != null && screenRotationAnimation.isAnimating()) {
+                        // 执行动画, mCurrentTiem 为现在时间
                         if (screenRotationAnimation.stepAnimationLocked(mCurrentTime)) {
                             setAnimating(true);
                         } else {
@@ -178,18 +182,22 @@ public class WindowAnimator {
 
                     // Update animations of all applications, including those
                     // associated with exiting/removed apps
+                    // 对屏幕下的窗所有窗口执行动画
                     dc.updateWindowsForAnimator();
+                    // 对壁纸执行动画
                     dc.updateBackgroundForAnimator();
+                    // 将动画的参数设置给 Surface
                     dc.prepareSurfaces();
                 }
 
+                // 遍历所有屏幕，对屏幕下的所有窗口的 Surface 应用动画变化。
                 for (int i = 0; i < numDisplays; i++) {
                     final int displayId = mDisplayContentsAnimators.keyAt(i);
-                    final DisplayContent dc = mService.mRoot.getDisplayContent(displayId);
-
+                    final com.android.server.wm.DisplayContent dc = mService.mRoot.getDisplayContent(displayId);
+                    // 检查应用程序的窗口是否全部绘制，
                     dc.checkAppWindowsReadyToShow();
-
-                    final ScreenRotationAnimation screenRotationAnimation =
+                    // 处理屏幕旋转，更新 Surface
+                    final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
                             mDisplayContentsAnimators.valueAt(i).mScreenRotationAnimation;
                     if (screenRotationAnimation != null) {
                         screenRotationAnimation.updateSurfaces(mTransaction);
@@ -222,20 +230,23 @@ public class WindowAnimator {
                 doRequest = mService.mRoot.copyAnimToLayoutParams();
             }
 
+            // 这里可以体现动画和布局时交替执行的。
             if (hasPendingLayoutChanges || doRequest) {
+                // 调用布局，安排下一帧
                 mService.mWindowPlacerLocked.requestTraversal();
             }
-
+            // 动画是否在运行中
             final boolean rootAnimating = mService.mRoot.isSelfOrChildAnimating();
             if (rootAnimating && !mLastRootAnimating) {
-
                 // Usually app transitions but quite a load onto the system already (with all the
                 // things happening in app), so pause task snapshot persisting to not increase the
                 // load.
+                // 暂停快照
                 mService.mTaskSnapshotController.setPersisterPaused(true);
                 Trace.asyncTraceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "animating", 0);
             }
             if (!rootAnimating && mLastRootAnimating) {
+                // 有动画处于运行中，调用布局，安排下一帧
                 mService.mWindowPlacerLocked.requestTraversal();
                 mService.mTaskSnapshotController.setPersisterPaused(false);
                 Trace.asyncTraceEnd(Trace.TRACE_TAG_WINDOW_MANAGER, "animating", 0);
@@ -249,7 +260,7 @@ public class WindowAnimator {
             }
 
             mService.destroyPreservedSurfaceLocked();
-
+            // 参数设置给 Surface 添加完成之后执行
             executeAfterPrepareSurfacesRunnables();
 
             if (DEBUG_WINDOW_TRACE) {
@@ -262,10 +273,10 @@ public class WindowAnimator {
 
     private static String bulkUpdateParamsToString(int bulkUpdateParams) {
         StringBuilder builder = new StringBuilder(128);
-        if ((bulkUpdateParams & WindowSurfacePlacer.SET_UPDATE_ROTATION) != 0) {
+        if ((bulkUpdateParams & com.android.server.wm.WindowSurfacePlacer.SET_UPDATE_ROTATION) != 0) {
             builder.append(" UPDATE_ROTATION");
         }
-        if ((bulkUpdateParams & WindowSurfacePlacer.SET_ORIENTATION_CHANGE_COMPLETE) != 0) {
+        if ((bulkUpdateParams & com.android.server.wm.WindowSurfacePlacer.SET_ORIENTATION_CHANGE_COMPLETE) != 0) {
             builder.append(" ORIENTATION_CHANGE_COMPLETE");
         }
         return builder.toString();
@@ -280,7 +291,7 @@ public class WindowAnimator {
                     pw.print(mDisplayContentsAnimators.keyAt(i));
                     pw.println(":");
             final DisplayContentsAnimator displayAnimator = mDisplayContentsAnimators.valueAt(i);
-            final DisplayContent dc =
+            final com.android.server.wm.DisplayContent dc =
                     mService.mRoot.getDisplayContent(mDisplayContentsAnimators.keyAt(i));
             dc.dumpWindowAnimators(pw, subPrefix);
             if (displayAnimator.mScreenRotationAnimation != null) {
@@ -309,7 +320,7 @@ public class WindowAnimator {
         if (displayId < 0) {
             return 0;
         }
-        final DisplayContent displayContent = mService.mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent displayContent = mService.mRoot.getDisplayContent(displayId);
         return (displayContent != null) ? displayContent.pendingLayoutChanges : 0;
     }
 
@@ -317,7 +328,7 @@ public class WindowAnimator {
         if (displayId < 0) {
             return;
         }
-        final DisplayContent displayContent = mService.mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent displayContent = mService.mRoot.getDisplayContent(displayId);
         if (displayContent != null) {
             displayContent.pendingLayoutChanges |= changes;
         }
@@ -340,7 +351,7 @@ public class WindowAnimator {
         return displayAnimator;
     }
 
-    void setScreenRotationAnimationLocked(int displayId, ScreenRotationAnimation animation) {
+    void setScreenRotationAnimationLocked(int displayId, com.android.server.wm.ScreenRotationAnimation animation) {
         final DisplayContentsAnimator animator = getDisplayContentsAnimatorLocked(displayId);
 
         if (animator != null) {
@@ -348,7 +359,7 @@ public class WindowAnimator {
         }
     }
 
-    ScreenRotationAnimation getScreenRotationAnimationLocked(int displayId) {
+    com.android.server.wm.ScreenRotationAnimation getScreenRotationAnimationLocked(int displayId) {
         if (displayId < 0) {
             return null;
         }
@@ -362,7 +373,7 @@ public class WindowAnimator {
     }
 
     void scheduleAnimation() {
-        if (!mAnimationFrameCallbackScheduled) {
+        if (!mAnimationFrameCallbackScheduled) {// 避免重复发送
             mAnimationFrameCallbackScheduled = true;
             mChoreographer.postFrameCallback(mAnimationFrameCallback);
         }
@@ -376,7 +387,7 @@ public class WindowAnimator {
     }
 
     private class DisplayContentsAnimator {
-        ScreenRotationAnimation mScreenRotationAnimation = null;
+        com.android.server.wm.ScreenRotationAnimation mScreenRotationAnimation = null;
     }
 
     boolean isAnimating() {

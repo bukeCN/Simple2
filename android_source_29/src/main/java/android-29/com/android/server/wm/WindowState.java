@@ -3952,6 +3952,7 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
         logPerformShow("Showing ");
 
         mWmService.enableScreenIfNeededLocked();
+        // 执行对应的动画
         mWinAnimator.applyEnterAnimationLocked();
 
         // Force the show in the next prepareSurfaceLocked() call.
@@ -3959,6 +3960,7 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
         if (DEBUG_ANIM) Slog.v(TAG,
                 "performShowLocked: mDrawState=HAS_DRAWN in " + this);
         mWinAnimator.mDrawState = HAS_DRAWN;
+        // 执行下一帧动画
         mWmService.scheduleAnimationLocked();
 
         if (mHidden) {

@@ -417,7 +417,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
     TaskStack getStack(int windowingMode, int activityType) {
         for (int i = mChildren.size() - 1; i >= 0; i--) {
             final com.android.server.wm.DisplayContent dc = mChildren.get(i);
-            final TaskStack stack = dc.getStack(windowingMode, activityType);
+            final com.android.server.wm.TaskStack stack = dc.getStack(windowingMode, activityType);
             if (stack != null) {
                 return stack;
             }
@@ -624,7 +624,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
         // 动画处理
         mWmService.mAnimator.executeAfterPrepareSurfacesRunnables();
 
-        // 这里对 Surface 的擦偶作有点看不懂。
+        // 这里对 Surface 的操作有点看不懂。
         checkAppTransitionReady(surfacePlacer);
 
         // Defer starting the recents animation until the wallpaper has drawn
