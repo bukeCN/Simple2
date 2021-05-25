@@ -325,7 +325,7 @@ class WindowToken extends WindowContainer<WindowState> {
     }
 
     boolean okToAnimate() {
-        return mDisplayContent != null && mDisplayContent.okToAnimate();
+        return mDisplayContent != null && mDisplayContent.mDisplayContent();
     }
 
     /**

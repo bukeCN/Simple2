@@ -10,23 +10,35 @@ import android.os.MessageQueue
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import com.live.simple2.proformance.UiPromanceManager
 import com.live.simple2.utils.DialogUtil
 import com.live.simple2.view.RuningAdView
+import com.live.simple2.view.TestView
 import com.live.simple2.view.TextSwitchView
 import com.live.simple2.view.animator.TestAnimatorActivity
 
 class MainActivity : AppCompatActivity() {
     lateinit var view: View
+    lateinit var testLayout: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        testLayout = findViewById(R.id.testLayout)
 
+        findViewById<View>(R.id.toAnimator).setOnClickListener {
+            var dialog = TestDialog()
+            dialog.show(supportFragmentManager,"test")
+        }
+
+        Log.e("sun", "窗口类型：" + window.attributes.type)
+
+
+        var w = PopupWindow();
+        w.showAsDropDown(view);
     }
+
 }
 

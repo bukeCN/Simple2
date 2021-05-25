@@ -389,7 +389,9 @@ class AppWindowToken extends com.android.server.wm.WindowToken implements com.an
             // own stuff.
             win.cancelAnimation();
         }
+        // 移除开始窗口
         removeStartingWindow();
+        // 更新窗口显示状态
         updateReportedVisibilityLocked();
     }
 
@@ -438,8 +440,10 @@ class AppWindowToken extends com.android.server.wm.WindowToken implements com.an
             reportedVisible = nowVisible;
             if (mActivityRecord != null) {
                 if (nowVisible) {
+                    // 窗口显示
                     onWindowsVisible();
                 } else {
+                    // 窗口隐藏
                     onWindowsGone();
                 }
             }
@@ -607,6 +611,15 @@ class AppWindowToken extends com.android.server.wm.WindowToken implements com.an
         updateReportedVisibilityLocked();
     }
 
+    /**
+     * activity 窗口切换动画。
+     * @param lp 用来切换动画的布局参数
+     * @param visible
+     * @param transit
+     * @param performLayout
+     * @param isVoiceInteraction
+     * @return
+     */
     boolean commitVisibility(WindowManager.LayoutParams lp,
             boolean visible, int transit, boolean performLayout, boolean isVoiceInteraction) {
 
@@ -623,7 +636,7 @@ class AppWindowToken extends com.android.server.wm.WindowToken implements com.an
         // * or this is an opening app and windows are being replaced.
         boolean visibilityChanged = false;
         if (isHidden() == visible || (isHidden() && mIsExiting) || (visible && waitingForReplacement())) {
-            final AccessibilityController accessibilityController =
+            final com.android.server.wm.AccessibilityController accessibilityController =
                     mWmService.mAccessibilityController;
             boolean changed = false;
             if (DEBUG_APP_TRANSITIONS) Slog.v(TAG_WM,

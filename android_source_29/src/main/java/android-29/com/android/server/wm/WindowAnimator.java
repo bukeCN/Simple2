@@ -182,7 +182,7 @@ public class WindowAnimator {
 
                     // Update animations of all applications, including those
                     // associated with exiting/removed apps
-                    // 对屏幕下的窗所有窗口执行动画
+                    // 执行动画渲染，显示窗口
                     dc.updateWindowsForAnimator();
                     // 对壁纸执行动画
                     dc.updateBackgroundForAnimator();
@@ -190,11 +190,11 @@ public class WindowAnimator {
                     dc.prepareSurfaces();
                 }
 
-                // 遍历所有屏幕，对屏幕下的所有窗口的 Surface 应用动画变化。
+                // 遍历所有屏幕，屏幕旋转效果
                 for (int i = 0; i < numDisplays; i++) {
                     final int displayId = mDisplayContentsAnimators.keyAt(i);
                     final com.android.server.wm.DisplayContent dc = mService.mRoot.getDisplayContent(displayId);
-                    // 检查应用程序的窗口是否全部绘制，
+                    // 屏幕是都准备显示
                     dc.checkAppWindowsReadyToShow();
                     // 处理屏幕旋转，更新 Surface
                     final com.android.server.wm.ScreenRotationAnimation screenRotationAnimation =
@@ -202,6 +202,7 @@ public class WindowAnimator {
                     if (screenRotationAnimation != null) {
                         screenRotationAnimation.updateSurfaces(mTransaction);
                     }
+                    // 绘制屏幕分界线动画？？ 分屏情况下绘制？
                     orAnimating(dc.getDockedDividerController().animate(mCurrentTime));
                     if (accessibilityController != null) {
                         accessibilityController.drawMagnifiedRegionBorderIfNeededLocked(displayId);
@@ -211,7 +212,7 @@ public class WindowAnimator {
                 if (!mAnimating) {
                     cancelAnimation();
                 }
-
+                // 绘制屏幕水印
                 if (mService.mWatermark != null) {
                     mService.mWatermark.drawIfNeeded();
                 }
@@ -230,14 +231,15 @@ public class WindowAnimator {
                 doRequest = mService.mRoot.copyAnimToLayoutParams();
             }
 
-            // 这里可以体现动画和布局时交替执行的。
+            // 这里可以体现动画和布局时交替执行。如果没有窗口需要布局了，这里就不会安排下一帧
             if (hasPendingLayoutChanges || doRequest) {
                 // 调用布局，安排下一帧
                 mService.mWindowPlacerLocked.requestTraversal();
             }
-            // 动画是否在运行中
+            // 是根窗口在动画，还是子窗口
             final boolean rootAnimating = mService.mRoot.isSelfOrChildAnimating();
             if (rootAnimating && !mLastRootAnimating) {
+                // 是根窗口在进行动画，此时停止快照。
                 // Usually app transitions but quite a load onto the system already (with all the
                 // things happening in app), so pause task snapshot persisting to not increase the
                 // load.

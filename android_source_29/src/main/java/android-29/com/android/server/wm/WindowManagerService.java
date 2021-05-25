@@ -2193,6 +2193,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             // We should only relayout if the view is visible, it is a starting window, or the
             // associated appToken is not hidden.
+            // 需要是显示状态，是应用程序窗口，且该窗口对应的 Activity 不可见 shouldRelayout 才 为 true
             final boolean shouldRelayout = viewVisibility == View.VISIBLE &&
                     (win.mAppToken == null || win.mAttrs.type == TYPE_APPLICATION_STARTING
                             || !win.mAppToken.isClientHidden());
@@ -2206,6 +2207,7 @@ public class WindowManagerService extends IWindowManager.Stub
             // hiding the window before it's replacement was available. So we just do nothing on
             // our side.
             // This must be called before the call to performSurfacePlacement.
+            // 执行退出动画，需要有 Surface
             if (!shouldRelayout && winAnimator.hasSurface() && !win.mAnimatingExit) {
                 if (DEBUG_VISIBILITY) {
                     Slog.i(TAG_WM,
@@ -2213,6 +2215,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 result |= RELAYOUT_RES_SURFACE_CHANGED;
                 if (!win.mWillReplaceWindow) {
+                    // 如果该窗口需要隐藏，则为他添加一个退出动画并执行
                     focusMayChange = tryStartExitingAnimation(win, winAnimator, focusMayChange);
                 }
             }
@@ -2400,6 +2403,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (win.mAttrs.type == TYPE_APPLICATION_STARTING) {
             transit = WindowManagerPolicy.TRANSIT_PREVIEW_DONE;
         }
+        // 窗口需要可见，applyAnimationLocked() 添加进入动画,
         if (win.isWinVisibleLw() && winAnimator.applyAnimationLocked(transit, false)) {
             focusMayChange = true;
             win.mAnimatingExit = true;

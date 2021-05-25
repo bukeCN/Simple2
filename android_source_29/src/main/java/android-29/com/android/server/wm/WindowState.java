@@ -2966,6 +2966,7 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
 
     private boolean isHiddenFromUserLocked() {
         // Child windows are evaluated based on their parent window.
+        // 子窗口的显示隐藏需要根据父窗口判断。
         final WindowState win = getTopParentWindow();
         if (win.mAttrs.type < FIRST_SYSTEM_WINDOW
                 && win.mAppToken != null && win.mAppToken.mShowForAllUsers) {
@@ -3932,6 +3933,7 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
     // This must be called while inside a transaction.
     boolean performShowLocked() {
         if (isHiddenFromUserLocked()) {
+            // 窗口还没显示
             if (DEBUG_VISIBILITY) Slog.w(TAG, "hiding " + this + ", belonging to " + mOwnerUid);
             clearPolicyVisibilityFlag(VISIBLE_FOR_USER);
             return false;
@@ -3942,17 +3944,19 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
         final int drawState = mWinAnimator.mDrawState;
         if ((drawState == HAS_DRAWN || drawState == READY_TO_SHOW)
                 && mAttrs.type != TYPE_APPLICATION_STARTING && mAppToken != null) {
+            // 窗口准备展示, 更新窗口状态
             mAppToken.onFirstWindowDrawn(this, mWinAnimator);
         }
 
         if (mWinAnimator.mDrawState != READY_TO_SHOW || !isReadyForDisplay()) {
+            // 窗口还没显示
             return false;
         }
 
         logPerformShow("Showing ");
-
+        // 启用屏幕，屏幕需要被点亮没有被冻结
         mWmService.enableScreenIfNeededLocked();
-        // 执行对应的动画
+        // 选择对应的动画
         mWinAnimator.applyEnterAnimationLocked();
 
         // Force the show in the next prepareSurfaceLocked() call.
@@ -3960,10 +3964,11 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
         if (DEBUG_ANIM) Slog.v(TAG,
                 "performShowLocked: mDrawState=HAS_DRAWN in " + this);
         mWinAnimator.mDrawState = HAS_DRAWN;
-        // 执行下一帧动画
+        // 回调，推进动画
         mWmService.scheduleAnimationLocked();
 
         if (mHidden) {
+            // 需要隐藏当前窗口
             mHidden = false;
             final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
 
@@ -4649,7 +4654,9 @@ class WindowState extends com.android.server.wm.WindowContainer<WindowState> imp
                 new com.android.server.wm.WindowAnimationSpec(anim, mSurfacePosition, false /* canSkipFirstFrame */,
                         0 /* windowCornerRadius */),
                 mWmService.mSurfaceAnimationRunner);
+        // 不需要锁定窗口就能执行, 启动 Surface 动画。这个是不是执行的 Activity 切换动画。
         startAnimation(getPendingTransaction(), adapter);
+        // 提交动画请求，由 WMS 执行。
         commitPendingTransaction();
     }
 

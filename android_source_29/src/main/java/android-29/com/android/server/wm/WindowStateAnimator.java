@@ -1303,6 +1303,7 @@ class WindowStateAnimator {
         }
 
         final int transit;
+        // 判断添加那种类型的动画，进入，还是显示
         if (mEnterAnimationPending) {
             mEnterAnimationPending = false;
             transit = WindowManagerPolicy.TRANSIT_ENTER;
@@ -1312,6 +1313,7 @@ class WindowStateAnimator {
 
         // We don't apply animation for application main window here since this window type
         // should be controlled by AppWindowToken in general.
+        // 如果是应用程序类型的窗口，不在这里进行动画。
         if (mAttrType != TYPE_BASE_APPLICATION) {
             applyAnimationLocked(transit, true);
         }
@@ -1349,10 +1351,12 @@ class WindowStateAnimator {
         // is running.
         Trace.traceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "WSA#applyAnimationLocked");
         if (mWin.mToken.okToAnimate()) {
+            // 可以执行动画
             int anim = mWin.getDisplayContent().getDisplayPolicy().selectAnimationLw(mWin, transit);
             int attr = -1;
             Animation a = null;
             if (anim != 0) {
+                // 如果 WMP 为当前窗口指定了动画资源，则选择此动画
                 a = anim != -1 ? AnimationUtils.loadAnimation(mContext, anim) : null;
             } else {
                 switch (transit) {
@@ -1383,6 +1387,7 @@ class WindowStateAnimator {
                     + " isEntrance=" + isEntrance + " Callers " + Debug.getCallers(3));
             if (a != null) {
                 if (DEBUG_ANIM) logWithStack(TAG, "Loaded animation " + a + " for " + this);
+                // 重点，给对应的窗口设置动画，并且请求开始
                 mWin.startAnimation(a);
                 mAnimationIsEntrance = isEntrance;
             }

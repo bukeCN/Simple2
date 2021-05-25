@@ -776,7 +776,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
         // be enabled, because the window obscured flags have changed.
         mWmService.enableScreenIfNeededLocked();
 
-        // 启动动画？
+        // 启动动画？一帧动画执行完成之后又会调用布局
         mWmService.scheduleAnimationLocked();
 
         if (DEBUG_WINDOW_TRACE) Slog.e(TAG,
@@ -849,7 +849,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
         }
 
         // Give the display manager a chance to adjust properties like display rotation if it needs
-        // to.
+        // to.  屏幕管理器，正在布局，给屏幕一个做事的机会，如：旋转屏幕
         mWmService.mDisplayManagerInternal.performTraversal(mDisplayTransaction);
         SurfaceControl.mergeToGlobalTransaction(mDisplayTransaction);
     }
