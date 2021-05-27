@@ -377,6 +377,7 @@ public class RuntimeInit {
          * clears up all the stack frames that were required in setting
          * up the process.
          */
+        // 重点，在 ZygoteInit 的 main() 函数中调用了其 run() 函数。
         return new MethodAndArgsCaller(m, argv);
     }
 
@@ -419,6 +420,7 @@ public class RuntimeInit {
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
 
         // Remaining arguments are passed to the start class's static main
+        // 看名字，反射找到 main() 函数执行。
         return findStaticMain(args.startClass, args.startArgs, classLoader);
     }
 
@@ -427,9 +429,9 @@ public class RuntimeInit {
      */
     public static void redirectLogStreams() {
         System.out.close();
-        System.setOut(new AndroidPrintStream(Log.INFO, "System.out"));
+        System.setOut(new com.android.internal.os.AndroidPrintStream(Log.INFO, "System.out"));
         System.err.close();
-        System.setErr(new AndroidPrintStream(Log.WARN, "System.err"));
+        System.setErr(new com.android.internal.os.AndroidPrintStream(Log.WARN, "System.err"));
     }
 
     /**

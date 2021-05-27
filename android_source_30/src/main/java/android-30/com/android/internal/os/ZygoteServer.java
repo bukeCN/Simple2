@@ -170,21 +170,24 @@ class ZygoteServer {
      * @param isPrimaryZygote  If this is the primary Zygote or not.
      */
     ZygoteServer(boolean isPrimaryZygote) {
-        mUsapPoolEventFD = Zygote.getUsapPoolEventFD();
+        mUsapPoolEventFD = com.android.internal.os.Zygote.getUsapPoolEventFD();
 
+        // 初始化 socket 接口，用于接接收 SystemServer 的请求，用来 fork() 进程。
+        // 新采用了 usap_pool ，提前 fork() 了进程资源，需要的时候拿出来用，优化了应用的启动速度。
         if (isPrimaryZygote) {
-            mZygoteSocket = Zygote.createManagedSocketFromInitSocket(Zygote.PRIMARY_SOCKET_NAME);
+            mZygoteSocket = com.android.internal.os.Zygote.createManagedSocketFromInitSocket(com.android.internal.os.Zygote.PRIMARY_SOCKET_NAME);
             mUsapPoolSocket =
-                    Zygote.createManagedSocketFromInitSocket(
-                            Zygote.USAP_POOL_PRIMARY_SOCKET_NAME);
+                    com.android.internal.os.Zygote.createManagedSocketFromInitSocket(
+                            com.android.internal.os.Zygote.USAP_POOL_PRIMARY_SOCKET_NAME);
         } else {
-            mZygoteSocket = Zygote.createManagedSocketFromInitSocket(Zygote.SECONDARY_SOCKET_NAME);
+            mZygoteSocket = com.android.internal.os.Zygote.createManagedSocketFromInitSocket(com.android.internal.os.Zygote.SECONDARY_SOCKET_NAME);
             mUsapPoolSocket =
-                    Zygote.createManagedSocketFromInitSocket(
-                            Zygote.USAP_POOL_SECONDARY_SOCKET_NAME);
+                    com.android.internal.os.Zygote.createManagedSocketFromInitSocket(
+                            com.android.internal.os.Zygote.USAP_POOL_SECONDARY_SOCKET_NAME);
         }
 
         mUsapPoolSupported = true;
+        // usap_pool 初始化工作
         fetchUsapPoolPolicyProps();
     }
 
@@ -216,7 +219,7 @@ class ZygoteServer {
      * Waits for and accepts a single command connection. Throws
      * RuntimeException on failure.
      */
-    private ZygoteConnection acceptCommandPeer(String abiList) {
+    private com.android.internal.os.ZygoteConnection acceptCommandPeer(String abiList) {
         try {
             return createNewConnection(mZygoteSocket.accept(), abiList);
         } catch (IOException ex) {
@@ -225,9 +228,9 @@ class ZygoteServer {
         }
     }
 
-    protected ZygoteConnection createNewConnection(LocalSocket socket, String abiList)
+    protected com.android.internal.os.ZygoteConnection createNewConnection(LocalSocket socket, String abiList)
             throws IOException {
-        return new ZygoteConnection(socket, abiList);
+        return new com.android.internal.os.ZygoteConnection(socket, abiList);
     }
 
     /**
@@ -264,24 +267,24 @@ class ZygoteServer {
 
     private void fetchUsapPoolPolicyProps() {
         if (mUsapPoolSupported) {
-            final String usapPoolSizeMaxPropString = Zygote.getConfigurationProperty(
-                    ZygoteConfig.USAP_POOL_SIZE_MAX, USAP_POOL_SIZE_MAX_DEFAULT);
+            final String usapPoolSizeMaxPropString = com.android.internal.os.Zygote.getConfigurationProperty(
+                    com.android.internal.os.ZygoteConfig.USAP_POOL_SIZE_MAX, USAP_POOL_SIZE_MAX_DEFAULT);
 
             if (!usapPoolSizeMaxPropString.isEmpty()) {
                 mUsapPoolSizeMax = Integer.min(Integer.parseInt(
                         usapPoolSizeMaxPropString), USAP_POOL_SIZE_MAX_LIMIT);
             }
 
-            final String usapPoolSizeMinPropString = Zygote.getConfigurationProperty(
-                    ZygoteConfig.USAP_POOL_SIZE_MIN, USAP_POOL_SIZE_MIN_DEFAULT);
+            final String usapPoolSizeMinPropString = com.android.internal.os.Zygote.getConfigurationProperty(
+                    com.android.internal.os.ZygoteConfig.USAP_POOL_SIZE_MIN, USAP_POOL_SIZE_MIN_DEFAULT);
 
             if (!usapPoolSizeMinPropString.isEmpty()) {
                 mUsapPoolSizeMin = Integer.max(
                         Integer.parseInt(usapPoolSizeMinPropString), USAP_POOL_SIZE_MIN_LIMIT);
             }
 
-            final String usapPoolRefillThresholdPropString = Zygote.getConfigurationProperty(
-                    ZygoteConfig.USAP_POOL_REFILL_THRESHOLD,
+            final String usapPoolRefillThresholdPropString = com.android.internal.os.Zygote.getConfigurationProperty(
+                    com.android.internal.os.ZygoteConfig.USAP_POOL_REFILL_THRESHOLD,
                     Integer.toString(mUsapPoolSizeMax / 2));
 
             if (!usapPoolRefillThresholdPropString.isEmpty()) {
@@ -290,8 +293,8 @@ class ZygoteServer {
                         mUsapPoolSizeMax);
             }
 
-            final String usapPoolRefillDelayMsPropString = Zygote.getConfigurationProperty(
-                    ZygoteConfig.USAP_POOL_REFILL_DELAY_MS, USAP_POOL_REFILL_DELAY_MS_DEFAULT);
+            final String usapPoolRefillDelayMsPropString = com.android.internal.os.Zygote.getConfigurationProperty(
+                    com.android.internal.os.ZygoteConfig.USAP_POOL_REFILL_DELAY_MS, USAP_POOL_REFILL_DELAY_MS_DEFAULT);
 
             if (!usapPoolRefillDelayMsPropString.isEmpty()) {
                 mUsapPoolRefillDelayMs = Integer.parseInt(usapPoolRefillDelayMsPropString);
@@ -316,7 +319,7 @@ class ZygoteServer {
         final long currentTimestamp = SystemClock.elapsedRealtime();
 
         if (mIsFirstPropertyCheck
-                || (currentTimestamp - mLastPropCheckTimestamp >= Zygote.PROPERTY_CHECK_INTERVAL)) {
+                || (currentTimestamp - mLastPropCheckTimestamp >= com.android.internal.os.Zygote.PROPERTY_CHECK_INTERVAL)) {
             mIsFirstPropertyCheck = false;
             mLastPropCheckTimestamp = currentTimestamp;
             fetchUsapPoolPolicyProps();
@@ -346,7 +349,7 @@ class ZygoteServer {
         // Ensure that the pool properties have been fetched.
         fetchUsapPoolPolicyPropsIfUnfetched();
 
-        int usapPoolCount = Zygote.getUsapPoolCount();
+        int usapPoolCount = com.android.internal.os.Zygote.getUsapPoolCount();
         int numUsapsToSpawn;
 
         if (isPriorityRefill) {
@@ -369,7 +372,7 @@ class ZygoteServer {
 
         while (--numUsapsToSpawn >= 0) {
             Runnable caller =
-                    Zygote.forkUsap(mUsapPoolSocket, sessionSocketRawFDs, isPriorityRefill);
+                    com.android.internal.os.Zygote.forkUsap(mUsapPoolSocket, sessionSocketRawFDs, isPriorityRefill);
 
             if (caller != null) {
                 return caller;
@@ -406,7 +409,7 @@ class ZygoteServer {
         if (newStatus) {
             return fillUsapPool(new int[]{ sessionSocket.getFileDescriptor().getInt$() }, false);
         } else {
-            Zygote.emptyUsapPool();
+            com.android.internal.os.Zygote.emptyUsapPool();
             return null;
         }
     }
@@ -423,7 +426,7 @@ class ZygoteServer {
      */
     Runnable runSelectLoop(String abiList) {
         ArrayList<FileDescriptor> socketFDs = new ArrayList<>();
-        ArrayList<ZygoteConnection> peers = new ArrayList<>();
+        ArrayList<com.android.internal.os.ZygoteConnection> peers = new ArrayList<>();
 
         socketFDs.add(mZygoteSocket.getFileDescriptor());
         peers.add(null);
@@ -441,7 +444,7 @@ class ZygoteServer {
             // the state of the USAP pool for this Zygote (could be a
             // regular Zygote, a WebView Zygote, or an AppZygote).
             if (mUsapPoolEnabled) {
-                usapPipeFDs = Zygote.getUsapPipeFDs();
+                usapPipeFDs = com.android.internal.os.Zygote.getUsapPipeFDs();
                 pollFDs = new StructPollfd[socketFDs.size() + 1 + usapPipeFDs.length];
             } else {
                 pollFDs = new StructPollfd[socketFDs.size()];
@@ -511,6 +514,7 @@ class ZygoteServer {
 
             int pollReturnValue;
             try {
+                // 有事件来临就处理，没有则阻塞在这里。
                 pollReturnValue = Os.poll(pollFDs, pollTimeoutMs);
             } catch (ErrnoException ex) {
                 throw new RuntimeException("poll failed", ex);
@@ -534,7 +538,7 @@ class ZygoteServer {
                     if (pollIndex == 0) {
                         // Zygote server socket
 
-                        ZygoteConnection newPeer = acceptCommandPeer(abiList);
+                        com.android.internal.os.ZygoteConnection newPeer = acceptCommandPeer(abiList);
                         peers.add(newPeer);
                         socketFDs.add(newPeer.getFileDescriptor());
 
@@ -542,7 +546,8 @@ class ZygoteServer {
                         // Session socket accepted from the Zygote server socket
 
                         try {
-                            ZygoteConnection connection = peers.get(pollIndex);
+                            com.android.internal.os.ZygoteConnection connection = peers.get(pollIndex);
+                            // fork() 进程
                             final Runnable command = connection.processOneCommand(this);
 
                             // TODO (chriswailes): Is this extra check necessary?
@@ -582,7 +587,7 @@ class ZygoteServer {
                                 // Make sure the socket is closed so that the other end knows
                                 // immediately that something has gone wrong and doesn't time out
                                 // waiting for a response.
-                                ZygoteConnection conn = peers.remove(pollIndex);
+                                com.android.internal.os.ZygoteConnection conn = peers.remove(pollIndex);
                                 conn.closeSocket();
 
                                 socketFDs.remove(pollIndex);
@@ -612,11 +617,11 @@ class ZygoteServer {
                         long messagePayload;
 
                         try {
-                            byte[] buffer = new byte[Zygote.USAP_MANAGEMENT_MESSAGE_BYTES];
+                            byte[] buffer = new byte[com.android.internal.os.Zygote.USAP_MANAGEMENT_MESSAGE_BYTES];
                             int readBytes =
                                     Os.read(pollFDs[pollIndex].fd, buffer, 0, buffer.length);
 
-                            if (readBytes == Zygote.USAP_MANAGEMENT_MESSAGE_BYTES) {
+                            if (readBytes == com.android.internal.os.Zygote.USAP_MANAGEMENT_MESSAGE_BYTES) {
                                 DataInputStream inputStream =
                                         new DataInputStream(new ByteArrayInputStream(buffer));
 
@@ -639,7 +644,7 @@ class ZygoteServer {
                         }
 
                         if (pollIndex > usapPoolEventFDIndex) {
-                            Zygote.removeUsapTableEntry((int) messagePayload);
+                            com.android.internal.os.Zygote.removeUsapTableEntry((int) messagePayload);
                         }
 
                         usapPoolFDRead = true;
@@ -647,7 +652,7 @@ class ZygoteServer {
                 }
 
                 if (usapPoolFDRead) {
-                    int usapPoolCount = Zygote.getUsapPoolCount();
+                    int usapPoolCount = com.android.internal.os.Zygote.getUsapPoolCount();
 
                     if (usapPoolCount < mUsapPoolSizeMin) {
                         // Immediate refill

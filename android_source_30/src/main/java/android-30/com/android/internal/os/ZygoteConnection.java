@@ -87,7 +87,7 @@ class ZygoteConnection {
         mSocketOutStream = new DataOutputStream(socket.getOutputStream());
         mSocketReader =
                 new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()), Zygote.SOCKET_BUFFER_SIZE);
+                        new InputStreamReader(socket.getInputStream()), com.android.internal.os.Zygote.SOCKET_BUFFER_SIZE);
 
         mSocket.setSoTimeout(CONNECTION_TIMEOUT_MILLIS);
 
@@ -118,11 +118,12 @@ class ZygoteConnection {
      * If the client closes the socket, an {@code EOF} condition is set, which callers can test
      * for by calling {@code ZygoteConnection.isClosedByPeer}.
      */
-    Runnable processOneCommand(ZygoteServer zygoteServer) {
+    Runnable processOneCommand(com.android.internal.os.ZygoteServer zygoteServer) {
         String[] args;
 
         try {
-            args = Zygote.readArgumentList(mSocketReader);
+            // 解析客户端发送过来的列表
+            args = com.android.internal.os.Zygote.readArgumentList(mSocketReader);
         } catch (IOException ex) {
             throw new IllegalStateException("IOException on command socket", ex);
         }
@@ -137,8 +138,8 @@ class ZygoteConnection {
         int pid;
         FileDescriptor childPipeFd = null;
         FileDescriptor serverPipeFd = null;
-
-        ZygoteArguments parsedArgs = new ZygoteArguments(args);
+        // 解析成参数专用的对象
+        com.android.internal.os.ZygoteArguments parsedArgs = new com.android.internal.os.ZygoteArguments(args);
 
         if (parsedArgs.mBootCompleted) {
             handleBootCompleted();
@@ -197,21 +198,21 @@ class ZygoteConnection {
         }
 
         if (parsedArgs.mPermittedCapabilities != 0 || parsedArgs.mEffectiveCapabilities != 0) {
-            throw new ZygoteSecurityException("Client may not specify capabilities: "
+            throw new com.android.internal.os.ZygoteSecurityException("Client may not specify capabilities: "
                     + "permitted=0x" + Long.toHexString(parsedArgs.mPermittedCapabilities)
                     + ", effective=0x" + Long.toHexString(parsedArgs.mEffectiveCapabilities));
         }
 
-        Zygote.applyUidSecurityPolicy(parsedArgs, peer);
-        Zygote.applyInvokeWithSecurityPolicy(parsedArgs, peer);
+        com.android.internal.os.Zygote.applyUidSecurityPolicy(parsedArgs, peer);
+        com.android.internal.os.Zygote.applyInvokeWithSecurityPolicy(parsedArgs, peer);
 
-        Zygote.applyDebuggerSystemProperty(parsedArgs);
-        Zygote.applyInvokeWithSystemProperty(parsedArgs);
+        com.android.internal.os.Zygote.applyDebuggerSystemProperty(parsedArgs);
+        com.android.internal.os.Zygote.applyInvokeWithSystemProperty(parsedArgs);
 
         int[][] rlimits = null;
 
         if (parsedArgs.mRLimits != null) {
-            rlimits = parsedArgs.mRLimits.toArray(Zygote.INT_ARRAY_2D);
+            rlimits = parsedArgs.mRLimits.toArray(com.android.internal.os.Zygote.INT_ARRAY_2D);
         }
 
         int[] fdsToIgnore = null;
@@ -253,8 +254,8 @@ class ZygoteConnection {
         if (fd != null) {
             fdsToClose[1] = fd.getInt$();
         }
-
-        pid = Zygote.forkAndSpecialize(parsedArgs.mUid, parsedArgs.mGid, parsedArgs.mGids,
+        // fork() 出进程
+        pid = com.android.internal.os.Zygote.forkAndSpecialize(parsedArgs.mUid, parsedArgs.mGid, parsedArgs.mGids,
                 parsedArgs.mRuntimeFlags, rlimits, parsedArgs.mMountExternal, parsedArgs.mSeInfo,
                 parsedArgs.mNiceName, fdsToClose, fdsToIgnore, parsedArgs.mStartChildZygote,
                 parsedArgs.mInstructionSet, parsedArgs.mAppDataDir, parsedArgs.mIsTopApp,
@@ -263,13 +264,14 @@ class ZygoteConnection {
 
         try {
             if (pid == 0) {
+                // 运行在新创建的进程
                 // in child
                 zygoteServer.setForkChild();
 
                 zygoteServer.closeServerSocket();
                 IoUtils.closeQuietly(serverPipeFd);
                 serverPipeFd = null;
-
+                // 处理子进程，
                 return handleChildProc(parsedArgs, childPipeFd, parsedArgs.mStartChildZygote);
             } else {
                 // In the parent. A pid < 0 indicates a failure and will be handled in
@@ -335,12 +337,12 @@ class ZygoteConnection {
         }
     }
 
-    private Runnable stateChangeWithUsapPoolReset(ZygoteServer zygoteServer,
-            Runnable stateChangeCode) {
+    private Runnable stateChangeWithUsapPoolReset(com.android.internal.os.ZygoteServer zygoteServer,
+                                                  Runnable stateChangeCode) {
         try {
             if (zygoteServer.isUsapPoolEnabled()) {
                 Log.i(TAG, "Emptying USAP Pool due to state change.");
-                Zygote.emptyUsapPool();
+                com.android.internal.os.Zygote.emptyUsapPool();
             }
 
             stateChangeCode.run();
@@ -380,12 +382,12 @@ class ZygoteConnection {
      * @return A Runnable object representing a new app in any USAPs spawned from here; the
      *         zygote process will always receive a null value from this function.
      */
-    private Runnable handleApiBlacklistExemptions(ZygoteServer zygoteServer, String[] exemptions) {
+    private Runnable handleApiBlacklistExemptions(com.android.internal.os.ZygoteServer zygoteServer, String[] exemptions) {
         return stateChangeWithUsapPoolReset(zygoteServer,
-                () -> ZygoteInit.setApiBlacklistExemptions(exemptions));
+                () -> com.android.internal.os.ZygoteInit.setApiBlacklistExemptions(exemptions));
     }
 
-    private Runnable handleUsapPoolStatusChange(ZygoteServer zygoteServer, boolean newStatus) {
+    private Runnable handleUsapPoolStatusChange(com.android.internal.os.ZygoteServer zygoteServer, boolean newStatus) {
         try {
             Runnable fpResult = zygoteServer.setUsapPoolStatus(newStatus, mSocket);
 
@@ -415,23 +417,23 @@ class ZygoteConnection {
      * @return A Runnable object representing a new app in any blastulas spawned from here; the
      *         zygote process will always receive a null value from this function.
      */
-    private Runnable handleHiddenApiAccessLogSampleRate(ZygoteServer zygoteServer,
-            int samplingRate, int statsdSamplingRate) {
+    private Runnable handleHiddenApiAccessLogSampleRate(com.android.internal.os.ZygoteServer zygoteServer,
+                                                        int samplingRate, int statsdSamplingRate) {
         return stateChangeWithUsapPoolReset(zygoteServer, () -> {
             int maxSamplingRate = Math.max(samplingRate, statsdSamplingRate);
-            ZygoteInit.setHiddenApiAccessLogSampleRate(maxSamplingRate);
-            StatsdHiddenApiUsageLogger.setHiddenApiAccessLogSampleRates(
+            com.android.internal.os.ZygoteInit.setHiddenApiAccessLogSampleRate(maxSamplingRate);
+            com.android.internal.os.StatsdHiddenApiUsageLogger.setHiddenApiAccessLogSampleRates(
                     samplingRate, statsdSamplingRate);
-            ZygoteInit.setHiddenApiUsageLogger(StatsdHiddenApiUsageLogger.getInstance());
+            com.android.internal.os.ZygoteInit.setHiddenApiUsageLogger(com.android.internal.os.StatsdHiddenApiUsageLogger.getInstance());
         });
     }
 
     protected void preload() {
-        ZygoteInit.lazyPreload();
+        com.android.internal.os.ZygoteInit.lazyPreload();
     }
 
     protected boolean isPreloadComplete() {
-        return ZygoteInit.isPreloadComplete();
+        return com.android.internal.os.ZygoteInit.isPreloadComplete();
     }
 
     protected DataOutputStream getSocketOutputStream() {
@@ -477,8 +479,8 @@ class ZygoteConnection {
      * @param pipeFd null-ok; pipe for communication back to Zygote.
      * @param isZygote whether this new child process is itself a new Zygote.
      */
-    private Runnable handleChildProc(ZygoteArguments parsedArgs,
-            FileDescriptor pipeFd, boolean isZygote) {
+    private Runnable handleChildProc(com.android.internal.os.ZygoteArguments parsedArgs,
+                                     FileDescriptor pipeFd, boolean isZygote) {
         /*
          * By the time we get here, the native code has closed the two actual Zygote
          * socket connections, and substituted /dev/null in their place.  The LocalSocket
@@ -487,12 +489,12 @@ class ZygoteConnection {
 
         closeSocket();
 
-        Zygote.setAppProcessName(parsedArgs, TAG);
+        com.android.internal.os.Zygote.setAppProcessName(parsedArgs, TAG);
 
         // End of the postFork event.
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
         if (parsedArgs.mInvokeWith != null) {
-            WrapperInit.execApplication(parsedArgs.mInvokeWith,
+            com.android.internal.os.WrapperInit.execApplication(parsedArgs.mInvokeWith,
                     parsedArgs.mNiceName, parsedArgs.mTargetSdkVersion,
                     VMRuntime.getCurrentInstructionSet(),
                     pipeFd, parsedArgs.mRemainingArgs);
@@ -501,11 +503,11 @@ class ZygoteConnection {
             throw new IllegalStateException("WrapperInit.execApplication unexpectedly returned");
         } else {
             if (!isZygote) {
-                return ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
+                return com.android.internal.os.ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mDisabledCompatChanges,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             } else {
-                return ZygoteInit.childZygoteInit(parsedArgs.mTargetSdkVersion,
+                return com.android.internal.os.ZygoteInit.childZygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             }
         }

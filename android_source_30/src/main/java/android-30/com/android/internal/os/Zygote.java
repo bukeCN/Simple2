@@ -339,6 +339,7 @@ public final class Zygote {
             int[] fdsToIgnore, boolean startChildZygote, String instructionSet, String appDataDir,
             boolean isTopApp, String[] pkgDataInfoList, String[] whitelistedDataInfoList,
             boolean bindMountAppDataDirs, boolean bindMountAppStorageDirs) {
+        // 停止 Zygote 的子线程，确保 Zygote 是单线程。
         ZygoteHooks.preFork();
 
         int pid = nativeForkAndSpecialize(
@@ -640,7 +641,7 @@ public final class Zygote {
         LocalSocket sessionSocket = null;
         DataOutputStream usapOutputStream = null;
         Credentials peerCredentials = null;
-        ZygoteArguments args = null;
+        com.android.internal.os.ZygoteArguments args = null;
 
         // Change the priority to max before calling accept so we can respond to new specialization
         // requests as quickly as possible.  This will be reverted to the default priority in the
@@ -664,7 +665,7 @@ public final class Zygote {
                 String[] argStrings = readArgumentList(usapReader);
 
                 if (argStrings != null) {
-                    args = new ZygoteArguments(argStrings);
+                    args = new com.android.internal.os.ZygoteArguments(argStrings);
 
                     // TODO (chriswailes): Should this only be run for debug builds?
                     validateUsapCommand(args);
@@ -758,7 +759,7 @@ public final class Zygote {
 
             Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
 
-            return ZygoteInit.zygoteInit(args.mTargetSdkVersion,
+            return com.android.internal.os.ZygoteInit.zygoteInit(args.mTargetSdkVersion,
                                          args.mDisabledCompatChanges,
                                          args.mRemainingArgs,
                                          null /* classLoader */);
@@ -786,7 +787,7 @@ public final class Zygote {
 
     private static native void nativeBoostUsapPriority();
 
-    static void setAppProcessName(ZygoteArguments args, String loggingTag) {
+    static void setAppProcessName(com.android.internal.os.ZygoteArguments args, String loggingTag) {
         if (args.mNiceName != null) {
             Process.setArgV0(args.mNiceName);
         } else if (args.mPackageName != null) {
@@ -803,7 +804,7 @@ public final class Zygote {
      * exception if an invalid arugment is encountered.
      * @param args  The arguments to test
      */
-    private static void validateUsapCommand(ZygoteArguments args) {
+    private static void validateUsapCommand(com.android.internal.os.ZygoteArguments args) {
         if (args.mAbiListQuery) {
             throw new IllegalArgumentException(USAP_ERROR_PREFIX + "--query-abi-list");
         } else if (args.mPidQuery) {
@@ -828,7 +829,7 @@ public final class Zygote {
         } else if (args.mInvokeWith != null) {
             throw new IllegalArgumentException(USAP_ERROR_PREFIX + "--invoke-with");
         } else if (args.mPermittedCapabilities != 0 || args.mEffectiveCapabilities != 0) {
-            throw new ZygoteSecurityException("Client may not specify capabilities: "
+            throw new com.android.internal.os.ZygoteSecurityException("Client may not specify capabilities: "
                 + "permitted=0x" + Long.toHexString(args.mPermittedCapabilities)
                 + ", effective=0x" + Long.toHexString(args.mEffectiveCapabilities));
         }
@@ -865,8 +866,8 @@ public final class Zygote {
      * @throws ZygoteSecurityException Indicates a security issue when applying the UID based
      *  security policies
      */
-    static void applyUidSecurityPolicy(ZygoteArguments args, Credentials peer)
-            throws ZygoteSecurityException {
+    static void applyUidSecurityPolicy(com.android.internal.os.ZygoteArguments args, Credentials peer)
+            throws com.android.internal.os.ZygoteSecurityException {
 
         if (peer.getUid() == Process.SYSTEM_UID) {
             /* In normal operation, SYSTEM_UID can only specify a restricted
@@ -875,7 +876,7 @@ public final class Zygote {
             boolean uidRestricted = FactoryTest.getMode() == FactoryTest.FACTORY_TEST_OFF;
 
             if (uidRestricted && args.mUidSpecified && (args.mUid < Process.SYSTEM_UID)) {
-                throw new ZygoteSecurityException(
+                throw new com.android.internal.os.ZygoteSecurityException(
                         "System UID may not launch process with UID < "
                         + Process.SYSTEM_UID);
             }
@@ -901,8 +902,8 @@ public final class Zygote {
      *
      * @param args non-null; zygote spawner args
      */
-    static void applyDebuggerSystemProperty(ZygoteArguments args) {
-        if (RoSystemProperties.DEBUGGABLE) {
+    static void applyDebuggerSystemProperty(com.android.internal.os.ZygoteArguments args) {
+        if (com.android.internal.os.RoSystemProperties.DEBUGGABLE) {
             args.mRuntimeFlags |= Zygote.DEBUG_ENABLE_JDWP;
         }
     }
@@ -921,13 +922,13 @@ public final class Zygote {
      * @throws ZygoteSecurityException Thrown when `--invoke-with` is specified for a non-debuggable
      *  application.
      */
-    static void applyInvokeWithSecurityPolicy(ZygoteArguments args, Credentials peer)
-            throws ZygoteSecurityException {
+    static void applyInvokeWithSecurityPolicy(com.android.internal.os.ZygoteArguments args, Credentials peer)
+            throws com.android.internal.os.ZygoteSecurityException {
         int peerUid = peer.getUid();
 
         if (args.mInvokeWith != null && peerUid != 0
                 && (args.mRuntimeFlags & Zygote.DEBUG_ENABLE_JDWP) == 0) {
-            throw new ZygoteSecurityException("Peer is permitted to specify an "
+            throw new com.android.internal.os.ZygoteSecurityException("Peer is permitted to specify an "
                 + "explicit invoke-with wrapper command only for debuggable "
                 + "applications.");
         }
@@ -957,7 +958,7 @@ public final class Zygote {
      *
      * @param args non-null; zygote args
      */
-    static void applyInvokeWithSystemProperty(ZygoteArguments args) {
+    static void applyInvokeWithSystemProperty(com.android.internal.os.ZygoteArguments args) {
         if (args.mInvokeWith == null) {
             args.mInvokeWith = getWrapProperty(args.mNiceName);
         }

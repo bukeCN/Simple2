@@ -281,7 +281,7 @@ public class ZygoteInit {
 
         try {
             BufferedReader br =
-                    new BufferedReader(new InputStreamReader(is), Zygote.SOCKET_BUFFER_SIZE);
+                    new BufferedReader(new InputStreamReader(is), com.android.internal.os.Zygote.SOCKET_BUFFER_SIZE);
 
             int count = 0;
             String line;
@@ -498,7 +498,7 @@ public class ZygoteInit {
     /**
      * Finish remaining work for the newly forked system server process.
      */
-    private static Runnable handleSystemServerProcess(ZygoteArguments parsedArgs) {
+    private static Runnable handleSystemServerProcess(com.android.internal.os.ZygoteArguments parsedArgs) {
         // set umask to 0077 so new files and directories will default to owner-only permissions.
         Os.umask(S_IRWXG | S_IRWXO);
 
@@ -522,6 +522,7 @@ public class ZygoteInit {
         }
 
         if (parsedArgs.mInvokeWith != null) {
+            // 默认为空，走 ZygoteInit.init 流程
             String[] args = parsedArgs.mRemainingArgs;
             // If we have a non-null system server class path, we'll have to duplicate the
             // existing arguments and append the classpath to it. ART will handle the classpath
@@ -534,7 +535,7 @@ public class ZygoteInit {
                 args = amendedArgs;
             }
 
-            WrapperInit.execApplication(parsedArgs.mInvokeWith,
+            com.android.internal.os.WrapperInit.execApplication(parsedArgs.mInvokeWith,
                     parsedArgs.mNiceName, parsedArgs.mTargetSdkVersion,
                     VMRuntime.getCurrentInstructionSet(), null, args);
 
@@ -549,6 +550,7 @@ public class ZygoteInit {
 
             /*
              * Pass the remaining arguments to SystemServer.
+             * 后续都是为了调用 SystemServer.java 中的 main() 函数。
              */
             return ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
                     parsedArgs.mDisabledCompatChanges,
@@ -616,7 +618,7 @@ public class ZygoteInit {
         // We use the boot class loader, that's what the runtime expects at AOT.
         ClassLoader parent = ClassLoader.getSystemClassLoader().getParent();
 
-        return ClassLoaderFactory.createClassLoader(classPath, libraryPath, libraryPath,
+        return com.android.internal.os.ClassLoaderFactory.createClassLoader(classPath, libraryPath, libraryPath,
                 parent, targetSdkVersion, true /* isNamespaceShared */, null /* classLoaderName */);
     }
 
@@ -715,7 +717,7 @@ public class ZygoteInit {
      * process; {@code null} in the parent.
      */
     private static Runnable forkSystemServer(String abiList, String socketName,
-            ZygoteServer zygoteServer) {
+            com.android.internal.os.ZygoteServer zygoteServer) {
         long capabilities = posixCapabilitiesAsBits(
                 OsConstants.CAP_IPC_LOCK,
                 OsConstants.CAP_KILL,
@@ -752,33 +754,34 @@ public class ZygoteInit {
                 "--nice-name=system_server",
                 "--runtime-args",
                 "--target-sdk-version=" + VMRuntime.SDK_VERSION_CUR_DEVELOPMENT,
-                "com.android.server.SystemServer",
+                "com.android.server.SystemServer",// 注意这个全路径限定
         };
-        ZygoteArguments parsedArgs = null;
+        com.android.internal.os.ZygoteArguments parsedArgs = null;
 
         int pid;
 
         try {
-            parsedArgs = new ZygoteArguments(args);
-            Zygote.applyDebuggerSystemProperty(parsedArgs);
-            Zygote.applyInvokeWithSystemProperty(parsedArgs);
+            parsedArgs = new com.android.internal.os.ZygoteArguments(args);
+            com.android.internal.os.Zygote.applyDebuggerSystemProperty(parsedArgs);
+            com.android.internal.os.Zygote.applyInvokeWithSystemProperty(parsedArgs);
 
-            if (Zygote.nativeSupportsTaggedPointers()) {
+            if (com.android.internal.os.Zygote.nativeSupportsTaggedPointers()) {
                 /* Enable pointer tagging in the system server. Hardware support for this is present
                  * in all ARMv8 CPUs. */
-                parsedArgs.mRuntimeFlags |= Zygote.MEMORY_TAG_LEVEL_TBI;
+                parsedArgs.mRuntimeFlags |= com.android.internal.os.Zygote.MEMORY_TAG_LEVEL_TBI;
             }
 
             /* Enable gwp-asan on the system server with a small probability. This is the same
              * policy as applied to native processes and system apps. */
-            parsedArgs.mRuntimeFlags |= Zygote.GWP_ASAN_LEVEL_LOTTERY;
+            parsedArgs.mRuntimeFlags |= com.android.internal.os.Zygote.GWP_ASAN_LEVEL_LOTTERY;
 
             if (shouldProfileSystemServer()) {
-                parsedArgs.mRuntimeFlags |= Zygote.PROFILE_SYSTEM_SERVER;
+                parsedArgs.mRuntimeFlags |= com.android.internal.os.Zygote.PROFILE_SYSTEM_SERVER;
             }
 
             /* Request to fork the system server process */
-            pid = Zygote.forkSystemServer(
+            // fork() 出 SystemServer 进程
+            pid = com.android.internal.os.Zygote.forkSystemServer(
                     parsedArgs.mUid, parsedArgs.mGid,
                     parsedArgs.mGids,
                     parsedArgs.mRuntimeFlags,
@@ -791,11 +794,13 @@ public class ZygoteInit {
 
         /* For child process */
         if (pid == 0) {
+            // 子进程 fork() 成功
             if (hasSecondZygote(abiList)) {
                 waitForSecondaryZygote(socketName);
             }
 
             zygoteServer.closeServerSocket();
+            // 处理 systemserver 进程
             return handleSystemServerProcess(parsedArgs);
         }
 
@@ -830,7 +835,7 @@ public class ZygoteInit {
      */
     @UnsupportedAppUsage
     public static void main(String argv[]) {
-        ZygoteServer zygoteServer = null;
+        com.android.internal.os.ZygoteServer zygoteServer = null;
 
         // Mark zygote start. This ensures that thread creation will throw
         // an error.
@@ -854,7 +859,8 @@ public class ZygoteInit {
             TimingsTraceLog bootTimingsTraceLog = new TimingsTraceLog(bootTimeTag,
                     Trace.TRACE_TAG_DALVIK);
             bootTimingsTraceLog.traceBegin("ZygoteInit");
-            RuntimeInit.preForkInit();
+            // fork() SystemServer 进程前的准备
+            com.android.internal.os.RuntimeInit.preForkInit();
 
             boolean startSystemServer = false;
             String zygoteSocketName = "zygote";
@@ -874,13 +880,13 @@ public class ZygoteInit {
                 }
             }
 
-            final boolean isPrimaryZygote = zygoteSocketName.equals(Zygote.PRIMARY_SOCKET_NAME);
+            final boolean isPrimaryZygote = zygoteSocketName.equals(com.android.internal.os.Zygote.PRIMARY_SOCKET_NAME);
             if (!isRuntimeRestarted) {
                 if (isPrimaryZygote) {
                     FrameworkStatsLog.write(FrameworkStatsLog.BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
                             BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ZYGOTE_INIT_START,
                             startTime);
-                } else if (zygoteSocketName.equals(Zygote.SECONDARY_SOCKET_NAME)) {
+                } else if (zygoteSocketName.equals(com.android.internal.os.Zygote.SECONDARY_SOCKET_NAME)) {
                     FrameworkStatsLog.write(FrameworkStatsLog.BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
                             BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__SECONDARY_ZYGOTE_INIT_START,
                             startTime);
@@ -897,6 +903,7 @@ public class ZygoteInit {
                 bootTimingsTraceLog.traceBegin("ZygotePreload");
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
                         SystemClock.uptimeMillis());
+                // 预加载
                 preload(bootTimingsTraceLog);
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
                         SystemClock.uptimeMillis());
@@ -910,15 +917,16 @@ public class ZygoteInit {
 
             bootTimingsTraceLog.traceEnd(); // ZygoteInit
 
-            Zygote.initNativeState(isPrimaryZygote);
+            com.android.internal.os.Zygote.initNativeState(isPrimaryZygote);
 
             ZygoteHooks.stopZygoteNoThreadCreation();
-
-            zygoteServer = new ZygoteServer(isPrimaryZygote);
+            // zygoteserver 注册 socket 服务。
+            zygoteServer = new com.android.internal.os.ZygoteServer(isPrimaryZygote);
 
             if (startSystemServer) {
+                // fork 进程，运行 SystemServer
                 Runnable r = forkSystemServer(abiList, zygoteSocketName, zygoteServer);
-
+                // 注意 fork() 后续代码父进程和子进程都会运行。下面英文注释意思：父进程 r == null 子进程 r != null
                 // {@code r == null} in the parent (zygote) process, and {@code r != null} in the
                 // child (system_server) process.
                 if (r != null) {
@@ -931,6 +939,7 @@ public class ZygoteInit {
 
             // The select loop returns early in the child process after a fork and
             // loops forever in the zygote.
+            // 进入死循环
             caller = zygoteServer.runSelectLoop(abiList);
         } catch (Throwable ex) {
             Log.e(TAG, "System zygote died with exception", ex);
@@ -959,8 +968,8 @@ public class ZygoteInit {
     }
 
     private static void waitForSecondaryZygote(String socketName) {
-        String otherZygoteName = Zygote.PRIMARY_SOCKET_NAME.equals(socketName)
-                ? Zygote.SECONDARY_SOCKET_NAME : Zygote.PRIMARY_SOCKET_NAME;
+        String otherZygoteName = com.android.internal.os.Zygote.PRIMARY_SOCKET_NAME.equals(socketName)
+                ? com.android.internal.os.Zygote.SECONDARY_SOCKET_NAME : com.android.internal.os.Zygote.PRIMARY_SOCKET_NAME;
         ZygoteProcess.waitForConnectionToZygote(otherZygoteName);
     }
 
@@ -990,16 +999,18 @@ public class ZygoteInit {
      */
     public static final Runnable zygoteInit(int targetSdkVersion, long[] disabledCompatChanges,
             String[] argv, ClassLoader classLoader) {
-        if (RuntimeInit.DEBUG) {
-            Slog.d(RuntimeInit.TAG, "RuntimeInit: Starting application from zygote");
+        if (com.android.internal.os.RuntimeInit.DEBUG) {
+            Slog.d(com.android.internal.os.RuntimeInit.TAG, "RuntimeInit: Starting application from zygote");
         }
 
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "ZygoteInit");
-        RuntimeInit.redirectLogStreams();
+        com.android.internal.os.RuntimeInit.redirectLogStreams();
 
-        RuntimeInit.commonInit();
+        com.android.internal.os.RuntimeInit.commonInit();
+        // 初始化 zygoteinit
         ZygoteInit.nativeZygoteInit();
-        return RuntimeInit.applicationInit(targetSdkVersion, disabledCompatChanges, argv,
+        // Runtime 初始化, 目的是调用 SystemServer 的 main() 函数。
+        return com.android.internal.os.RuntimeInit.applicationInit(targetSdkVersion, disabledCompatChanges, argv,
                 classLoader);
     }
 
@@ -1010,8 +1021,8 @@ public class ZygoteInit {
      */
     static final Runnable childZygoteInit(
             int targetSdkVersion, String[] argv, ClassLoader classLoader) {
-        RuntimeInit.Arguments args = new RuntimeInit.Arguments(argv);
-        return RuntimeInit.findStaticMain(args.startClass, args.startArgs, classLoader);
+        com.android.internal.os.RuntimeInit.Arguments args = new com.android.internal.os.RuntimeInit.Arguments(argv);
+        return com.android.internal.os.RuntimeInit.findStaticMain(args.startClass, args.startArgs, classLoader);
     }
 
     private static final native void nativeZygoteInit();
