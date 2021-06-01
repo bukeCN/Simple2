@@ -1004,10 +1004,11 @@ public class ZygoteInit {
         }
 
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "ZygoteInit");
-        com.android.internal.os.RuntimeInit.redirectLogStreams();
+        com.android.internal.os.RuntimeInit.redirectLogStreams();// 重定向 log 输出
 
         com.android.internal.os.RuntimeInit.commonInit();
         // 初始化 zygoteinit
+        // 调用 AndroidRuntime.cpp / app_main.cpp 打开 binder 驱动，启动 binder 线程。
         ZygoteInit.nativeZygoteInit();
         // Runtime 初始化, 目的是调用 SystemServer 的 main() 函数。
         return com.android.internal.os.RuntimeInit.applicationInit(targetSdkVersion, disabledCompatChanges, argv,

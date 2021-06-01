@@ -91,6 +91,7 @@ import android.transition.TransitionManager;
 import android.util.ArrayMap;
 import android.util.AttributeSet;
 import android.util.EventLog;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.util.PrintWriterPrinter;
 import android.util.Slog;
@@ -811,7 +812,7 @@ public class Activity extends ContextThemeWrapper
     @UnsupportedAppUsage
     /*package*/ ActivityInfo mActivityInfo;
     @UnsupportedAppUsage
-    /*package*/ ActivityThread mMainThread;
+    /*package*/ android.app.ActivityThread mMainThread;
     @UnsupportedAppUsage(trackingBug = 137825207, maxTargetSdk = Build.VERSION_CODES.Q,
             publicAlternatives = "Use {@code androidx.fragment.app.Fragment} and "
                     + "{@code androidx.fragment.app.FragmentManager} instead")
@@ -932,7 +933,7 @@ public class Activity extends ContextThemeWrapper
     private Thread mUiThread;
 
     @UnsupportedAppUsage
-    ActivityTransitionState mActivityTransitionState = new ActivityTransitionState();
+    android.app.ActivityTransitionState mActivityTransitionState = new android.app.ActivityTransitionState();
     SharedElementCallback mEnterTransitionListener = SharedElementCallback.NULL_CALLBACK;
     SharedElementCallback mExitTransitionListener = SharedElementCallback.NULL_CALLBACK;
 
@@ -962,7 +963,7 @@ public class Activity extends ContextThemeWrapper
          */
         @Override
         public void toggleFreeformWindowingMode() throws RemoteException {
-            ActivityTaskManager.getService().toggleFreeformWindowingMode(mToken);
+            android.app.ActivityTaskManager.getService().toggleFreeformWindowingMode(mToken);
         }
 
         /**
@@ -980,7 +981,7 @@ public class Activity extends ContextThemeWrapper
         @Override
         public boolean isTaskRoot() {
             try {
-                return ActivityTaskManager.getService().getTaskForActivity(mToken, true) >= 0;
+                return android.app.ActivityTaskManager.getService().getTaskForActivity(mToken, true) >= 0;
             } catch (RemoteException e) {
                 return false;
             }
@@ -2051,7 +2052,7 @@ public class Activity extends ContextThemeWrapper
     public boolean isVoiceInteractionRoot() {
         try {
             return mVoiceInteractor != null
-                    && ActivityTaskManager.getService().isRootVoiceInteraction(mToken);
+                    && android.app.ActivityTaskManager.getService().isRootVoiceInteraction(mToken);
         } catch (RemoteException e) {
         }
         return false;
@@ -2074,7 +2075,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean isLocalVoiceInteractionSupported() {
         try {
-            return ActivityTaskManager.getService().supportsLocalVoiceInteraction();
+            return android.app.ActivityTaskManager.getService().supportsLocalVoiceInteraction();
         } catch (RemoteException re) {
         }
         return false;
@@ -2088,7 +2089,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void startLocalVoiceInteraction(Bundle privateOptions) {
         try {
-            ActivityTaskManager.getService().startLocalVoiceInteraction(mToken, privateOptions);
+            android.app.ActivityTaskManager.getService().startLocalVoiceInteraction(mToken, privateOptions);
         } catch (RemoteException re) {
         }
     }
@@ -2117,7 +2118,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void stopLocalVoiceInteraction() {
         try {
-            ActivityTaskManager.getService().stopLocalVoiceInteraction(mToken);
+            android.app.ActivityTaskManager.getService().stopLocalVoiceInteraction(mToken);
         } catch (RemoteException re) {
         }
     }
@@ -2562,7 +2563,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean showAssist(Bundle args) {
         try {
-            return ActivityTaskManager.getService().showAssistFromActivity(mToken, args);
+            return android.app.ActivityTaskManager.getService().showAssistFromActivity(mToken, args);
         } catch (RemoteException e) {
         }
         return false;
@@ -2701,7 +2702,7 @@ public class Activity extends ContextThemeWrapper
         if (mDoReportFullyDrawn) {
             mDoReportFullyDrawn = false;
             try {
-                ActivityTaskManager.getService().reportActivityFullyDrawn(
+                android.app.ActivityTaskManager.getService().reportActivityFullyDrawn(
                         mToken, mRestoredFromBundle);
                 VMRuntime.getRuntime().notifyStartupCompleted();
             } catch (RemoteException e) {
@@ -2847,7 +2848,7 @@ public class Activity extends ContextThemeWrapper
             // onPictureInPictureModeChanged callback here. This is to ensure that
             // isInPictureInPictureMode returns true in the following onPause callback.
             // See https://developer.android.com/guide/topics/ui/picture-in-picture for guidance.
-            mIsInPictureInPictureMode = ActivityTaskManager.getService().enterPictureInPictureMode(
+            mIsInPictureInPictureMode = android.app.ActivityTaskManager.getService().enterPictureInPictureMode(
                     mToken, params);
             return mIsInPictureInPictureMode;
         } catch (RemoteException e) {
@@ -2869,7 +2870,7 @@ public class Activity extends ContextThemeWrapper
             if (params == null) {
                 throw new IllegalArgumentException("Expected non-null picture-in-picture params");
             }
-            ActivityTaskManager.getService().setPictureInPictureParams(mToken, params);
+            android.app.ActivityTaskManager.getService().setPictureInPictureParams(mToken, params);
         } catch (RemoteException e) {
         }
     }
@@ -2882,7 +2883,7 @@ public class Activity extends ContextThemeWrapper
      */
     public int getMaxNumPictureInPictureActions() {
         try {
-            return ActivityTaskManager.getService().getMaxNumPictureInPictureActions(mToken);
+            return android.app.ActivityTaskManager.getService().getMaxNumPictureInPictureActions(mToken);
         } catch (RemoteException e) {
             return 0;
         }
@@ -3837,7 +3838,7 @@ public class Activity extends ContextThemeWrapper
             // Inform activity task manager that the activity received a back press
             // while at the root of the task. This call allows ActivityTaskManager
             // to intercept or defer finishing.
-            ActivityTaskManager.getService().onBackPressedOnTaskRoot(mToken,
+            android.app.ActivityTaskManager.getService().onBackPressedOnTaskRoot(mToken,
                     new RequestFinishCallback(new WeakReference<>(this)));
         } catch (RemoteException e) {
             finishAfterTransition();
@@ -5315,7 +5316,9 @@ public class Activity extends ContextThemeWrapper
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
             @Nullable Bundle options) {
         if (mParent == null) {
+            // 参数处理
             options = transferSpringboardActivityOptions(options);
+            // 转调用
             Instrumentation.ActivityResult ar =
                 mInstrumentation.execStartActivity(
                     this, mMainThread.getApplicationThread(), mToken, this,
@@ -5571,7 +5574,7 @@ public class Activity extends ContextThemeWrapper
                 fillInIntent.prepareToLeaveProcess(this);
                 resolvedType = fillInIntent.resolveTypeIfNeeded(getContentResolver());
             }
-            int result = ActivityTaskManager.getService()
+            int result = android.app.ActivityTaskManager.getService()
                 .startActivityIntentSender(mMainThread.getApplicationThread(),
                         intent != null ? intent.getTarget() : null,
                         intent != null ? intent.getWhitelistToken() : null,
@@ -5824,7 +5827,7 @@ public class Activity extends ContextThemeWrapper
                 }
                 intent.migrateExtraStreamToClipData(this);
                 intent.prepareToLeaveProcess(this);
-                result = ActivityTaskManager.getService()
+                result = android.app.ActivityTaskManager.getService()
                     .startActivity(mMainThread.getApplicationThread(), getBasePackageName(),
                             getAttributionTag(), intent,
                             intent.resolveTypeIfNeeded(getContentResolver()), mToken, mEmbeddedID,
@@ -5895,7 +5898,7 @@ public class Activity extends ContextThemeWrapper
             try {
                 intent.migrateExtraStreamToClipData(this);
                 intent.prepareToLeaveProcess(this);
-                return ActivityTaskManager.getService()
+                return android.app.ActivityTaskManager.getService()
                     .startNextMatchingActivity(mToken, intent, options);
             } catch (RemoteException e) {
                 // Empty
@@ -6119,7 +6122,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void overridePendingTransition(int enterAnim, int exitAnim) {
         try {
-            ActivityTaskManager.getService().overridePendingTransition(
+            android.app.ActivityTaskManager.getService().overridePendingTransition(
                     mToken, getPackageName(), enterAnim, exitAnim);
         } catch (RemoteException e) {
         }
@@ -6244,7 +6247,7 @@ public class Activity extends ContextThemeWrapper
     @Nullable
     public String getCallingPackage() {
         try {
-            return ActivityTaskManager.getService().getCallingPackage(mToken);
+            return android.app.ActivityTaskManager.getService().getCallingPackage(mToken);
         } catch (RemoteException e) {
             return null;
         }
@@ -6267,7 +6270,7 @@ public class Activity extends ContextThemeWrapper
     @Nullable
     public ComponentName getCallingActivity() {
         try {
-            return ActivityTaskManager.getService().getCallingActivity(mToken);
+            return android.app.ActivityTaskManager.getService().getCallingActivity(mToken);
         } catch (RemoteException e) {
             return null;
         }
@@ -6372,7 +6375,7 @@ public class Activity extends ContextThemeWrapper
                 if (resultData != null) {
                     resultData.prepareToLeaveProcess(this);
                 }
-                if (ActivityTaskManager.getService()
+                if (android.app.ActivityTaskManager.getService()
                         .finishActivity(mToken, resultCode, resultData, finishTask)) {
                     mFinished = true;
                 }
@@ -6434,7 +6437,7 @@ public class Activity extends ContextThemeWrapper
             throw new IllegalStateException("Can not be called to deliver a result");
         }
         try {
-            if (ActivityTaskManager.getService().finishActivityAffinity(mToken)) {
+            if (android.app.ActivityTaskManager.getService().finishActivityAffinity(mToken)) {
                 mFinished = true;
             }
         } catch (RemoteException e) {
@@ -6482,7 +6485,7 @@ public class Activity extends ContextThemeWrapper
     public void finishActivity(int requestCode) {
         if (mParent == null) {
             try {
-                ActivityTaskManager.getService()
+                android.app.ActivityTaskManager.getService()
                     .finishSubActivity(mToken, mEmbeddedID, requestCode);
             } catch (RemoteException e) {
                 // Empty
@@ -6504,7 +6507,7 @@ public class Activity extends ContextThemeWrapper
     @Deprecated
     public void finishActivityFromChild(@NonNull Activity child, int requestCode) {
         try {
-            ActivityTaskManager.getService()
+            android.app.ActivityTaskManager.getService()
                 .finishSubActivity(mToken, child.mEmbeddedID, requestCode);
         } catch (RemoteException e) {
             // Empty
@@ -6532,7 +6535,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean releaseInstance() {
         try {
-            return ActivityTaskManager.getService().releaseActivityInstance(mToken);
+            return android.app.ActivityTaskManager.getService().releaseActivityInstance(mToken);
         } catch (RemoteException e) {
             // Empty
         }
@@ -6649,7 +6652,7 @@ public class Activity extends ContextThemeWrapper
     public void setRequestedOrientation(@ActivityInfo.ScreenOrientation int requestedOrientation) {
         if (mParent == null) {
             try {
-                ActivityTaskManager.getService().setRequestedOrientation(
+                android.app.ActivityTaskManager.getService().setRequestedOrientation(
                         mToken, requestedOrientation);
             } catch (RemoteException e) {
                 // Empty
@@ -6672,7 +6675,7 @@ public class Activity extends ContextThemeWrapper
     public int getRequestedOrientation() {
         if (mParent == null) {
             try {
-                return ActivityTaskManager.getService()
+                return android.app.ActivityTaskManager.getService()
                         .getRequestedOrientation(mToken);
             } catch (RemoteException e) {
                 // Empty
@@ -6691,7 +6694,7 @@ public class Activity extends ContextThemeWrapper
      */
     public int getTaskId() {
         try {
-            return ActivityTaskManager.getService().getTaskForActivity(mToken, false);
+            return android.app.ActivityTaskManager.getService().getTaskForActivity(mToken, false);
         } catch (RemoteException e) {
             return -1;
         }
@@ -6720,7 +6723,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean moveTaskToBack(boolean nonRoot) {
         try {
-            return ActivityTaskManager.getService().moveActivityTaskToBack(mToken, nonRoot);
+            return android.app.ActivityTaskManager.getService().moveActivityTaskToBack(mToken, nonRoot);
         } catch (RemoteException e) {
             // Empty
         }
@@ -6901,7 +6904,7 @@ public class Activity extends ContextThemeWrapper
             }
         }
         try {
-            ActivityTaskManager.getService().setTaskDescription(mToken, mTaskDescription);
+            android.app.ActivityTaskManager.getService().setTaskDescription(mToken, mTaskDescription);
         } catch (RemoteException e) {
         }
     }
@@ -7179,7 +7182,7 @@ public class Activity extends ContextThemeWrapper
         dumpAutofillManager(prefix, writer);
         dumpContentCaptureManager(prefix, writer);
 
-        ResourcesManager.getInstance().dump(prefix, writer);
+        android.app.ResourcesManager.getInstance().dump(prefix, writer);
     }
 
     void dumpAutofillManager(String prefix, PrintWriter writer) {
@@ -7215,7 +7218,7 @@ public class Activity extends ContextThemeWrapper
      */
     public boolean isImmersive() {
         try {
-            return ActivityTaskManager.getService().isImmersive(mToken);
+            return android.app.ActivityTaskManager.getService().isImmersive(mToken);
         } catch (RemoteException e) {
             return false;
         }
@@ -7233,7 +7236,7 @@ public class Activity extends ContextThemeWrapper
             return false;
         }
         try {
-            return ActivityTaskManager.getService().isTopOfTask(getActivityToken());
+            return android.app.ActivityTaskManager.getService().isTopOfTask(getActivityToken());
         } catch (RemoteException e) {
             return false;
         }
@@ -7277,7 +7280,7 @@ public class Activity extends ContextThemeWrapper
     private boolean convertFromTranslucentInternal() {
         try {
             mTranslucentCallback = null;
-            if (ActivityTaskManager.getService().convertFromTranslucent(mToken)) {
+            if (android.app.ActivityTaskManager.getService().convertFromTranslucent(mToken)) {
                 WindowManagerGlobal.getInstance().changeCanvasOpacity(mToken, true);
                 return true;
             }
@@ -7314,7 +7317,7 @@ public class Activity extends ContextThemeWrapper
         boolean drawComplete;
         try {
             mTranslucentCallback = callback;
-            mChangeCanvasToTranslucent = ActivityTaskManager.getService().convertToTranslucent(
+            mChangeCanvasToTranslucent = android.app.ActivityTaskManager.getService().convertToTranslucent(
                     mToken, options == null ? null : options.toBundle());
             WindowManagerGlobal.getInstance().changeCanvasOpacity(mToken, false);
             drawComplete = true;
@@ -7361,7 +7364,7 @@ public class Activity extends ContextThemeWrapper
     ActivityOptions getActivityOptions() {
         try {
             return ActivityOptions.fromBundle(
-                    ActivityTaskManager.getService().getActivityOptions(mToken));
+                    android.app.ActivityTaskManager.getService().getActivityOptions(mToken));
         } catch (RemoteException e) {
         }
         return null;
@@ -7509,7 +7512,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void setImmersive(boolean i) {
         try {
-            ActivityTaskManager.getService().setImmersive(mToken, i);
+            android.app.ActivityTaskManager.getService().setImmersive(mToken, i);
         } catch (RemoteException e) {
             // pass
         }
@@ -7572,7 +7575,7 @@ public class Activity extends ContextThemeWrapper
     public void setVrModeEnabled(boolean enabled, @NonNull ComponentName requestedComponent)
           throws PackageManager.NameNotFoundException {
         try {
-            if (ActivityTaskManager.getService().setVrMode(mToken, enabled, requestedComponent)
+            if (android.app.ActivityTaskManager.getService().setVrMode(mToken, enabled, requestedComponent)
                     != 0) {
                 throw new PackageManager.NameNotFoundException(
                         requestedComponent.flattenToString());
@@ -7693,7 +7696,7 @@ public class Activity extends ContextThemeWrapper
             if (info.taskAffinity == null) {
                 return false;
             }
-            return ActivityTaskManager.getService().shouldUpRecreateTask(mToken, info.taskAffinity);
+            return android.app.ActivityTaskManager.getService().shouldUpRecreateTask(mToken, info.taskAffinity);
         } catch (RemoteException e) {
             return false;
         } catch (NameNotFoundException e) {
@@ -7745,7 +7748,7 @@ public class Activity extends ContextThemeWrapper
             }
             try {
                 upIntent.prepareToLeaveProcess(this);
-                return ActivityTaskManager.getService().navigateUpTo(mToken, upIntent,
+                return android.app.ActivityTaskManager.getService().navigateUpTo(mToken, upIntent,
                         resultCode, resultData);
             } catch (RemoteException e) {
                 return false;
@@ -7889,7 +7892,7 @@ public class Activity extends ContextThemeWrapper
     }
 
     @UnsupportedAppUsage
-    final void attach(Context context, ActivityThread aThread,
+    final void attach(Context context, android.app.ActivityThread aThread,
             Instrumentation instr, IBinder token, int ident,
             Application application, Intent intent, ActivityInfo info,
             CharSequence title, Activity parent, String id,
@@ -7976,7 +7979,7 @@ public class Activity extends ContextThemeWrapper
 
     /** @hide */
     @VisibleForTesting
-    public final ActivityThread getActivityThread() {
+    public final android.app.ActivityThread getActivityThread() {
         return mMainThread;
     }
 
@@ -8366,7 +8369,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void startLockTask() {
         try {
-            ActivityTaskManager.getService().startLockTaskModeByToken(mToken);
+            android.app.ActivityTaskManager.getService().startLockTaskModeByToken(mToken);
         } catch (RemoteException e) {
         }
     }
@@ -8389,7 +8392,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void stopLockTask() {
         try {
-            ActivityTaskManager.getService().stopLockTaskModeByToken(mToken);
+            android.app.ActivityTaskManager.getService().stopLockTaskModeByToken(mToken);
         } catch (RemoteException e) {
         }
     }
@@ -8401,7 +8404,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void showLockTaskEscapeMessage() {
         try {
-            ActivityTaskManager.getService().showLockTaskEscapeMessage(mToken);
+            android.app.ActivityTaskManager.getService().showLockTaskEscapeMessage(mToken);
         } catch (RemoteException e) {
         }
     }
@@ -8672,7 +8675,7 @@ public class Activity extends ContextThemeWrapper
     @UnsupportedAppUsage
     public void setDisablePreviewScreenshots(boolean disable) {
         try {
-            ActivityTaskManager.getService().setDisablePreviewScreenshots(mToken, disable);
+            android.app.ActivityTaskManager.getService().setDisablePreviewScreenshots(mToken, disable);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
@@ -8693,7 +8696,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void setShowWhenLocked(boolean showWhenLocked) {
         try {
-            ActivityTaskManager.getService().setShowWhenLocked(mToken, showWhenLocked);
+            android.app.ActivityTaskManager.getService().setShowWhenLocked(mToken, showWhenLocked);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
@@ -8716,7 +8719,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void setInheritShowWhenLocked(boolean inheritShowWhenLocked) {
         try {
-            ActivityTaskManager.getService().setInheritShowWhenLocked(
+            android.app.ActivityTaskManager.getService().setInheritShowWhenLocked(
                     mToken, inheritShowWhenLocked);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
@@ -8743,7 +8746,7 @@ public class Activity extends ContextThemeWrapper
      */
     public void setTurnScreenOn(boolean turnScreenOn) {
         try {
-            ActivityTaskManager.getService().setTurnScreenOn(mToken, turnScreenOn);
+            android.app.ActivityTaskManager.getService().setTurnScreenOn(mToken, turnScreenOn);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
@@ -8759,7 +8762,7 @@ public class Activity extends ContextThemeWrapper
     @RequiresPermission(CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS)
     public void registerRemoteAnimations(RemoteAnimationDefinition definition) {
         try {
-            ActivityTaskManager.getService().registerRemoteAnimations(mToken, definition);
+            android.app.ActivityTaskManager.getService().registerRemoteAnimations(mToken, definition);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
@@ -8773,7 +8776,7 @@ public class Activity extends ContextThemeWrapper
     @RequiresPermission(CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS)
     public void unregisterRemoteAnimations() {
         try {
-            ActivityTaskManager.getService().unregisterRemoteAnimations(mToken);
+            android.app.ActivityTaskManager.getService().unregisterRemoteAnimations(mToken);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }

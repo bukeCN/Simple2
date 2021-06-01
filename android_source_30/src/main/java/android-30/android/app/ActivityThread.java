@@ -234,7 +234,7 @@ final class RemoteServiceException extends AndroidRuntimeException {
  *
  * {@hide}
  */
-public final class ActivityThread extends ClientTransactionHandler {
+public final class ActivityThread extends android.app.ClientTransactionHandler {
     /** @hide */
     public static final String TAG = "ActivityThread";
     private static final android.graphics.Bitmap.Config THUMBNAIL_FORMAT = Bitmap.Config.RGB_565;
@@ -301,8 +301,8 @@ public final class ActivityThread extends ClientTransactionHandler {
     private long mNetworkBlockSeq = INVALID_PROC_STATE_SEQ;
 
     @UnsupportedAppUsage
-    private ContextImpl mSystemContext;
-    private ContextImpl mSystemUiContext;
+    private android.app.ContextImpl mSystemContext;
+    private android.app.ContextImpl mSystemUiContext;
 
     @UnsupportedAppUsage
     static volatile IPackageManager sPackageManager;
@@ -394,10 +394,10 @@ public final class ActivityThread extends ClientTransactionHandler {
     // These LoadedApk are only valid for the userId that we're running as.
     @GuardedBy("mResourcesManager")
     @UnsupportedAppUsage
-    final ArrayMap<String, WeakReference<LoadedApk>> mPackages = new ArrayMap<>();
+    final ArrayMap<String, WeakReference<android.app.LoadedApk>> mPackages = new ArrayMap<>();
     @GuardedBy("mResourcesManager")
     @UnsupportedAppUsage
-    final ArrayMap<String, WeakReference<LoadedApk>> mResourcePackages = new ArrayMap<>();
+    final ArrayMap<String, WeakReference<android.app.LoadedApk>> mResourcePackages = new ArrayMap<>();
     @GuardedBy("mResourcesManager")
     final ArrayList<ActivityClientRecord> mRelaunchingActivities = new ArrayList<>();
     @GuardedBy("mResourcesManager")
@@ -407,7 +407,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     private final TransactionExecutor mTransactionExecutor = new TransactionExecutor(this);
 
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
-    private final ResourcesManager mResourcesManager;
+    private final android.app.ResourcesManager mResourcesManager;
 
     /** The active adjustments that override the {@link DisplayAdjustments} in resources. */
     private ArrayList<Pair<IBinder, Consumer<DisplayAdjustments>>> mActiveRotationAdjustments;
@@ -464,8 +464,8 @@ public final class ActivityThread extends ClientTransactionHandler {
     @GuardedBy("mGetProviderLocks")
     final ArrayMap<ProviderKey, Object> mGetProviderLocks = new ArrayMap<>();
 
-    final ArrayMap<Activity, ArrayList<OnActivityPausedListener>> mOnPauseListeners
-        = new ArrayMap<Activity, ArrayList<OnActivityPausedListener>>();
+    final ArrayMap<Activity, ArrayList<android.app.OnActivityPausedListener>> mOnPauseListeners
+        = new ArrayMap<Activity, ArrayList<android.app.OnActivityPausedListener>>();
 
     final GcIdler mGcIdler = new GcIdler();
     final PurgeIdler mPurgeIdler = new PurgeIdler();
@@ -525,16 +525,16 @@ public final class ActivityThread extends ClientTransactionHandler {
         // and ON_PAUSE to the app.
         boolean lastReportedTopResumedState;
 
-        ProfilerInfo profilerInfo;
+        android.app.ProfilerInfo profilerInfo;
 
         @UnsupportedAppUsage
         ActivityInfo activityInfo;
         @UnsupportedAppUsage
         CompatibilityInfo compatInfo;
         @UnsupportedAppUsage
-        public LoadedApk packageInfo;
+        public android.app.LoadedApk packageInfo;
 
-        List<ResultInfo> pendingResults;
+        List<android.app.ResultInfo> pendingResults;
         List<ReferrerIntent> pendingIntents;
 
         boolean startsNotResumed;
@@ -565,12 +565,12 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         public ActivityClientRecord(IBinder token, Intent intent, int ident,
-                ActivityInfo info, Configuration overrideConfig, CompatibilityInfo compatInfo,
-                String referrer, IVoiceInteractor voiceInteractor, Bundle state,
-                PersistableBundle persistentState, List<ResultInfo> pendingResults,
-                List<ReferrerIntent> pendingNewIntents, boolean isForward,
-                ProfilerInfo profilerInfo, ClientTransactionHandler client,
-                IBinder assistToken, FixedRotationAdjustments fixedRotationAdjustments) {
+                                    ActivityInfo info, Configuration overrideConfig, CompatibilityInfo compatInfo,
+                                    String referrer, IVoiceInteractor voiceInteractor, Bundle state,
+                                    PersistableBundle persistentState, List<android.app.ResultInfo> pendingResults,
+                                    List<ReferrerIntent> pendingNewIntents, boolean isForward,
+                                    android.app.ProfilerInfo profilerInfo, android.app.ClientTransactionHandler client,
+                                    IBinder assistToken, FixedRotationAdjustments fixedRotationAdjustments) {
             this.token = token;
             this.assistToken = assistToken;
             this.ident = ident;
@@ -701,10 +701,10 @@ public final class ActivityThread extends ClientTransactionHandler {
         @UnsupportedAppUsage
         final ContentProvider mLocalProvider;
         @UnsupportedAppUsage
-        final ContentProviderHolder mHolder;
+        final android.app.ContentProviderHolder mHolder;
 
         ProviderClientRecord(String[] names, IContentProvider provider,
-                ContentProvider localProvider, ContentProviderHolder holder) {
+                ContentProvider localProvider, android.app.ContentProviderHolder holder) {
             mNames = names;
             mProvider = provider;
             mLocalProvider = localProvider;
@@ -795,7 +795,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         AppBindData() {
         }
         @UnsupportedAppUsage
-        LoadedApk info;
+        android.app.LoadedApk info;
         @UnsupportedAppUsage
         String processName;
         @UnsupportedAppUsage
@@ -820,7 +820,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         String buildSerial;
 
         /** Initial values for {@link Profiler}. */
-        ProfilerInfo initProfilerInfo;
+        android.app.ProfilerInfo initProfilerInfo;
 
         AutofillOptions autofillOptions;
 
@@ -847,7 +847,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         boolean streamingOutput;
         boolean profiling;
         boolean handlingProfiling;
-        public void setProfiler(ProfilerInfo profilerInfo) {
+        public void setProfiler(android.app.ProfilerInfo profilerInfo) {
             ParcelFileDescriptor fd = profilerInfo.profileFd;
             if (profiling) {
                 if (fd != null) {
@@ -916,7 +916,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     static final class ContextCleanupInfo {
-        ContextImpl context;
+        android.app.ContextImpl context;
         String what;
         String who;
     }
@@ -1013,10 +1013,10 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         public final void scheduleServiceArgs(IBinder token, ParceledListSlice args) {
-            List<ServiceStartArgs> list = args.getList();
+            List<android.app.ServiceStartArgs> list = args.getList();
 
             for (int i = 0; i < list.size(); i++) {
-                ServiceStartArgs ssa = list.get(i);
+                android.app.ServiceStartArgs ssa = list.get(i);
                 ServiceArgsData s = new ServiceArgsData();
                 s.token = token;
                 s.taskRemoved = ssa.taskRemoved;
@@ -1034,15 +1034,15 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         @Override
         public final void bindApplication(String processName, ApplicationInfo appInfo,
-                ProviderInfoList providerList, ComponentName instrumentationName,
-                ProfilerInfo profilerInfo, Bundle instrumentationArgs,
-                IInstrumentationWatcher instrumentationWatcher,
-                IUiAutomationConnection instrumentationUiConnection, int debugMode,
-                boolean enableBinderTracking, boolean trackAllocation,
-                boolean isRestrictedBackupMode, boolean persistent, Configuration config,
-                CompatibilityInfo compatInfo, Map services, Bundle coreSettings,
-                String buildSerial, AutofillOptions autofillOptions,
-                ContentCaptureOptions contentCaptureOptions, long[] disabledCompatChanges) {
+                                          ProviderInfoList providerList, ComponentName instrumentationName,
+                                          android.app.ProfilerInfo profilerInfo, Bundle instrumentationArgs,
+                                          IInstrumentationWatcher instrumentationWatcher,
+                                          IUiAutomationConnection instrumentationUiConnection, int debugMode,
+                                          boolean enableBinderTracking, boolean trackAllocation,
+                                          boolean isRestrictedBackupMode, boolean persistent, Configuration config,
+                                          CompatibilityInfo compatInfo, Map services, Bundle coreSettings,
+                                          String buildSerial, AutofillOptions autofillOptions,
+                                          ContentCaptureOptions contentCaptureOptions, long[] disabledCompatChanges) {
             if (services != null) {
                 if (false) {
                     // Test code to make sure the app could see the passed-in services.
@@ -1068,7 +1068,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 // Setup the service cache in the ServiceManager
                 ServiceManager.initServiceCache(services);
             }
-
+            // 给主线程发送 SET_CORE_SETTINGS 消息
             setCoreSettings(coreSettings);
 
             AppBindData data = new AppBindData();
@@ -1091,6 +1091,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             data.autofillOptions = autofillOptions;
             data.contentCaptureOptions = contentCaptureOptions;
             data.disabledCompatChanges = disabledCompatChanges;
+            // 给主线程发送 BIND_APPLICATION 消息
             sendMessage(H.BIND_APPLICATION, data);
         }
 
@@ -1167,7 +1168,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         @Override
-        public void profilerControl(boolean start, ProfilerInfo profilerInfo, int profileType) {
+        public void profilerControl(boolean start, android.app.ProfilerInfo profilerInfo, int profileType) {
             sendMessage(H.PROFILER_CONTROL, profilerInfo, start ? 1 : 0, profileType);
         }
 
@@ -1279,7 +1280,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             long dalvikAllocated = dalvikMax - dalvikFree;
 
             Class[] classesToCount = new Class[] {
-                    ContextImpl.class,
+                    android.app.ContextImpl.class,
                     Activity.class,
                     WebView.class,
                     OpenSSLSocketImpl.class
@@ -1431,7 +1432,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             long dalvikAllocated = dalvikMax - dalvikFree;
 
             Class[] classesToCount = new Class[] {
-                    ContextImpl.class,
+                    android.app.ContextImpl.class,
                     Activity.class,
                     WebView.class,
                     OpenSSLSocketImpl.class
@@ -1538,7 +1539,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         @Override
         public void dumpCacheInfo(ParcelFileDescriptor pfd, String[] args) {
-            PropertyInvalidatedCache.dumpCacheInfo(pfd.getFileDescriptor(), args);
+            android.app.PropertyInvalidatedCache.dumpCacheInfo(pfd.getFileDescriptor(), args);
             IoUtils.closeQuietly(pfd);
         }
 
@@ -1976,7 +1977,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
                     break;
                 case PROFILER_CONTROL:
-                    handleProfilerControl(msg.arg1 != 0, (ProfilerInfo)msg.obj, msg.arg2);
+                    handleProfilerControl(msg.arg1 != 0, (android.app.ProfilerInfo)msg.obj, msg.arg2);
                     break;
                 case CREATE_BACKUP_AGENT:
                     Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "backupCreateAgent");
@@ -2101,7 +2102,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             }
             if (a != null) {
                 mNewActivities = null;
-                IActivityTaskManager am = ActivityTaskManager.getService();
+                IActivityTaskManager am = android.app.ActivityTaskManager.getService();
                 ActivityClientRecord prev;
                 do {
                     if (localLOGV) Slog.v(
@@ -2221,7 +2222,7 @@ public final class ActivityThread extends ClientTransactionHandler {
      * Resources if one has already been created.
      */
     Resources getTopLevelResources(String resDir, String[] splitResDirs, String[] overlayDirs,
-            String[] libDirs, int displayId, LoadedApk pkgInfo) {
+            String[] libDirs, int displayId, android.app.LoadedApk pkgInfo) {
         return mResourcesManager.getResources(null, resDir, splitResDirs, overlayDirs, libDirs,
                 displayId, null, pkgInfo.getCompatibilityInfo(), pkgInfo.getClassLoader(), null);
     }
@@ -2232,13 +2233,13 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
-    public final LoadedApk getPackageInfo(String packageName, CompatibilityInfo compatInfo,
-            int flags) {
+    public final android.app.LoadedApk getPackageInfo(String packageName, CompatibilityInfo compatInfo,
+                                                      int flags) {
         return getPackageInfo(packageName, compatInfo, flags, UserHandle.myUserId());
     }
 
-    public final LoadedApk getPackageInfo(String packageName, CompatibilityInfo compatInfo,
-            int flags, int userId) {
+    public final android.app.LoadedApk getPackageInfo(String packageName, CompatibilityInfo compatInfo,
+                                                      int flags, int userId) {
         final boolean differentUser = (UserHandle.myUserId() != userId);
         ApplicationInfo ai = PackageManager.getApplicationInfoAsUserCached(
                 packageName,
@@ -2246,7 +2247,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 | PackageManager.MATCH_DEBUG_TRIAGED_MISSING,
                 (userId < 0) ? UserHandle.myUserId() : userId);
         synchronized (mResourcesManager) {
-            WeakReference<LoadedApk> ref;
+            WeakReference<android.app.LoadedApk> ref;
             if (differentUser) {
                 // Caching not supported across users
                 ref = null;
@@ -2256,11 +2257,11 @@ public final class ActivityThread extends ClientTransactionHandler {
                 ref = mResourcePackages.get(packageName);
             }
 
-            LoadedApk packageInfo = ref != null ? ref.get() : null;
+            android.app.LoadedApk packageInfo = ref != null ? ref.get() : null;
             if (ai != null && packageInfo != null) {
                 if (!isLoadedApkResourceDirsUpToDate(packageInfo, ai)) {
                     List<String> oldPaths = new ArrayList<>();
-                    LoadedApk.makePaths(this, ai, oldPaths);
+                    android.app.LoadedApk.makePaths(this, ai, oldPaths);
                     packageInfo.updateApplicationInfo(ai, oldPaths);
                 }
 
@@ -2284,8 +2285,8 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public final LoadedApk getPackageInfo(ApplicationInfo ai, CompatibilityInfo compatInfo,
-            int flags) {
+    public final android.app.LoadedApk getPackageInfo(ApplicationInfo ai, CompatibilityInfo compatInfo,
+                                                      int flags) {
         boolean includeCode = (flags&Context.CONTEXT_INCLUDE_CODE) != 0;
         boolean securityViolation = includeCode && ai.uid != 0
                 && ai.uid != Process.SYSTEM_UID && (mBoundApplication != null
@@ -2312,15 +2313,15 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     @Override
     @UnsupportedAppUsage
-    public final LoadedApk getPackageInfoNoCheck(ApplicationInfo ai,
-            CompatibilityInfo compatInfo) {
+    public final android.app.LoadedApk getPackageInfoNoCheck(ApplicationInfo ai,
+                                                             CompatibilityInfo compatInfo) {
         return getPackageInfo(ai, compatInfo, null, false, true, false);
     }
 
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
-    public final LoadedApk peekPackageInfo(String packageName, boolean includeCode) {
+    public final android.app.LoadedApk peekPackageInfo(String packageName, boolean includeCode) {
         synchronized (mResourcesManager) {
-            WeakReference<LoadedApk> ref;
+            WeakReference<android.app.LoadedApk> ref;
             if (includeCode) {
                 ref = mPackages.get(packageName);
             } else {
@@ -2330,12 +2331,12 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
     }
 
-    private LoadedApk getPackageInfo(ApplicationInfo aInfo, CompatibilityInfo compatInfo,
-            ClassLoader baseLoader, boolean securityViolation, boolean includeCode,
-            boolean registerPackage) {
+    private android.app.LoadedApk getPackageInfo(ApplicationInfo aInfo, CompatibilityInfo compatInfo,
+                                                 ClassLoader baseLoader, boolean securityViolation, boolean includeCode,
+                                                 boolean registerPackage) {
         final boolean differentUser = (UserHandle.myUserId() != UserHandle.getUserId(aInfo.uid));
         synchronized (mResourcesManager) {
-            WeakReference<LoadedApk> ref;
+            WeakReference<android.app.LoadedApk> ref;
             if (differentUser) {
                 // Caching not supported across users
                 ref = null;
@@ -2345,12 +2346,12 @@ public final class ActivityThread extends ClientTransactionHandler {
                 ref = mResourcePackages.get(aInfo.packageName);
             }
 
-            LoadedApk packageInfo = ref != null ? ref.get() : null;
+            android.app.LoadedApk packageInfo = ref != null ? ref.get() : null;
 
             if (packageInfo != null) {
                 if (!isLoadedApkResourceDirsUpToDate(packageInfo, aInfo)) {
                     List<String> oldPaths = new ArrayList<>();
-                    LoadedApk.makePaths(this, aInfo, oldPaths);
+                    android.app.LoadedApk.makePaths(this, aInfo, oldPaths);
                     packageInfo.updateApplicationInfo(aInfo, oldPaths);
                 }
 
@@ -2366,7 +2367,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             }
 
             packageInfo =
-                    new LoadedApk(this, aInfo, compatInfo, baseLoader,
+                    new android.app.LoadedApk(this, aInfo, compatInfo, baseLoader,
                             securityViolation, includeCode
                             && (aInfo.flags & ApplicationInfo.FLAG_HAS_CODE) != 0, registerPackage);
 
@@ -2379,18 +2380,18 @@ public final class ActivityThread extends ClientTransactionHandler {
                 // Caching not supported across users
             } else if (includeCode) {
                 mPackages.put(aInfo.packageName,
-                        new WeakReference<LoadedApk>(packageInfo));
+                        new WeakReference<android.app.LoadedApk>(packageInfo));
             } else {
                 mResourcePackages.put(aInfo.packageName,
-                        new WeakReference<LoadedApk>(packageInfo));
+                        new WeakReference<android.app.LoadedApk>(packageInfo));
             }
 
             return packageInfo;
         }
     }
 
-    private static boolean isLoadedApkResourceDirsUpToDate(LoadedApk loadedApk,
-            ApplicationInfo appInfo) {
+    private static boolean isLoadedApkResourceDirsUpToDate(android.app.LoadedApk loadedApk,
+                                                           ApplicationInfo appInfo) {
         Resources packageResources = loadedApk.mResources;
         String[] overlayDirs = ArrayUtils.defeatNullable(loadedApk.getOverlayDirs());
         String[] resourceDirs = ArrayUtils.defeatNullable(appInfo.resourceDirs);
@@ -2402,7 +2403,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     @UnsupportedAppUsage
     ActivityThread() {
-        mResourcesManager = ResourcesManager.getInstance();
+        mResourcesManager = android.app.ResourcesManager.getInstance();
     }
 
     @UnsupportedAppUsage
@@ -2446,19 +2447,19 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public ContextImpl getSystemContext() {
+    public android.app.ContextImpl getSystemContext() {
         synchronized (this) {
             if (mSystemContext == null) {
-                mSystemContext = ContextImpl.createSystemContext(this);
+                mSystemContext = android.app.ContextImpl.createSystemContext(this);
             }
             return mSystemContext;
         }
     }
 
-    public ContextImpl getSystemUiContext() {
+    public android.app.ContextImpl getSystemUiContext() {
         synchronized (this) {
             if (mSystemUiContext == null) {
-                mSystemUiContext = ContextImpl.createSystemUiContext(getSystemContext());
+                mSystemUiContext = android.app.ContextImpl.createSystemUiContext(getSystemContext());
             }
             return mSystemUiContext;
         }
@@ -2469,8 +2470,8 @@ public final class ActivityThread extends ClientTransactionHandler {
      * @param displayId The ID of the display where the UI is shown.
      * @see ContextImpl#createSystemUiContext(ContextImpl, int)
      */
-    public ContextImpl createSystemUiContext(int displayId) {
-        return ContextImpl.createSystemUiContext(getSystemUiContext(), displayId);
+    public android.app.ContextImpl createSystemUiContext(int displayId) {
+        return android.app.ContextImpl.createSystemUiContext(getSystemUiContext(), displayId);
     }
 
     public void installSystemApplicationInfo(ApplicationInfo info, ClassLoader classLoader) {
@@ -3033,11 +3034,11 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     @UnsupportedAppUsage
     public void registerOnActivityPausedListener(Activity activity,
-            OnActivityPausedListener listener) {
+            android.app.OnActivityPausedListener listener) {
         synchronized (mOnPauseListeners) {
-            ArrayList<OnActivityPausedListener> list = mOnPauseListeners.get(activity);
+            ArrayList<android.app.OnActivityPausedListener> list = mOnPauseListeners.get(activity);
             if (list == null) {
-                list = new ArrayList<OnActivityPausedListener>();
+                list = new ArrayList<android.app.OnActivityPausedListener>();
                 mOnPauseListeners.put(activity, list);
             }
             list.add(listener);
@@ -3046,9 +3047,9 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     @UnsupportedAppUsage
     public void unregisterOnActivityPausedListener(Activity activity,
-            OnActivityPausedListener listener) {
+            android.app.OnActivityPausedListener listener) {
         synchronized (mOnPauseListeners) {
-            ArrayList<OnActivityPausedListener> list = mOnPauseListeners.get(activity);
+            ArrayList<android.app.OnActivityPausedListener> list = mOnPauseListeners.get(activity);
             if (list != null) {
                 list.remove(listener);
             }
@@ -3182,8 +3183,8 @@ public final class ActivityThread extends ClientTransactionHandler {
             int resultCode, Intent data) {
         if (DEBUG_RESULTS) Slog.v(TAG, "sendActivityResult: id=" + id
                 + " req=" + requestCode + " res=" + resultCode + " data=" + data);
-        ArrayList<ResultInfo> list = new ArrayList<ResultInfo>();
-        list.add(new ResultInfo(id, requestCode, resultCode, data));
+        ArrayList<android.app.ResultInfo> list = new ArrayList<android.app.ResultInfo>();
+        list.add(new android.app.ResultInfo(id, requestCode, resultCode, data));
         final ClientTransaction clientTransaction = ClientTransaction.obtain(mAppThread, token);
         clientTransaction.addCallback(ActivityResultItem.obtain(list));
         try {
@@ -3241,8 +3242,8 @@ public final class ActivityThread extends ClientTransactionHandler {
         mH.sendMessage(msg);
     }
 
-    final void scheduleContextCleanup(ContextImpl context, String who,
-            String what) {
+    final void scheduleContextCleanup(android.app.ContextImpl context, String who,
+                                      String what) {
         ContextCleanupInfo cci = new ContextCleanupInfo();
         cci.context = context;
         cci.who = who;
@@ -3346,7 +3347,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     r.activityInfo.targetActivity);
         }
 
-        ContextImpl appContext = createBaseContextForActivity(r);
+        android.app.ContextImpl appContext = createBaseContextForActivity(r);
         Activity activity = null;
         try {
             java.lang.ClassLoader cl = appContext.getClassLoader();
@@ -3528,15 +3529,15 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
     }
 
-    private ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
+    private android.app.ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
         final int displayId;
         try {
-            displayId = ActivityTaskManager.getService().getDisplayId(r.token);
+            displayId = android.app.ActivityTaskManager.getService().getDisplayId(r.token);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
 
-        ContextImpl appContext = ContextImpl.createActivityContext(
+        android.app.ContextImpl appContext = android.app.ContextImpl.createActivityContext(
                 this, r.packageInfo, r.activityInfo, r.token, displayId, r.overrideConfig);
 
         // The rotation adjustments must be applied before creating the activity, so the activity
@@ -3558,7 +3559,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 if (id != Display.DEFAULT_DISPLAY) {
                     Display display =
                             dm.getCompatibleDisplay(id, appContext.getResources());
-                    appContext = (ContextImpl) appContext.createDisplayContext(display);
+                    appContext = (android.app.ContextImpl) appContext.createDisplayContext(display);
                     break;
                 }
             }
@@ -3611,7 +3612,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else {
             // If there was an error, for any reason, tell the activity manager to stop us.
             try {
-                ActivityTaskManager.getService()
+                android.app.ActivityTaskManager.getService()
                         .finishActivity(r.token, Activity.RESULT_CANCELED, null,
                                 Activity.DONT_FINISH_TASK_WITH_ACTIVITY);
             } catch (RemoteException ex) {
@@ -3647,7 +3648,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             }
         }
         try {
-            ActivityTaskManager.getService().reportSizeConfigurations(r.token,
+            android.app.ActivityTaskManager.getService().reportSizeConfigurations(r.token,
                     horizontal.copyKeys(), vertical.copyKeys(), smallest.copyKeys());
         } catch (RemoteException ex) {
             throw ex.rethrowFromSystemServer();
@@ -3743,7 +3744,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         structure.setAcquisitionEndTime(SystemClock.uptimeMillis());
 
         mLastAssistStructures.add(new WeakReference<>(structure));
-        IActivityTaskManager mgr = ActivityTaskManager.getService();
+        IActivityTaskManager mgr = android.app.ActivityTaskManager.getService();
         try {
             mgr.reportAssistContextExtras(cmd.requestToken, data, structure, content, referrer);
         } catch (RemoteException e) {
@@ -3939,7 +3940,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
     }
 
-    static void handleAttachAgent(String agent, LoadedApk loadedApk) {
+    static void handleAttachAgent(String agent, android.app.LoadedApk loadedApk) {
         ClassLoader classLoader = loadedApk != null ? loadedApk.getClassLoader() : null;
         if (attemptAttachAgent(agent, classLoader)) {
             return;
@@ -3951,7 +3952,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     static void handleAttachStartupAgents(String dataDir) {
         try {
-            Path code_cache = ContextImpl.getCodeCacheDirBeforeBind(new File(dataDir)).toPath();
+            Path code_cache = android.app.ContextImpl.getCodeCacheDirBeforeBind(new File(dataDir)).toPath();
             if (!Files.exists(code_cache)) {
                 return;
             }
@@ -3989,19 +3990,19 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         String component = data.intent.getComponent().getClassName();
 
-        LoadedApk packageInfo = getPackageInfoNoCheck(
+        android.app.LoadedApk packageInfo = getPackageInfoNoCheck(
                 data.info.applicationInfo, data.compatInfo);
 
         IActivityManager mgr = ActivityManager.getService();
 
         Application app;
         BroadcastReceiver receiver;
-        ContextImpl context;
+        android.app.ContextImpl context;
         try {
             app = packageInfo.makeApplication(false, mInstrumentation);
-            context = (ContextImpl) app.getBaseContext();
+            context = (android.app.ContextImpl) app.getBaseContext();
             if (data.info.splitName != null) {
-                context = (ContextImpl) context.createContextForSplit(data.info.splitName);
+                context = (android.app.ContextImpl) context.createContextForSplit(data.info.splitName);
             }
             java.lang.ClassLoader cl = context.getClassLoader();
             data.intent.setExtrasClassLoader(cl);
@@ -4070,7 +4071,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         unscheduleGcIdler();
 
         // instantiate the BackupAgent class named in the manifest
-        LoadedApk packageInfo = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
+        android.app.LoadedApk packageInfo = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
         String packageName = packageInfo.mPackageName;
         if (packageName == null) {
             Slog.d(TAG, "Asked to create backup agent for nonexistent package");
@@ -4079,8 +4080,8 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         String classname = data.appInfo.backupAgentName;
         // full backup operation but no app-supplied agent?  use the default implementation
-        if (classname == null && (data.backupMode == ApplicationThreadConstants.BACKUP_MODE_FULL
-                || data.backupMode == ApplicationThreadConstants.BACKUP_MODE_RESTORE_FULL)) {
+        if (classname == null && (data.backupMode == android.app.ApplicationThreadConstants.BACKUP_MODE_FULL
+                || data.backupMode == android.app.ApplicationThreadConstants.BACKUP_MODE_RESTORE_FULL)) {
             classname = "android.app.backup.FullBackupAgent";
         }
 
@@ -4102,7 +4103,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     agent = (BackupAgent) cl.loadClass(classname).newInstance();
 
                     // set up the agent's context
-                    ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
+                    android.app.ContextImpl context = android.app.ContextImpl.createAppContext(this, packageInfo);
                     context.setOuterContext(agent);
                     agent.attach(context);
 
@@ -4113,9 +4114,9 @@ public final class ActivityThread extends ClientTransactionHandler {
                     // If this is during restore, fail silently; otherwise go
                     // ahead and let the user see the crash.
                     Slog.e(TAG, "Agent threw during creation: " + e);
-                    if (data.backupMode != ApplicationThreadConstants.BACKUP_MODE_RESTORE
+                    if (data.backupMode != android.app.ApplicationThreadConstants.BACKUP_MODE_RESTORE
                             && data.backupMode !=
-                                    ApplicationThreadConstants.BACKUP_MODE_RESTORE_FULL) {
+                                    android.app.ApplicationThreadConstants.BACKUP_MODE_RESTORE_FULL) {
                         throw e;
                     }
                     // falling through with 'binder' still null
@@ -4138,7 +4139,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     private void handleDestroyBackupAgent(CreateBackupAgentData data) {
         if (DEBUG_BACKUP) Slog.v(TAG, "handleDestroyBackupAgent: " + data);
 
-        LoadedApk packageInfo = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
+        android.app.LoadedApk packageInfo = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
         String packageName = packageInfo.mPackageName;
         ArrayMap<String, BackupAgent> backupAgents = getBackupAgentsForUser(data.userId);
         BackupAgent agent = backupAgents.get(packageName);
@@ -4170,13 +4171,13 @@ public final class ActivityThread extends ClientTransactionHandler {
         // we are back active so skip it.
         unscheduleGcIdler();
 
-        LoadedApk packageInfo = getPackageInfoNoCheck(
+        android.app.LoadedApk packageInfo = getPackageInfoNoCheck(
                 data.info.applicationInfo, data.compatInfo);
         Service service = null;
         try {
             if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
 
-            ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
+            android.app.ContextImpl context = android.app.ContextImpl.createAppContext(this, packageInfo);
             Application app = packageInfo.makeApplication(false, mInstrumentation);
             java.lang.ClassLoader cl = packageInfo.getClassLoader();
             service = packageInfo.getAppFactory()
@@ -4329,7 +4330,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     res = Service.START_TASK_REMOVED_COMPLETE;
                 }
 
-                QueuedWork.waitToFinish();
+                android.app.QueuedWork.waitToFinish();
 
                 try {
                     ActivityManager.getService().serviceDoneExecuting(
@@ -4355,12 +4356,12 @@ public final class ActivityThread extends ClientTransactionHandler {
                 s.onDestroy();
                 s.detachAndCleanUp();
                 Context context = s.getBaseContext();
-                if (context instanceof ContextImpl) {
+                if (context instanceof android.app.ContextImpl) {
                     final String who = s.getClassName();
-                    ((ContextImpl) context).scheduleFinalCleanup(who, "Service");
+                    ((android.app.ContextImpl) context).scheduleFinalCleanup(who, "Service");
                 }
 
-                QueuedWork.waitToFinish();
+                android.app.QueuedWork.waitToFinish();
 
                 try {
                     ActivityManager.getService().serviceDoneExecuting(
@@ -4502,7 +4503,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         boolean willBeVisible = !a.mStartedActivity;
         if (!willBeVisible) {
             try {
-                willBeVisible = ActivityTaskManager.getService().willActivityBeVisible(
+                willBeVisible = android.app.ActivityTaskManager.getService().willActivityBeVisible(
                         a.getActivityToken());
             } catch (RemoteException e) {
                 throw e.rethrowFromSystemServer();
@@ -4648,7 +4649,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             // Make sure any pending writes are now committed.
             if (r.isPreHoneycomb()) {
-                QueuedWork.waitToFinish();
+                android.app.QueuedWork.waitToFinish();
             }
             mSomeActivitiesChanged = true;
         }
@@ -4696,7 +4697,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         performPauseActivityIfNeeded(r, reason);
 
         // Notify any outstanding on paused listeners
-        ArrayList<OnActivityPausedListener> listeners;
+        ArrayList<android.app.OnActivityPausedListener> listeners;
         synchronized (mOnPauseListeners) {
             listeners = mOnPauseListeners.remove(r.activity);
         }
@@ -4757,7 +4758,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private static final class ProviderRefCount {
-        public final ContentProviderHolder holder;
+        public final android.app.ContentProviderHolder holder;
         public final ProviderClientRecord client;
         public int stableCount;
         public int unstableCount;
@@ -4769,8 +4770,8 @@ public final class ActivityThread extends ClientTransactionHandler {
         // here.
         public boolean removePending;
 
-        ProviderRefCount(ContentProviderHolder inHolder,
-                ProviderClientRecord inClient, int sCount, int uCount) {
+        ProviderRefCount(android.app.ContentProviderHolder inHolder,
+                         ProviderClientRecord inClient, int sCount, int uCount) {
             holder = inHolder;
             client = inClient;
             stableCount = sCount;
@@ -4910,7 +4911,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         // Make sure any pending writes are now committed.
         if (!r.isPreHoneycomb()) {
-            QueuedWork.waitToFinish();
+            android.app.QueuedWork.waitToFinish();
         }
 
         stopInfo.setActivity(r);
@@ -4952,6 +4953,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     private void onCoreSettingsChange() {
         if (updateDebugViewAttributeState()) {
             // request all activities to relaunch for the changes to take place
+            // XX 发生了改变，重新启动所有 Activity
             relaunchAllActivities(false /* preserveWindows */);
         }
     }
@@ -4982,7 +4984,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleUpdatePackageCompatibilityInfo(UpdateCompatibilityData data) {
-        LoadedApk apk = peekPackageInfo(data.pkg, false);
+        android.app.LoadedApk apk = peekPackageInfo(data.pkg, false);
         if (apk != null) {
             apk.setCompatibilityInfo(data.info);
         }
@@ -4994,10 +4996,10 @@ public final class ActivityThread extends ClientTransactionHandler {
         WindowManagerGlobal.getInstance().reportNewConfiguration(mConfiguration);
     }
 
-    private void deliverResults(ActivityClientRecord r, List<ResultInfo> results, String reason) {
+    private void deliverResults(ActivityClientRecord r, List<android.app.ResultInfo> results, String reason) {
         final int N = results.size();
         for (int i=0; i<N; i++) {
-            ResultInfo ri = results.get(i);
+            android.app.ResultInfo ri = results.get(i);
             try {
                 if (ri.mData != null) {
                     ri.mData.setExtrasClassLoader(r.activity.getClassLoader());
@@ -5019,7 +5021,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @Override
-    public void handleSendResult(IBinder token, List<ResultInfo> results, String reason) {
+    public void handleSendResult(IBinder token, List<android.app.ResultInfo> results, String reason) {
         ActivityClientRecord r = mActivities.get(token);
         if (DEBUG_RESULTS) Slog.v(TAG, "Handling send result to " + r);
         if (r != null) {
@@ -5191,14 +5193,14 @@ public final class ActivityThread extends ClientTransactionHandler {
             // ApplicationContext we need to have it tear down things
             // cleanly.
             Context c = r.activity.getBaseContext();
-            if (c instanceof ContextImpl) {
-                ((ContextImpl) c).scheduleFinalCleanup(
+            if (c instanceof android.app.ContextImpl) {
+                ((android.app.ContextImpl) c).scheduleFinalCleanup(
                         r.activity.getClass().getName(), "Activity");
             }
         }
         if (finishing) {
             try {
-                ActivityTaskManager.getService().activityDestroyed(token);
+                android.app.ActivityTaskManager.getService().activityDestroyed(token);
             } catch (RemoteException ex) {
                 throw ex.rethrowFromSystemServer();
             }
@@ -5208,8 +5210,8 @@ public final class ActivityThread extends ClientTransactionHandler {
 
     @Override
     public ActivityClientRecord prepareRelaunchActivity(IBinder token,
-            List<ResultInfo> pendingResults, List<ReferrerIntent> pendingNewIntents,
-            int configChanges, MergedConfiguration config, boolean preserveWindow) {
+                                                        List<android.app.ResultInfo> pendingResults, List<ReferrerIntent> pendingNewIntents,
+                                                        int configChanges, MergedConfiguration config, boolean preserveWindow) {
         ActivityClientRecord target = null;
         boolean scheduleRelaunch = false;
 
@@ -5416,9 +5418,9 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleRelaunchActivityInner(ActivityClientRecord r, int configChanges,
-            List<ResultInfo> pendingResults, List<ReferrerIntent> pendingIntents,
-            PendingTransactionActions pendingActions, boolean startsNotResumed,
-            Configuration overrideConfig, String reason) {
+                                             List<android.app.ResultInfo> pendingResults, List<ReferrerIntent> pendingIntents,
+                                             PendingTransactionActions pendingActions, boolean startsNotResumed,
+                                             Configuration overrideConfig, String reason) {
         // Preserve last used intent, it may be set from Activity#setIntent().
         final Intent customIntent = r.activity.mIntent;
         // Need to ensure state is saved.
@@ -5459,7 +5461,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     @Override
     public void reportRelaunch(IBinder token, PendingTransactionActions pendingActions) {
         try {
-            ActivityTaskManager.getService().activityRelaunched(token);
+            android.app.ActivityTaskManager.getService().activityRelaunched(token);
             final ActivityClientRecord r = mActivities.get(token);
             if (pendingActions.shouldReportRelaunchToWindowManager() && r != null
                     && r.window != null) {
@@ -5852,9 +5854,9 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else if (oldWindowingMode == WINDOWING_MODE_PINNED) {
             activity.dispatchPictureInPictureModeChanged(false, newConfiguration);
         }
-        final boolean wasInMultiWindowMode = WindowConfiguration.inMultiWindowMode(
+        final boolean wasInMultiWindowMode = android.app.WindowConfiguration.inMultiWindowMode(
                 oldWindowingMode);
-        final boolean nowInMultiWindowMode = WindowConfiguration.inMultiWindowMode(
+        final boolean nowInMultiWindowMode = android.app.WindowConfiguration.inMultiWindowMode(
                 newWindowingMode);
         if (wasInMultiWindowMode != nowInMultiWindowMode) {
             activity.dispatchMultiWindowModeChanged(nowInMultiWindowMode, newConfiguration);
@@ -5879,11 +5881,11 @@ public final class ActivityThread extends ClientTransactionHandler {
         // caused by other sources, such as overlays. That means we want to be as conservative
         // about code changes as possible. Take the diff of the old ApplicationInfo and the new
         // to see if anything needs to change.
-        LoadedApk apk;
-        LoadedApk resApk;
+        android.app.LoadedApk apk;
+        android.app.LoadedApk resApk;
         // Update all affected loaded packages with new package information
         synchronized (mResourcesManager) {
-            WeakReference<LoadedApk> ref = mPackages.get(ai.packageName);
+            WeakReference<android.app.LoadedApk> ref = mPackages.get(ai.packageName);
             apk = ref != null ? ref.get() : null;
             ref = mResourcePackages.get(ai.packageName);
             resApk = ref != null ? ref.get() : null;
@@ -5894,13 +5896,13 @@ public final class ActivityThread extends ClientTransactionHandler {
         if (apk != null) {
             oldResDirs[0] = apk.getResDir();
             final ArrayList<String> oldPaths = new ArrayList<>();
-            LoadedApk.makePaths(this, apk.getApplicationInfo(), oldPaths);
+            android.app.LoadedApk.makePaths(this, apk.getApplicationInfo(), oldPaths);
             apk.updateApplicationInfo(ai, oldPaths);
         }
         if (resApk != null) {
             oldResDirs[1] = resApk.getResDir();
             final ArrayList<String> oldPaths = new ArrayList<>();
-            LoadedApk.makePaths(this, resApk.getApplicationInfo(), oldPaths);
+            android.app.LoadedApk.makePaths(this, resApk.getApplicationInfo(), oldPaths);
             resApk.updateApplicationInfo(ai, oldPaths);
         }
 
@@ -5909,7 +5911,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             mResourcesManager.applyNewResourceDirsLocked(ai, oldResDirs);
         }
 
-        ApplicationPackageManager.configurationChanged();
+        android.app.ApplicationPackageManager.configurationChanged();
 
         // Trigger a regular Configuration change event, only with a different assetsSeq number
         // so that we actually call through to all components.
@@ -6041,7 +6043,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         mSomeActivitiesChanged = true;
     }
 
-    final void handleProfilerControl(boolean start, ProfilerInfo profilerInfo, int profileType) {
+    final void handleProfilerControl(boolean start, android.app.ProfilerInfo profilerInfo, int profileType) {
         if (start) {
             try {
                 switch (profileType) {
@@ -6115,17 +6117,17 @@ public final class ActivityThread extends ClientTransactionHandler {
     final void handleDispatchPackageBroadcast(int cmd, String[] packages) {
         boolean hasPkgInfo = false;
         switch (cmd) {
-            case ApplicationThreadConstants.PACKAGE_REMOVED:
-            case ApplicationThreadConstants.PACKAGE_REMOVED_DONT_KILL:
+            case android.app.ApplicationThreadConstants.PACKAGE_REMOVED:
+            case android.app.ApplicationThreadConstants.PACKAGE_REMOVED_DONT_KILL:
             {
-                final boolean killApp = cmd == ApplicationThreadConstants.PACKAGE_REMOVED;
+                final boolean killApp = cmd == android.app.ApplicationThreadConstants.PACKAGE_REMOVED;
                 if (packages == null) {
                     break;
                 }
                 synchronized (mResourcesManager) {
                     for (int i = packages.length - 1; i >= 0; i--) {
                         if (!hasPkgInfo) {
-                            WeakReference<LoadedApk> ref = mPackages.get(packages[i]);
+                            WeakReference<android.app.LoadedApk> ref = mPackages.get(packages[i]);
                             if (ref != null && ref.get() != null) {
                                 hasPkgInfo = true;
                             } else {
@@ -6143,7 +6145,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 }
                 break;
             }
-            case ApplicationThreadConstants.PACKAGE_REPLACED:
+            case android.app.ApplicationThreadConstants.PACKAGE_REPLACED:
             {
                 if (packages == null) {
                     break;
@@ -6154,8 +6156,8 @@ public final class ActivityThread extends ClientTransactionHandler {
                 synchronized (mResourcesManager) {
                     for (int i = packages.length - 1; i >= 0; i--) {
                         String packageName = packages[i];
-                        WeakReference<LoadedApk> ref = mPackages.get(packageName);
-                        LoadedApk pkgInfo = ref != null ? ref.get() : null;
+                        WeakReference<android.app.LoadedApk> ref = mPackages.get(packageName);
+                        android.app.LoadedApk pkgInfo = ref != null ? ref.get() : null;
                         if (pkgInfo != null) {
                             hasPkgInfo = true;
                         } else {
@@ -6191,7 +6193,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                 final String[] oldResDirs = { pkgInfo.getResDir() };
 
                                 final ArrayList<String> oldPaths = new ArrayList<>();
-                                LoadedApk.makePaths(this, pkgInfo.getApplicationInfo(), oldPaths);
+                                android.app.LoadedApk.makePaths(this, pkgInfo.getApplicationInfo(), oldPaths);
                                 pkgInfo.updateApplicationInfo(aInfo, oldPaths);
 
                                 synchronized (mResourcesManager) {
@@ -6213,7 +6215,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 break;
             }
         }
-        ApplicationPackageManager.handlePackageBroadcast(cmd, packages, hasPkgInfo);
+        android.app.ApplicationPackageManager.handlePackageBroadcast(cmd, packages, hasPkgInfo);
     }
 
     final void handleLowMemory() {
@@ -6244,7 +6246,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         if (DEBUG_MEMORY_TRIM) Slog.v(TAG, "Trimming memory to level: " + level);
 
         if (level >= ComponentCallbacks2.TRIM_MEMORY_COMPLETE) {
-            for (PropertyInvalidatedCache pic : PropertyInvalidatedCache.getActiveCaches()) {
+            for (android.app.PropertyInvalidatedCache pic : android.app.PropertyInvalidatedCache.getActiveCaches()) {
                 pic.clear();
             }
         }
@@ -6383,7 +6385,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         // Note when this process has started.
         Process.setStartTimes(SystemClock.elapsedRealtime(), SystemClock.uptimeMillis());
 
-        AppCompatCallbacks.install(data.disabledCompatChanges);
+        android.app.AppCompatCallbacks.install(data.disabledCompatChanges);
         mBoundApplication = data;
         mConfiguration = new Configuration(data.config);
         mCompatConfiguration = new Configuration(data.config);
@@ -6462,7 +6464,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             // This calls mResourcesManager so keep it within the synchronized block.
             applyCompatConfiguration(mCurDefaultDisplayDpi);
         }
-
+        // 创建 LoadApk
         data.info = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
 
         if (agent != null) {
@@ -6494,10 +6496,10 @@ public final class ActivityThread extends ClientTransactionHandler {
         StrictMode.initThreadDefaults(data.appInfo);
         StrictMode.initVmDefaults(data.appInfo);
 
-        if (data.debugMode != ApplicationThreadConstants.DEBUG_OFF) {
+        if (data.debugMode != android.app.ApplicationThreadConstants.DEBUG_OFF) {
             // XXX should have option to change the port.
             Debug.changeDebugPort(8100);
-            if (data.debugMode == ApplicationThreadConstants.DEBUG_WAIT) {
+            if (data.debugMode == android.app.ApplicationThreadConstants.DEBUG_WAIT) {
                 Slog.w(TAG, "Application " + data.info.getPackageName()
                       + " is waiting for the debugger on port 8100...");
 
@@ -6542,6 +6544,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         /**
          * Initialize the default http proxy in this process for the reasons we set the time zone.
          */
+        // HTTP 代理
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "Setup proxies");
         final IBinder b = ServiceManager.getService(Context.CONNECTIVITY_SERVICE);
         if (b != null) {
@@ -6563,7 +6566,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         final InstrumentationInfo ii;
         if (data.instrumentationName != null) {
             try {
-                ii = new ApplicationPackageManager(
+                ii = new android.app.ApplicationPackageManager(
                         null, getPackageManager(), getPermissionManager())
                         .getInstrumentationInfo(data.instrumentationName, 0);
             } catch (PackageManager.NameNotFoundException e) {
@@ -6591,14 +6594,15 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else {
             ii = null;
         }
-
-        final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
+        // 创建上下文
+        final android.app.ContextImpl appContext = android.app.ContextImpl.createAppContext(this, data.info);
         updateLocaleListFromAppContext(appContext,
                 mResourcesManager.getConfiguration().getLocales());
 
         if (!Process.isIsolated()) {
             final int oldMask = StrictMode.allowThreadDiskWritesMask();
             try {
+                // 用于存储产生/编译的图形代码
                 setupGraphicsSupport(appContext);
             } finally {
                 StrictMode.setThreadPolicyMask(oldMask);
@@ -6628,13 +6632,13 @@ public final class ActivityThread extends ClientTransactionHandler {
             }
             ii.copyTo(instrApp);
             instrApp.initForUser(UserHandle.myUserId());
-            final LoadedApk pi = getPackageInfo(instrApp, data.compatInfo,
+            final android.app.LoadedApk pi = getPackageInfo(instrApp, data.compatInfo,
                     appContext.getClassLoader(), false, true, false);
 
             // The test context's op package name == the target app's op package name, because
             // the app ops manager checks the op package name against the real calling UID,
             // which is what the target package name is associated with.
-            final ContextImpl instrContext = ContextImpl.createAppContext(this, pi,
+            final android.app.ContextImpl instrContext = android.app.ContextImpl.createAppContext(this, pi,
                     appContext.getOpPackageName());
 
             try {
@@ -6680,6 +6684,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         try {
             // If the app is being launched for full backup or restore, bring it up in
             // a restricted environment with the base application class.
+            // 创建 Application
             app = data.info.makeApplication(data.restrictedBackupMode, null);
 
             // Propagate autofill compat state
@@ -6709,6 +6714,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     + data.instrumentationName + ": " + e.toString(), e);
             }
             try {
+                // 回调 Application.onCreate() 参数
                 mInstrumentation.callApplicationOnCreate(app);
             } catch (Exception e) {
                 if (!mInstrumentation.onException(app, e)) {
@@ -6766,7 +6772,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     @UnsupportedAppUsage
     private void installContentProviders(
             Context context, List<ProviderInfo> providers) {
-        final ArrayList<ContentProviderHolder> results = new ArrayList<>();
+        final ArrayList<android.app.ContentProviderHolder> results = new ArrayList<>();
 
         for (ProviderInfo cpi : providers) {
             if (DEBUG_PROVIDER) {
@@ -6777,7 +6783,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 buf.append(cpi.name);
                 Log.i(TAG, buf.toString());
             }
-            ContentProviderHolder cph = installProvider(context, null, cpi,
+            android.app.ContentProviderHolder cph = installProvider(context, null, cpi,
                     false /*noisy*/, true /*noReleaseNeeded*/, true /*stable*/);
             if (cph != null) {
                 cph.noReleaseNeeded = true;
@@ -6807,7 +6813,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         // Note that we cannot hold the lock while acquiring and installing the
         // provider since it might take a long time to run and it could also potentially
         // be re-entrant in the case where the provider is in the same process.
-        ContentProviderHolder holder = null;
+        android.app.ContentProviderHolder holder = null;
         try {
             synchronized (getGetProviderLock(auth, userId)) {
                 holder = ActivityManager.getService().getContentProvider(
@@ -7125,7 +7131,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private ProviderClientRecord installProviderAuthoritiesLocked(IContentProvider provider,
-            ContentProvider localProvider, ContentProviderHolder holder) {
+            ContentProvider localProvider, android.app.ContentProviderHolder holder) {
         final String auths[] = holder.info.authority.split(";");
         final int userId = UserHandle.getUserId(holder.info.applicationInfo.uid);
 
@@ -7176,9 +7182,9 @@ public final class ActivityThread extends ClientTransactionHandler {
      * attempts to acquire the same provider.
      */
     @UnsupportedAppUsage
-    private ContentProviderHolder installProvider(Context context,
-            ContentProviderHolder holder, ProviderInfo info,
-            boolean noisy, boolean noReleaseNeeded, boolean stable) {
+    private android.app.ContentProviderHolder installProvider(Context context,
+                                                              android.app.ContentProviderHolder holder, ProviderInfo info,
+                                                              boolean noisy, boolean noReleaseNeeded, boolean stable) {
         ContentProvider localProvider = null;
         IContentProvider provider;
         if (holder == null || holder.provider == null) {
@@ -7219,7 +7225,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             try {
                 final java.lang.ClassLoader cl = c.getClassLoader();
-                LoadedApk packageInfo = peekPackageInfo(ai.packageName, true);
+                android.app.LoadedApk packageInfo = peekPackageInfo(ai.packageName, true);
                 if (packageInfo == null) {
                     // System startup case.
                     packageInfo = getSystemContext().mPackageInfo;
@@ -7251,7 +7257,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     + info.name);
         }
 
-        ContentProviderHolder retHolder;
+        android.app.ContentProviderHolder retHolder;
 
         synchronized (mProviderMap) {
             if (DEBUG_PROVIDER) Slog.v(TAG, "Checking to add " + provider
@@ -7267,7 +7273,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     }
                     provider = pr.mProvider;
                 } else {
-                    holder = new ContentProviderHolder(info);
+                    holder = new android.app.ContentProviderHolder(info);
                     holder.provider = provider;
                     holder.noReleaseNeeded = true;
                     pr = installProviderAuthoritiesLocked(provider, localProvider, holder);
@@ -7328,11 +7334,13 @@ public final class ActivityThread extends ClientTransactionHandler {
         sCurrentActivityThread = this;
         mSystemThread = system;
         if (!system) {
+            // 非系统的走这里
             android.ddm.DdmHandleAppName.setAppName("<pre-initialized>",
                                                     UserHandle.myUserId());
             RuntimeInit.setApplicationObject(mAppThread.asBinder());
             final IActivityManager mgr = ActivityManager.getService();
             try {
+                // 远程调用 WMS
                 mgr.attachApplication(mAppThread, startSeq);
             } catch (RemoteException ex) {
                 throw ex.rethrowFromSystemServer();
@@ -7352,7 +7360,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                 + " used=" + (dalvikUsed/1024));
                         mSomeActivitiesChanged = false;
                         try {
-                            ActivityTaskManager.getService().releaseSomeActivities(mAppThread);
+                            android.app.ActivityTaskManager.getService().releaseSomeActivities(mAppThread);
                         } catch (RemoteException e) {
                             throw e.rethrowFromSystemServer();
                         }
@@ -7367,7 +7375,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             try {
                 mInstrumentation = new Instrumentation();
                 mInstrumentation.basicInit(this);
-                ContextImpl context = ContextImpl.createAppContext(
+                android.app.ContextImpl context = android.app.ContextImpl.createAppContext(
                         this, getSystemContext().mPackageInfo);
                 mInitialApplication = context.mPackageInfo.makeApplication(true, null);
                 mInitialApplication.onCreate();

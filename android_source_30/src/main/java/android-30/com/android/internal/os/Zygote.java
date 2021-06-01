@@ -341,13 +341,14 @@ public final class Zygote {
             boolean bindMountAppDataDirs, boolean bindMountAppStorageDirs) {
         // 停止 Zygote 的子线程，确保 Zygote 是单线程。
         ZygoteHooks.preFork();
-
+        // fork() 进程
         int pid = nativeForkAndSpecialize(
                 uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName, fdsToClose,
                 fdsToIgnore, startChildZygote, instructionSet, appDataDir, isTopApp,
                 pkgDataInfoList, whitelistedDataInfoList, bindMountAppDataDirs,
                 bindMountAppStorageDirs);
         if (pid == 0) {
+            // 执行在子进程中
             // Note that this event ends at the end of handleChildProc,
             Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "PostFork");
 

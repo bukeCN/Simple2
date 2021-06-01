@@ -258,6 +258,7 @@ public class RuntimeInit {
          * set handlers; these apply to all threads in the VM. Apps can replace
          * the default handler, but not the pre handler.
          */
+        // 设置默认的未捕获异常处理方法
         LoggingHandler loggingHandler = new LoggingHandler();
         RuntimeHooks.setUncaughtExceptionPreHandler(loggingHandler);
         Thread.setDefaultUncaughtExceptionHandler(new KillApplicationHandler(loggingHandler));
@@ -274,18 +275,21 @@ public class RuntimeInit {
          * can't use the system property here since the logger has almost
          * certainly already been initialized.
          */
+        // 重置 log 配置
         LogManager.getLogManager().reset();
         new AndroidConfig();
 
         /*
          * Sets the default HTTP User-Agent used by HttpURLConnection.
          */
+        // 设置 Http User-agent 格式， 用于 HttpURLConnection
         String userAgent = getDefaultUserAgent();
         System.setProperty("http.agent", userAgent);
 
         /*
          * Wire socket tagging to traffic stats.
          */
+        // 设置 socket 的 tag，用于网络流量统计
         NetworkManagementSocketTagger.install();
 
         /*
@@ -378,6 +382,7 @@ public class RuntimeInit {
          * up the process.
          */
         // 重点，在 ZygoteInit 的 main() 函数中调用了其 run() 函数。
+        // 如果是启动应用程序进程，那么就是调用 ActivityThread.main() 函数。
         return new MethodAndArgsCaller(m, argv);
     }
 
@@ -409,8 +414,9 @@ public class RuntimeInit {
         // shutdown an Android application gracefully.  Among other things, the
         // Android runtime shutdown hooks close the Binder driver, which can cause
         // leftover running threads to crash before the process actually exits.
+        // true 代表应用程序退出时不调用 AppRuntime.onExit()。
         nativeSetExitWithoutCleanup(true);
-
+        // 设置虚拟机的内存利用参数值
         VMRuntime.getRuntime().setTargetSdkVersion(targetSdkVersion);
         VMRuntime.getRuntime().setDisabledCompatChanges(disabledCompatChanges);
 
@@ -420,7 +426,7 @@ public class RuntimeInit {
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
 
         // Remaining arguments are passed to the start class's static main
-        // 看名字，反射找到 main() 函数执行。
+        // 看名字，反射找到 startClass 的 main() 函数执行。
         return findStaticMain(args.startClass, args.startArgs, classLoader);
     }
 

@@ -537,14 +537,14 @@ class ZygoteServer {
 
                     if (pollIndex == 0) {
                         // Zygote server socket
-
+                        // Sokect 有客户端连接请求，创建 ZygoteConnection 对象，并添加到 fds
                         com.android.internal.os.ZygoteConnection newPeer = acceptCommandPeer(abiList);
                         peers.add(newPeer);
                         socketFDs.add(newPeer.getFileDescriptor());
 
                     } else if (pollIndex < usapPoolEventFDIndex) {
                         // Session socket accepted from the Zygote server socket
-
+                        // 通过 sokect 接收到来自客户端的请求。
                         try {
                             com.android.internal.os.ZygoteConnection connection = peers.get(pollIndex);
                             // fork() 进程

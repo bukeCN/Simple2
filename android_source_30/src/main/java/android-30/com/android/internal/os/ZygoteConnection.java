@@ -271,7 +271,7 @@ class ZygoteConnection {
                 zygoteServer.closeServerSocket();
                 IoUtils.closeQuietly(serverPipeFd);
                 serverPipeFd = null;
-                // 处理子进程，
+                // 处理子进程，主要就是执行对应进程启动 class 对象的 main() 函数。
                 return handleChildProc(parsedArgs, childPipeFd, parsedArgs.mStartChildZygote);
             } else {
                 // In the parent. A pid < 0 indicates a failure and will be handled in
@@ -494,6 +494,7 @@ class ZygoteConnection {
         // End of the postFork event.
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
         if (parsedArgs.mInvokeWith != null) {
+            // gityuan 的文章这里也没讲。。。
             com.android.internal.os.WrapperInit.execApplication(parsedArgs.mInvokeWith,
                     parsedArgs.mNiceName, parsedArgs.mTargetSdkVersion,
                     VMRuntime.getCurrentInstructionSet(),
@@ -503,10 +504,12 @@ class ZygoteConnection {
             throw new IllegalStateException("WrapperInit.execApplication unexpectedly returned");
         } else {
             if (!isZygote) {
+                // 启动的进程是 zygote 的子进程，执行目标类的 main() 函数。应用程序走这里。
                 return com.android.internal.os.ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mDisabledCompatChanges,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             } else {
+                // 子进程，什么意思？？？
                 return com.android.internal.os.ZygoteInit.childZygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             }

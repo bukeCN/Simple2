@@ -99,7 +99,7 @@ public class Instrumentation {
 
 
     private final Object mSync = new Object();
-    private ActivityThread mThread = null;
+    private android.app.ActivityThread mThread = null;
     private MessageQueue mMessageQueue = null;
     private Context mInstrContext;
     private Context mAppContext;
@@ -1219,7 +1219,7 @@ public class Instrumentation {
             Object lastNonConfigurationInstance) throws InstantiationException,
             IllegalAccessException {
         Activity activity = (Activity)clazz.newInstance();
-        ActivityThread aThread = null;
+        android.app.ActivityThread aThread = null;
         // Activity.attach expects a non-null Application Object.
         if (application == null) {
             application = new Application();
@@ -1263,7 +1263,7 @@ public class Instrumentation {
                     + " disabling AppComponentFactory", new Throwable());
             return AppComponentFactory.DEFAULT;
         }
-        LoadedApk apk = mThread.peekPackageInfo(pkg, true);
+        android.app.LoadedApk apk = mThread.peekPackageInfo(pkg, true);
         // This is in the case of starting up "android".
         if (apk == null) apk = mThread.getSystemContext().mPackageInfo;
         return apk.getAppFactory();
@@ -1720,10 +1720,12 @@ public class Instrumentation {
         try {
             intent.migrateExtraStreamToClipData(who);
             intent.prepareToLeaveProcess(who);
-            int result = ActivityTaskManager.getService().startActivity(whoThread,
+            // 重点，获取 ActivityTaskManagerService 进行 IPC 调用
+            int result = android.app.ActivityTaskManager.getService().startActivity(whoThread,
                     who.getBasePackageName(), who.getAttributionTag(), intent,
                     intent.resolveTypeIfNeeded(who.getContentResolver()), token,
                     target != null ? target.mEmbeddedID : null, requestCode, 0, null, options);
+            // 检查 activity 是否启动成功
             checkStartActivityResult(result, intent);
         } catch (RemoteException e) {
             throw new RuntimeException("Failure from system", e);
@@ -1792,7 +1794,7 @@ public class Instrumentation {
                 intents[i].prepareToLeaveProcess(who);
                 resolvedTypes[i] = intents[i].resolveTypeIfNeeded(who.getContentResolver());
             }
-            int result = ActivityTaskManager.getService().startActivities(whoThread,
+            int result = android.app.ActivityTaskManager.getService().startActivities(whoThread,
                     who.getBasePackageName(), who.getAttributionTag(), intents, resolvedTypes,
                     token, options, userId);
             checkStartActivityResult(result, intents[0]);
@@ -1859,7 +1861,7 @@ public class Instrumentation {
         try {
             intent.migrateExtraStreamToClipData(who);
             intent.prepareToLeaveProcess(who);
-            int result = ActivityTaskManager.getService().startActivity(whoThread,
+            int result = android.app.ActivityTaskManager.getService().startActivity(whoThread,
                     who.getBasePackageName(), who.getAttributionTag(), intent,
                     intent.resolveTypeIfNeeded(who.getContentResolver()), token, target,
                     requestCode, 0, null, options);
@@ -1926,7 +1928,7 @@ public class Instrumentation {
         try {
             intent.migrateExtraStreamToClipData(who);
             intent.prepareToLeaveProcess(who);
-            int result = ActivityTaskManager.getService().startActivityAsUser(whoThread,
+            int result = android.app.ActivityTaskManager.getService().startActivityAsUser(whoThread,
                     who.getBasePackageName(), who.getAttributionTag(), intent,
                     intent.resolveTypeIfNeeded(who.getContentResolver()), token, resultWho,
                     requestCode, 0, null, options, user.getIdentifier());
@@ -1972,7 +1974,7 @@ public class Instrumentation {
         try {
             intent.migrateExtraStreamToClipData(who);
             intent.prepareToLeaveProcess(who);
-            int result = ActivityTaskManager.getService()
+            int result = android.app.ActivityTaskManager.getService()
                 .startActivityAsCaller(whoThread, who.getBasePackageName(), intent,
                         intent.resolveTypeIfNeeded(who.getContentResolver()),
                         token, target != null ? target.mEmbeddedID : null,
@@ -2029,9 +2031,9 @@ public class Instrumentation {
         return;
     }
 
-    /*package*/ final void init(ActivityThread thread,
-            Context instrContext, Context appContext, ComponentName component, 
-            IInstrumentationWatcher watcher, IUiAutomationConnection uiAutomationConnection) {
+    /*package*/ final void init(android.app.ActivityThread thread,
+                                Context instrContext, Context appContext, ComponentName component,
+                                IInstrumentationWatcher watcher, IUiAutomationConnection uiAutomationConnection) {
         mThread = thread;
         mMessageQueue = mThread.getLooper().myQueue();
         mInstrContext = instrContext;
@@ -2045,7 +2047,7 @@ public class Instrumentation {
      * Only sets the ActivityThread up, keeps everything else null because app is not being
      * instrumented.
      */
-    final void basicInit(ActivityThread thread) {
+    final void basicInit(android.app.ActivityThread thread) {
         mThread = thread;
     }
 

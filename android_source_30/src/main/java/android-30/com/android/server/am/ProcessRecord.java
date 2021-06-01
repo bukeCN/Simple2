@@ -54,6 +54,7 @@ import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.DebugUtils;
 import android.util.EventLog;
+import android.util.EventLogTags;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.util.TimeUtils;
@@ -85,7 +86,7 @@ import java.util.function.Consumer;
 class ProcessRecord implements WindowProcessListener {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ProcessRecord" : TAG_AM;
 
-    private final ActivityManagerService mService; // where we came from
+    private final com.android.server.am.ActivityManagerService mService; // where we came from
     volatile ApplicationInfo info; // all about the first app in the process
     final ProcessInfo processInfo; // if non-null, process-specific manifest info
     final boolean isolated;     // true if this is a special isolated process
@@ -129,9 +130,9 @@ class ProcessRecord implements WindowProcessListener {
         }
     }
 
-    final ProcessList.ProcStateMemTracker procStateMemTracker
-            = new ProcessList.ProcStateMemTracker();
-    UidRecord uidRecord;        // overall state of process's uid.
+    final com.android.server.am.ProcessList.ProcStateMemTracker procStateMemTracker
+            = new com.android.server.am.ProcessList.ProcStateMemTracker();
+    com.android.server.am.UidRecord uidRecord;        // overall state of process's uid.
     ArraySet<String> pkgDeps;   // additional packages we have a dependency on
     IApplicationThread thread;  // the actual proc...  may be null only if
                                 // 'persistent' is true (in which case we
@@ -179,7 +180,7 @@ class ProcessRecord implements WindowProcessListener {
     int pssStatType;            // The type of stat collection that we are currently requesting
     int savedPriority;          // Previous priority value if we're switching to non-SCHED_OTHER
     int renderThreadTid;        // TID for RenderThread
-    ServiceRecord connectionService; // Service that applied current connectionGroup/Importance
+    com.android.server.am.ServiceRecord connectionService; // Service that applied current connectionGroup/Importance
     int connectionGroup;        // Last group set by a connection
     int connectionImportance;   // Last importance set by a connection
     boolean serviceb;           // Process currently is on the service B list
@@ -231,10 +232,10 @@ class ProcessRecord implements WindowProcessListener {
     int lruSeq;                 // Sequence id for identifying LRU update cycles
     CompatibilityInfo compat;   // last used compatibility mode
     IBinder.DeathRecipient deathRecipient; // Who is watching for the death.
-    private ActiveInstrumentation mInstr; // Set to currently active instrumentation running in
+    private com.android.server.am.ActiveInstrumentation mInstr; // Set to currently active instrumentation running in
                                           // process.
     private boolean mUsingWrapper; // Set to true when process was launched with a wrapper attached
-    final ArraySet<BroadcastRecord> curReceivers = new ArraySet<BroadcastRecord>();// receivers currently running in the app
+    final ArraySet<com.android.server.am.BroadcastRecord> curReceivers = new ArraySet<com.android.server.am.BroadcastRecord>();// receivers currently running in the app
     private long mWhenUnimportant; // When (uptime) the process last became unimportant
     long lastCpuTime;           // How long proc has run CPU at last check
     long curCpuTime;            // How long proc has run CPU most recently
@@ -263,17 +264,17 @@ class ProcessRecord implements WindowProcessListener {
     // Controller for driving the process state on the window manager side.
     private final WindowProcessController mWindowProcessController;
     // all ServiceRecord running in this process
-    private final ArraySet<ServiceRecord> mServices = new ArraySet<>();
+    private final ArraySet<com.android.server.am.ServiceRecord> mServices = new ArraySet<>();
     // services that are currently executing code (need to remain foreground).
-    final ArraySet<ServiceRecord> executingServices = new ArraySet<>();
+    final ArraySet<com.android.server.am.ServiceRecord> executingServices = new ArraySet<>();
     // All ConnectionRecord this process holds
-    final ArraySet<ConnectionRecord> connections = new ArraySet<>();
+    final ArraySet<com.android.server.am.ConnectionRecord> connections = new ArraySet<>();
     // all IIntentReceivers that are registered from this process.
-    final ArraySet<ReceiverList> receivers = new ArraySet<>();
+    final ArraySet<com.android.server.am.ReceiverList> receivers = new ArraySet<>();
     // class (String) -> ContentProviderRecord
-    final ArrayMap<String, ContentProviderRecord> pubProviders = new ArrayMap<>();
+    final ArrayMap<String, com.android.server.am.ContentProviderRecord> pubProviders = new ArrayMap<>();
     // All ContentProviderRecord process is using
-    final ArrayList<ContentProviderConnection> conProviders = new ArrayList<>();
+    final ArrayList<com.android.server.am.ContentProviderConnection> conProviders = new ArrayList<>();
     // A set of tokens that currently contribute to this process being temporarily whitelisted
     // to start activities even if it's not in the foreground
     final ArraySet<Binder> mAllowBackgroundActivityStartsTokens = new ArraySet<>();
@@ -316,7 +317,7 @@ class ProcessRecord implements WindowProcessListener {
     boolean whitelistManager;
 
     // Params used in starting this process.
-    HostingRecord hostingRecord;
+    com.android.server.am.HostingRecord hostingRecord;
     String seInfo;
     long startTime;
     // This will be same as {@link #uid} usually except for some apps used during factory testing.
@@ -345,15 +346,15 @@ class ProcessRecord implements WindowProcessListener {
     private int mCachedIsPreviousProcess = VALUE_INVALID;
     private int mCachedHasRecentTasks = VALUE_INVALID;
     private int mCachedIsReceivingBroadcast = VALUE_INVALID;
-    int mCachedAdj = ProcessList.INVALID_ADJ;
+    int mCachedAdj = com.android.server.am.ProcessList.INVALID_ADJ;
     boolean mCachedForegroundActivities = false;
     int mCachedProcState = ActivityManager.PROCESS_STATE_CACHED_EMPTY;
-    int mCachedSchedGroup = ProcessList.SCHED_GROUP_BACKGROUND;
+    int mCachedSchedGroup = com.android.server.am.ProcessList.SCHED_GROUP_BACKGROUND;
 
     boolean mReachable; // Whether or not this process is reachable from given process
 
-    void setStartParams(int startUid, HostingRecord hostingRecord, String seInfo,
-            long startTime) {
+    void setStartParams(int startUid, com.android.server.am.HostingRecord hostingRecord, String seInfo,
+                        long startTime) {
         this.startUid = startUid;
         this.hostingRecord = hostingRecord;
         this.seInfo = seInfo;
@@ -634,8 +635,8 @@ class ProcessRecord implements WindowProcessListener {
         }
     }
 
-    ProcessRecord(ActivityManagerService _service, ApplicationInfo _info, String _processName,
-            int _uid) {
+    ProcessRecord(com.android.server.am.ActivityManagerService _service, ApplicationInfo _info, String _processName,
+                  int _uid) {
         mService = _service;
         info = _info;
         ProcessInfo procInfo = null;
@@ -659,9 +660,9 @@ class ProcessRecord implements WindowProcessListener {
         uid = _uid;
         userId = UserHandle.getUserId(_uid);
         processName = _processName;
-        maxAdj = ProcessList.UNKNOWN_ADJ;
-        mCurRawAdj = setRawAdj = ProcessList.INVALID_ADJ;
-        curAdj = setAdj = verifiedAdj = ProcessList.INVALID_ADJ;
+        maxAdj = com.android.server.am.ProcessList.UNKNOWN_ADJ;
+        mCurRawAdj = setRawAdj = com.android.server.am.ProcessList.INVALID_ADJ;
+        curAdj = setAdj = verifiedAdj = com.android.server.am.ProcessList.INVALID_ADJ;
         mPersistent = false;
         removed = false;
         freezeUnfreezeTime = lastStateTime = lastPssTime = nextPssTime = SystemClock.uptimeMillis();
@@ -678,7 +679,8 @@ class ProcessRecord implements WindowProcessListener {
         stringName = null;
     }
 
-    public void makeActive(IApplicationThread _thread, ProcessStatsService tracker) {
+    public void makeActive(IApplicationThread _thread, com.android.server.am.ProcessStatsService tracker) {
+        // 首次进来是 null 的
         if (thread == null) {
             final ProcessState origBase = baseProcessTracker;
             if (origBase != null) {
@@ -711,7 +713,7 @@ class ProcessRecord implements WindowProcessListener {
         mWindowProcessController.setThread(thread);
     }
 
-    public void makeInactive(ProcessStatsService tracker) {
+    public void makeInactive(com.android.server.am.ProcessStatsService tracker) {
         thread = null;
         mWindowProcessController.setThread(null);
         final ProcessState origBase = baseProcessTracker;
@@ -745,7 +747,7 @@ class ProcessRecord implements WindowProcessListener {
      *
      * @return true if the service was added, false otherwise.
      */
-    boolean startService(ServiceRecord record) {
+    boolean startService(com.android.server.am.ServiceRecord record) {
         if (record == null) {
             return false;
         }
@@ -762,7 +764,7 @@ class ProcessRecord implements WindowProcessListener {
      *
      * @return true if the service was removed, false otherwise.
      */
-    boolean stopService(ServiceRecord record) {
+    boolean stopService(com.android.server.am.ServiceRecord record) {
         return mServices.remove(record);
     }
 
@@ -789,7 +791,7 @@ class ProcessRecord implements WindowProcessListener {
      *
      * @see #numberOfRunningServices()
      */
-    ServiceRecord getRunningServiceAt(int index) {
+    com.android.server.am.ServiceRecord getRunningServiceAt(int index) {
         return mServices.valueAt(index);
     }
 
@@ -828,7 +830,7 @@ class ProcessRecord implements WindowProcessListener {
 
         final int servicesSize = mServices.size();
         for (int i = 0; i < servicesSize; i++) {
-            ServiceRecord r = mServices.valueAt(i);
+            com.android.server.am.ServiceRecord r = mServices.valueAt(i);
             if (r.isForeground) {
                 return true;
             }
@@ -846,7 +848,7 @@ class ProcessRecord implements WindowProcessListener {
     void updateHasAboveClientLocked() {
         hasAboveClient = false;
         for (int i=connections.size()-1; i>=0; i--) {
-            ConnectionRecord cr = connections.valueAt(i);
+            com.android.server.am.ConnectionRecord cr = connections.valueAt(i);
             if ((cr.flags&Context.BIND_ABOVE_CLIENT) != 0) {
                 hasAboveClient = true;
                 break;
@@ -861,17 +863,17 @@ class ProcessRecord implements WindowProcessListener {
             // in order to honor the request.  We want to drop it by one adjustment
             // level...  but there is special meaning applied to various levels so
             // we will skip some of them.
-            if (adj < ProcessList.FOREGROUND_APP_ADJ) {
+            if (adj < com.android.server.am.ProcessList.FOREGROUND_APP_ADJ) {
                 // System process will not get dropped, ever
-            } else if (adj < ProcessList.VISIBLE_APP_ADJ) {
-                adj = ProcessList.VISIBLE_APP_ADJ;
-            } else if (adj < ProcessList.PERCEPTIBLE_APP_ADJ) {
-                adj = ProcessList.PERCEPTIBLE_APP_ADJ;
-            } else if (adj < ProcessList.PERCEPTIBLE_LOW_APP_ADJ) {
-                adj = ProcessList.PERCEPTIBLE_LOW_APP_ADJ;
-            } else if (adj < ProcessList.CACHED_APP_MIN_ADJ) {
-                adj = ProcessList.CACHED_APP_MIN_ADJ;
-            } else if (adj < ProcessList.CACHED_APP_MAX_ADJ) {
+            } else if (adj < com.android.server.am.ProcessList.VISIBLE_APP_ADJ) {
+                adj = com.android.server.am.ProcessList.VISIBLE_APP_ADJ;
+            } else if (adj < com.android.server.am.ProcessList.PERCEPTIBLE_APP_ADJ) {
+                adj = com.android.server.am.ProcessList.PERCEPTIBLE_APP_ADJ;
+            } else if (adj < com.android.server.am.ProcessList.PERCEPTIBLE_LOW_APP_ADJ) {
+                adj = com.android.server.am.ProcessList.PERCEPTIBLE_LOW_APP_ADJ;
+            } else if (adj < com.android.server.am.ProcessList.CACHED_APP_MIN_ADJ) {
+                adj = com.android.server.am.ProcessList.CACHED_APP_MIN_ADJ;
+            } else if (adj < com.android.server.am.ProcessList.CACHED_APP_MAX_ADJ) {
                 adj++;
             }
         }
@@ -918,7 +920,7 @@ class ProcessRecord implements WindowProcessListener {
                 mService.mProcessList.noteAppKill(this, reasonCode, subReason, reason);
                 EventLog.writeEvent(EventLogTags.AM_KILL, userId, pid, processName, setAdj, reason);
                 Process.killProcessQuiet(pid);
-                ProcessList.killProcessGroup(uid, pid);
+                com.android.server.am.ProcessList.killProcessGroup(uid, pid);
             } else {
                 pendingStart = false;
             }
@@ -1030,7 +1032,7 @@ class ProcessRecord implements WindowProcessListener {
     /*
      *  Return true if package has been added false if not
      */
-    public boolean addPackage(String pkg, long versionCode, ProcessStatsService tracker) {
+    public boolean addPackage(String pkg, long versionCode, com.android.server.am.ProcessStatsService tracker) {
         if (!pkgList.containsKey(pkg)) {
             ProcessStats.ProcessStateHolder holder = new ProcessStats.ProcessStateHolder(
                     versionCode);
@@ -1050,9 +1052,9 @@ class ProcessRecord implements WindowProcessListener {
     }
 
     public int getSetAdjWithServices() {
-        if (setAdj >= ProcessList.CACHED_APP_MIN_ADJ) {
+        if (setAdj >= com.android.server.am.ProcessList.CACHED_APP_MIN_ADJ) {
             if (hasStartedServices) {
-                return ProcessList.SERVICE_B_ADJ;
+                return com.android.server.am.ProcessList.SERVICE_B_ADJ;
             }
         }
         return setAdj;
@@ -1075,7 +1077,7 @@ class ProcessRecord implements WindowProcessListener {
     /*
      *  Delete all packages from list except the package indicated in info
      */
-    public void resetPackageList(ProcessStatsService tracker) {
+    public void resetPackageList(com.android.server.am.ProcessStatsService tracker) {
         final int N = pkgList.size();
         if (baseProcessTracker != null) {
             long now = SystemClock.uptimeMillis();
@@ -1355,11 +1357,11 @@ class ProcessRecord implements WindowProcessListener {
         ArraySet<Integer> boundClientUids = new ArraySet<>();
         final int serviceCount = mServices.size();
         for (int j = 0; j < serviceCount; j++) {
-            ArrayMap<IBinder, ArrayList<ConnectionRecord>> conns =
+            ArrayMap<IBinder, ArrayList<com.android.server.am.ConnectionRecord>> conns =
                     mServices.valueAt(j).getConnections();
             final int N = conns.size();
             for (int conni = 0; conni < N; conni++) {
-                ArrayList<ConnectionRecord> c = conns.valueAt(conni);
+                ArrayList<com.android.server.am.ConnectionRecord> c = conns.valueAt(conni);
                 for (int i = 0; i < c.size(); i++) {
                     boundClientUids.add(c.get(i).clientUid);
                 }
@@ -1369,13 +1371,13 @@ class ProcessRecord implements WindowProcessListener {
         mWindowProcessController.setBoundClientUids(mBoundClientUids);
     }
 
-    void addBoundClientUidsOfNewService(ServiceRecord sr) {
+    void addBoundClientUidsOfNewService(com.android.server.am.ServiceRecord sr) {
         if (sr == null) {
             return;
         }
-        ArrayMap<IBinder, ArrayList<ConnectionRecord>> conns = sr.getConnections();
+        ArrayMap<IBinder, ArrayList<com.android.server.am.ConnectionRecord>> conns = sr.getConnections();
         for (int conni = conns.size() - 1; conni >= 0; conni--) {
-            ArrayList<ConnectionRecord> c = conns.valueAt(conni);
+            ArrayList<com.android.server.am.ConnectionRecord> c = conns.valueAt(conni);
             for (int i = 0; i < c.size(); i++) {
                 mBoundClientUids.add(c.get(i).clientUid);
             }
@@ -1388,20 +1390,20 @@ class ProcessRecord implements WindowProcessListener {
         mWindowProcessController.setBoundClientUids(mBoundClientUids);
     }
 
-    void setActiveInstrumentation(ActiveInstrumentation instr) {
+    void setActiveInstrumentation(com.android.server.am.ActiveInstrumentation instr) {
         mInstr = instr;
         boolean isInstrumenting = instr != null;
         mWindowProcessController.setInstrumenting(isInstrumenting,
                 isInstrumenting && instr.mHasBackgroundActivityStartsPermission);
     }
 
-    ActiveInstrumentation getActiveInstrumentation() {
+    com.android.server.am.ActiveInstrumentation getActiveInstrumentation() {
         return mInstr;
     }
 
     void setCurRawAdj(int curRawAdj) {
         mCurRawAdj = curRawAdj;
-        mWindowProcessController.setPerceptible(curRawAdj <= ProcessList.PERCEPTIBLE_APP_ADJ);
+        mWindowProcessController.setPerceptible(curRawAdj <= com.android.server.am.ProcessList.PERCEPTIBLE_APP_ADJ);
     }
 
     int getCurRawAdj() {
@@ -1456,7 +1458,7 @@ class ProcessRecord implements WindowProcessListener {
             }
             mService.mProcessList.updateLruProcessLocked(this, activityChange, null /* client */);
             if (updateOomAdj) {
-                mService.updateOomAdjLocked(this, OomAdjuster.OOM_ADJ_REASON_ACTIVITY);
+                mService.updateOomAdjLocked(this, com.android.server.am.OomAdjuster.OOM_ADJ_REASON_ACTIVITY);
             }
         }
     }
@@ -1518,7 +1520,7 @@ class ProcessRecord implements WindowProcessListener {
                 Slog.i(TAG, "Setting runningRemoteAnimation=" + runningRemoteAnimation
                         + " for pid=" + pid);
             }
-            mService.updateOomAdjLocked(this, true, OomAdjuster.OOM_ADJ_REASON_UI_VISIBILITY);
+            mService.updateOomAdjLocked(this, true, com.android.server.am.OomAdjuster.OOM_ADJ_REASON_UI_VISIBILITY);
         }
     }
 
@@ -1684,7 +1686,7 @@ class ProcessRecord implements WindowProcessListener {
         StringWriter tracesFileException = new StringWriter();
         // To hold the start and end offset to the ANR trace file respectively.
         final long[] offsets = new long[2];
-        File tracesFile = ActivityManagerService.dumpStackTraces(firstPids,
+        File tracesFile = com.android.server.am.ActivityManagerService.dumpStackTraces(firstPids,
                 isSilentAnr ? null : processCpuTracker, isSilentAnr ? null : lastPids,
                 nativePids, tracesFileException, offsets);
 
@@ -1759,8 +1761,8 @@ class ProcessRecord implements WindowProcessListener {
             if (mService.mUiHandler != null) {
                 // Bring up the infamous App Not Responding dialog
                 Message msg = Message.obtain();
-                msg.what = ActivityManagerService.SHOW_NOT_RESPONDING_UI_MSG;
-                msg.obj = new AppNotRespondingDialog.Data(this, aInfo, aboveSystem);
+                msg.what = com.android.server.am.ActivityManagerService.SHOW_NOT_RESPONDING_UI_MSG;
+                msg.obj = new com.android.server.am.AppNotRespondingDialog.Data(this, aInfo, aboveSystem);
 
                 mService.mUiHandler.sendMessage(msg);
             }
@@ -1827,10 +1829,10 @@ class ProcessRecord implements WindowProcessListener {
         mCachedIsPreviousProcess = VALUE_INVALID;
         mCachedHasRecentTasks = VALUE_INVALID;
         mCachedIsReceivingBroadcast = VALUE_INVALID;
-        mCachedAdj = ProcessList.INVALID_ADJ;
+        mCachedAdj = com.android.server.am.ProcessList.INVALID_ADJ;
         mCachedForegroundActivities = false;
         mCachedProcState = ActivityManager.PROCESS_STATE_CACHED_EMPTY;
-        mCachedSchedGroup = ProcessList.SCHED_GROUP_BACKGROUND;
+        mCachedSchedGroup = com.android.server.am.ProcessList.SCHED_GROUP_BACKGROUND;
     }
 
     boolean getCachedHasActivities() {
@@ -1881,36 +1883,36 @@ class ProcessRecord implements WindowProcessListener {
         return mCachedHasRecentTasks == VALUE_TRUE;
     }
 
-    boolean getCachedIsReceivingBroadcast(ArraySet<BroadcastQueue> tmpQueue) {
+    boolean getCachedIsReceivingBroadcast(ArraySet<com.android.server.am.BroadcastQueue> tmpQueue) {
         if (mCachedIsReceivingBroadcast == VALUE_INVALID) {
             tmpQueue.clear();
             mCachedIsReceivingBroadcast = mService.isReceivingBroadcastLocked(this, tmpQueue)
                     ? VALUE_TRUE : VALUE_FALSE;
             if (mCachedIsReceivingBroadcast == VALUE_TRUE) {
                 mCachedSchedGroup = tmpQueue.contains(mService.mFgBroadcastQueue)
-                        ? ProcessList.SCHED_GROUP_DEFAULT : ProcessList.SCHED_GROUP_BACKGROUND;
+                        ? com.android.server.am.ProcessList.SCHED_GROUP_DEFAULT : com.android.server.am.ProcessList.SCHED_GROUP_BACKGROUND;
             }
         }
         return mCachedIsReceivingBroadcast == VALUE_TRUE;
     }
 
-    void computeOomAdjFromActivitiesIfNecessary(OomAdjuster.ComputeOomAdjWindowCallback callback,
-            int adj, boolean foregroundActivities, int procState, int schedGroup, int appUid,
-            int logUid, int processCurTop) {
-        if (mCachedAdj != ProcessList.INVALID_ADJ) {
+    void computeOomAdjFromActivitiesIfNecessary(com.android.server.am.OomAdjuster.ComputeOomAdjWindowCallback callback,
+                                                int adj, boolean foregroundActivities, int procState, int schedGroup, int appUid,
+                                                int logUid, int processCurTop) {
+        if (mCachedAdj != com.android.server.am.ProcessList.INVALID_ADJ) {
             return;
         }
         callback.initialize(this, adj, foregroundActivities, procState, schedGroup, appUid, logUid,
                 processCurTop);
         final int minLayer = getWindowProcessController().computeOomAdjFromActivities(
-                ProcessList.VISIBLE_APP_LAYER_MAX, callback);
+                com.android.server.am.ProcessList.VISIBLE_APP_LAYER_MAX, callback);
 
         mCachedAdj = callback.adj;
         mCachedForegroundActivities = callback.foregroundActivities;
         mCachedProcState = callback.procState;
         mCachedSchedGroup = callback.schedGroup;
 
-        if (mCachedAdj == ProcessList.VISIBLE_APP_ADJ) {
+        if (mCachedAdj == com.android.server.am.ProcessList.VISIBLE_APP_ADJ) {
             mCachedAdj += minLayer;
         }
     }
@@ -1924,11 +1926,11 @@ class ProcessRecord implements WindowProcessListener {
         /** dialogs being displayed due to crash */
         private List<AppErrorDialog> mCrashDialogs;
         /** dialogs being displayed due to app not responding */
-        private List<AppNotRespondingDialog> mAnrDialogs;
+        private List<com.android.server.am.AppNotRespondingDialog> mAnrDialogs;
         /** dialogs displayed due to strict mode violation */
-        private List<StrictModeViolationDialog> mViolationDialogs;
+        private List<com.android.server.am.StrictModeViolationDialog> mViolationDialogs;
         /** current wait for debugger dialog */
-        private AppWaitingForDebuggerDialog mWaitDialog;
+        private com.android.server.am.AppWaitingForDebuggerDialog mWaitDialog;
 
         boolean hasCrashDialogs() {
             return mCrashDialogs != null;
@@ -1991,13 +1993,13 @@ class ProcessRecord implements WindowProcessListener {
             mWaitDialog = null;
         }
 
-        void forAllDialogs(List<? extends BaseErrorDialog> dialogs, Consumer<BaseErrorDialog> c) {
+        void forAllDialogs(List<? extends com.android.server.am.BaseErrorDialog> dialogs, Consumer<com.android.server.am.BaseErrorDialog> c) {
             for (int i = dialogs.size() - 1; i >= 0; i--) {
                 c.accept(dialogs.get(i));
             }
         }
 
-        void showCrashDialogs(AppErrorDialog.Data data) {
+        void showCrashDialogs(com.android.server.am.AppErrorDialog.Data data) {
             List<Context> contexts = getDisplayContexts(false /* lastUsedOnly */);
             mCrashDialogs = new ArrayList<>();
             for (int i = contexts.size() - 1; i >= 0; i--) {
@@ -2015,15 +2017,15 @@ class ProcessRecord implements WindowProcessListener {
             });
         }
 
-        void showAnrDialogs(AppNotRespondingDialog.Data data) {
+        void showAnrDialogs(com.android.server.am.AppNotRespondingDialog.Data data) {
             List<Context> contexts = getDisplayContexts(isSilentAnr() /* lastUsedOnly */);
             mAnrDialogs = new ArrayList<>();
             for (int i = contexts.size() - 1; i >= 0; i--) {
                 final Context c = contexts.get(i);
-                mAnrDialogs.add(new AppNotRespondingDialog(mService, c, data));
+                mAnrDialogs.add(new com.android.server.am.AppNotRespondingDialog(mService, c, data));
             }
             mService.mUiHandler.post(() -> {
-                List<AppNotRespondingDialog> dialogs;
+                List<com.android.server.am.AppNotRespondingDialog> dialogs;
                 synchronized (mService) {
                     dialogs = mAnrDialogs;
                 }
@@ -2033,16 +2035,16 @@ class ProcessRecord implements WindowProcessListener {
             });
         }
 
-        void showViolationDialogs(AppErrorResult res) {
+        void showViolationDialogs(com.android.server.am.AppErrorResult res) {
             List<Context> contexts = getDisplayContexts(false /* lastUsedOnly */);
             mViolationDialogs = new ArrayList<>();
             for (int i = contexts.size() - 1; i >= 0; i--) {
                 final Context c = contexts.get(i);
                 mViolationDialogs.add(
-                        new StrictModeViolationDialog(c, mService, res, ProcessRecord.this));
+                        new com.android.server.am.StrictModeViolationDialog(c, mService, res, ProcessRecord.this));
             }
             mService.mUiHandler.post(() -> {
-                List<StrictModeViolationDialog> dialogs;
+                List<com.android.server.am.StrictModeViolationDialog> dialogs;
                 synchronized (mService) {
                     dialogs = mViolationDialogs;
                 }
@@ -2055,7 +2057,7 @@ class ProcessRecord implements WindowProcessListener {
         void showDebugWaitingDialogs() {
             List<Context> contexts = getDisplayContexts(true /* lastUsedOnly */);
             final Context c = contexts.get(0);
-            mWaitDialog = new AppWaitingForDebuggerDialog(mService, c, ProcessRecord.this);
+            mWaitDialog = new com.android.server.am.AppWaitingForDebuggerDialog(mService, c, ProcessRecord.this);
 
             mService.mUiHandler.post(() -> {
                 Dialog dialog;

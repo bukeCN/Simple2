@@ -137,6 +137,7 @@ import android.os.SystemClock;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.service.voice.IVoiceInteractionSession;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.util.Slog;
 import android.util.proto.ProtoOutputStream;
@@ -227,8 +228,8 @@ class ActivityStack extends Task {
     // Activity in mTranslucentActivityWaiting is notified via
     // Activity.onTranslucentConversionComplete(false). If a timeout occurs prior to the last
     // background activity being drawn then the same call will be made with a true value.
-    ActivityRecord mTranslucentActivityWaiting = null;
-    ArrayList<ActivityRecord> mUndrawnActivitiesBelowTopTranslucent = new ArrayList<>();
+    com.android.server.wm.ActivityRecord mTranslucentActivityWaiting = null;
+    ArrayList<com.android.server.wm.ActivityRecord> mUndrawnActivitiesBelowTopTranslucent = new ArrayList<>();
 
     /**
      * Set when we know we are going to be calling updateConfiguration()
@@ -259,11 +260,11 @@ class ActivityStack extends Task {
 
     Rect mPreAnimationBounds = new Rect();
 
-    private final AnimatingActivityRegistry mAnimatingActivityRegistry =
-            new AnimatingActivityRegistry();
+    private final com.android.server.wm.AnimatingActivityRegistry mAnimatingActivityRegistry =
+            new com.android.server.wm.AnimatingActivityRegistry();
 
     private boolean mTopActivityOccludesKeyguard;
-    private ActivityRecord mTopDismissingKeyguardActivity;
+    private com.android.server.wm.ActivityRecord mTopDismissingKeyguardActivity;
 
     private static final int TRANSLUCENT_TIMEOUT_MSG = FIRST_ACTIVITY_STACK_MSG + 1;
 
@@ -287,9 +288,9 @@ class ActivityStack extends Task {
         }
     }
 
-    private static final ResetTargetTaskHelper sResetTargetTaskHelper = new ResetTargetTaskHelper();
-    private final EnsureActivitiesVisibleHelper mEnsureActivitiesVisibleHelper =
-            new EnsureActivitiesVisibleHelper(this);
+    private static final com.android.server.wm.ResetTargetTaskHelper sResetTargetTaskHelper = new com.android.server.wm.ResetTargetTaskHelper();
+    private final com.android.server.wm.EnsureActivitiesVisibleHelper mEnsureActivitiesVisibleHelper =
+            new com.android.server.wm.EnsureActivitiesVisibleHelper(this);
     private final EnsureVisibleActivitiesConfigHelper mEnsureVisibleActivitiesConfigHelper =
             new EnsureVisibleActivitiesConfigHelper();
     private class EnsureVisibleActivitiesConfigHelper {
@@ -303,7 +304,7 @@ class ActivityStack extends Task {
             mBehindFullscreen = false;
         }
 
-        void process(ActivityRecord start, boolean preserveWindow) {
+        void process(com.android.server.wm.ActivityRecord start, boolean preserveWindow) {
             if (start == null || !start.mVisibleRequested) {
                 return;
             }
@@ -311,7 +312,7 @@ class ActivityStack extends Task {
 
             final PooledFunction f = PooledLambda.obtainFunction(
                     EnsureVisibleActivitiesConfigHelper::processActivity, this,
-                    PooledLambda.__(ActivityRecord.class));
+                    PooledLambda.__(com.android.server.wm.ActivityRecord.class));
             forAllActivities(f, start, true /*includeBoundary*/, true /*traverseTopToBottom*/);
             f.recycle();
 
@@ -322,7 +323,7 @@ class ActivityStack extends Task {
             }
         }
 
-        boolean processActivity(ActivityRecord r) {
+        boolean processActivity(com.android.server.wm.ActivityRecord r) {
             mUpdateConfig |= r.ensureActivityConfiguration(0 /*globalChanges*/, mPreserveWindow);
             mBehindFullscreen |= r.occludesParent();
             return mBehindFullscreen;
@@ -334,12 +335,12 @@ class ActivityStack extends Task {
     private class CheckBehindFullscreenActivityHelper {
         private boolean mAboveTop;
         private boolean mBehindFullscreenActivity;
-        private ActivityRecord mToCheck;
-        private Consumer<ActivityRecord> mHandleBehindFullscreenActivity;
+        private com.android.server.wm.ActivityRecord mToCheck;
+        private Consumer<com.android.server.wm.ActivityRecord> mHandleBehindFullscreenActivity;
         private boolean mHandlingOccluded;
 
-        private void reset(ActivityRecord toCheck,
-                Consumer<ActivityRecord> handleBehindFullscreenActivity) {
+        private void reset(com.android.server.wm.ActivityRecord toCheck,
+                           Consumer<com.android.server.wm.ActivityRecord> handleBehindFullscreenActivity) {
             mToCheck = toCheck;
             mHandleBehindFullscreenActivity = handleBehindFullscreenActivity;
             mAboveTop = true;
@@ -355,18 +356,18 @@ class ActivityStack extends Task {
             mHandlingOccluded = mToCheck == null && mHandleBehindFullscreenActivity != null;
         }
 
-        boolean process(ActivityRecord toCheck,
-                Consumer<ActivityRecord> handleBehindFullscreenActivity) {
+        boolean process(com.android.server.wm.ActivityRecord toCheck,
+                        Consumer<com.android.server.wm.ActivityRecord> handleBehindFullscreenActivity) {
             reset(toCheck, handleBehindFullscreenActivity);
 
             if (!mHandlingOccluded && mBehindFullscreenActivity) {
                 return true;
             }
 
-            final ActivityRecord topActivity = topRunningActivity();
+            final com.android.server.wm.ActivityRecord topActivity = topRunningActivity();
             final PooledFunction f = PooledLambda.obtainFunction(
                     CheckBehindFullscreenActivityHelper::processActivity, this,
-                    PooledLambda.__(ActivityRecord.class), topActivity);
+                    PooledLambda.__(com.android.server.wm.ActivityRecord.class), topActivity);
             forAllActivities(f);
             f.recycle();
 
@@ -374,7 +375,7 @@ class ActivityStack extends Task {
         }
 
         /** Returns {@code true} to stop the outer loop and indicate the result is computed. */
-        private boolean processActivity(ActivityRecord r, ActivityRecord topActivity) {
+        private boolean processActivity(com.android.server.wm.ActivityRecord r, com.android.server.wm.ActivityRecord topActivity) {
             if (mAboveTop) {
                 if (r == topActivity) {
                     if (r == mToCheck) {
@@ -410,10 +411,10 @@ class ActivityStack extends Task {
     private class RemoveHistoryRecordsForApp {
         private boolean mHasVisibleActivities;
         private boolean mIsProcessRemoved;
-        private WindowProcessController mApp;
-        private ArrayList<ActivityRecord> mToRemove = new ArrayList<>();
+        private com.android.server.wm.WindowProcessController mApp;
+        private ArrayList<com.android.server.wm.ActivityRecord> mToRemove = new ArrayList<>();
 
-        boolean process(WindowProcessController app) {
+        boolean process(com.android.server.wm.WindowProcessController app) {
             mToRemove.clear();
             mHasVisibleActivities = false;
             mApp = app;
@@ -427,7 +428,7 @@ class ActivityStack extends Task {
 
             final PooledConsumer c = PooledLambda.obtainConsumer(
                     RemoveHistoryRecordsForApp::addActivityToRemove, this,
-                    PooledLambda.__(ActivityRecord.class));
+                    PooledLambda.__(com.android.server.wm.ActivityRecord.class));
             forAllActivities(c);
             c.recycle();
 
@@ -439,13 +440,13 @@ class ActivityStack extends Task {
             return mHasVisibleActivities;
         }
 
-        private void addActivityToRemove(ActivityRecord r) {
+        private void addActivityToRemove(com.android.server.wm.ActivityRecord r) {
             if (r.app == mApp) {
                 mToRemove.add(r);
             }
         }
 
-        private void processActivity(ActivityRecord r) {
+        private void processActivity(com.android.server.wm.ActivityRecord r) {
             if (DEBUG_CLEANUP) Slog.v(TAG_CLEANUP, "Record " + r + ": app=" + r.app);
 
             if (r.app != mApp) {
@@ -515,17 +516,17 @@ class ActivityStack extends Task {
         }
     }
 
-    ActivityStack(ActivityTaskManagerService atmService, int id, int activityType,
-            ActivityInfo info, Intent intent, boolean createdByOrganizer) {
+    ActivityStack(com.android.server.wm.ActivityTaskManagerService atmService, int id, int activityType,
+                  ActivityInfo info, Intent intent, boolean createdByOrganizer) {
         this(atmService, id, info, intent, null /*voiceSession*/, null /*voiceInteractor*/,
                 null /*taskDescription*/, null /*stack*/);
         mCreatedByOrganizer = createdByOrganizer;
         setActivityType(activityType);
     }
 
-    ActivityStack(ActivityTaskManagerService atmService, int id, ActivityInfo info, Intent _intent,
-            IVoiceInteractionSession _voiceSession, IVoiceInteractor _voiceInteractor,
-            ActivityManager.TaskDescription _taskDescription, ActivityStack stack) {
+    ActivityStack(com.android.server.wm.ActivityTaskManagerService atmService, int id, ActivityInfo info, Intent _intent,
+                  IVoiceInteractionSession _voiceSession, IVoiceInteractor _voiceInteractor,
+                  ActivityManager.TaskDescription _taskDescription, ActivityStack stack) {
         this(atmService, id, _intent,  null /*_affinityIntent*/, null /*_affinity*/,
                 null /*_rootAffinity*/, null /*_realActivity*/, null /*_origActivity*/,
                 false /*_rootWasReset*/, false /*_autoRemoveRecents*/, false /*_askedCompatMode*/,
@@ -540,18 +541,18 @@ class ActivityStack extends Task {
                 _voiceSession, _voiceInteractor, stack);
     }
 
-    ActivityStack(ActivityTaskManagerService atmService, int id, Intent _intent,
-            Intent _affinityIntent, String _affinity, String _rootAffinity,
-            ComponentName _realActivity, ComponentName _origActivity, boolean _rootWasReset,
-            boolean _autoRemoveRecents, boolean _askedCompatMode, int _userId, int _effectiveUid,
-            String _lastDescription, long lastTimeMoved, boolean neverRelinquishIdentity,
-            ActivityManager.TaskDescription _lastTaskDescription, int taskAffiliation,
-            int prevTaskId, int nextTaskId, int taskAffiliationColor, int callingUid,
-            String callingPackage, @Nullable String callingFeatureId, int resizeMode,
-            boolean supportsPictureInPicture, boolean _realActivitySuspended,
-            boolean userSetupComplete, int minWidth, int minHeight,
-            ActivityInfo info, IVoiceInteractionSession _voiceSession,
-            IVoiceInteractor _voiceInteractor, ActivityStack stack) {
+    ActivityStack(com.android.server.wm.ActivityTaskManagerService atmService, int id, Intent _intent,
+                  Intent _affinityIntent, String _affinity, String _rootAffinity,
+                  ComponentName _realActivity, ComponentName _origActivity, boolean _rootWasReset,
+                  boolean _autoRemoveRecents, boolean _askedCompatMode, int _userId, int _effectiveUid,
+                  String _lastDescription, long lastTimeMoved, boolean neverRelinquishIdentity,
+                  ActivityManager.TaskDescription _lastTaskDescription, int taskAffiliation,
+                  int prevTaskId, int nextTaskId, int taskAffiliationColor, int callingUid,
+                  String callingPackage, @Nullable String callingFeatureId, int resizeMode,
+                  boolean supportsPictureInPicture, boolean _realActivitySuspended,
+                  boolean userSetupComplete, int minWidth, int minHeight,
+                  ActivityInfo info, IVoiceInteractionSession _voiceSession,
+                  IVoiceInteractor _voiceInteractor, ActivityStack stack) {
         super(atmService, id, _intent, _affinityIntent, _affinity, _rootAffinity,
                 _realActivity, _origActivity, _rootWasReset, _autoRemoveRecents, _askedCompatMode,
                 _userId, _effectiveUid, _lastDescription, lastTimeMoved, neverRelinquishIdentity,
@@ -585,7 +586,7 @@ class ActivityStack extends Task {
 
         super.onConfigurationChanged(newParentConfig);
 
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         if (taskDisplayArea == null) {
             return;
         }
@@ -594,7 +595,7 @@ class ActivityStack extends Task {
             taskDisplayArea.onStackWindowingModeChanged(this);
         }
 
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
         if (display == null ) {
             return;
         }
@@ -666,7 +667,7 @@ class ActivityStack extends Task {
 
     private void setWindowingModeInSurfaceTransaction(int preferredWindowingMode,
             boolean creating) {
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         if (taskDisplayArea == null) {
             Slog.d(TAG, "taskDisplayArea is null, bail early");
             return;
@@ -704,14 +705,14 @@ class ActivityStack extends Task {
             return;
         }
 
-        final ActivityRecord topActivity = getTopNonFinishingActivity();
+        final com.android.server.wm.ActivityRecord topActivity = getTopNonFinishingActivity();
 
         // For now, assume that the Stack's windowing mode is what will actually be used
         // by it's activities. In the future, there may be situations where this doesn't
         // happen; so at that point, this message will need to handle that.
         int likelyResolvedMode = windowingMode;
         if (windowingMode == WINDOWING_MODE_UNDEFINED) {
-            final ConfigurationContainer parent = getParent();
+            final com.android.server.wm.ConfigurationContainer parent = getParent();
             likelyResolvedMode = parent != null ? parent.getWindowingMode()
                     : WINDOWING_MODE_FULLSCREEN;
         }
@@ -815,13 +816,13 @@ class ActivityStack extends Task {
                 !PRESERVE_WINDOWS);
     }
 
-    DisplayContent getDisplay() {
+    com.android.server.wm.DisplayContent getDisplay() {
         return getDisplayContent();
     }
 
     /** @return true if the stack can only contain one task */
     boolean isSingleTaskInstance() {
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
         return display != null && display.isSingleTaskInstance();
     }
 
@@ -846,7 +847,7 @@ class ActivityStack extends Task {
             return;
         }
 
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
 
         if (inSplitScreenSecondaryWindowingMode()) {
             // If the stack is in split-screen secondary mode, we need to make sure we move the
@@ -893,11 +894,11 @@ class ActivityStack extends Task {
         if (!isAttached()) {
             return;
         }
-        final TaskDisplayArea displayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea displayArea = getDisplayArea();
         if (!mCreatedByOrganizer) {
             // If this is just a normal task, so move to back of parent and then move 'task' to
             // back of this.
-            final WindowContainer parent = getParent();
+            final com.android.server.wm.WindowContainer parent = getParent();
             final Task parentTask = parent != null ? parent.asTask() : null;
             if (parentTask != null) {
                 ((ActivityStack) parentTask).moveToBack(reason, this);
@@ -936,14 +937,14 @@ class ActivityStack extends Task {
         }, true /* traverseTopToBottom */);
     }
 
-    void minimalResumeActivityLocked(ActivityRecord r) {
+    void minimalResumeActivityLocked(com.android.server.wm.ActivityRecord r) {
         if (DEBUG_STATES) Slog.v(TAG_STATES, "Moving to RESUMED: " + r + " (starting new instance)"
                 + " callers=" + Debug.getCallers(5));
         r.setState(RESUMED, "minimalResumeActivityLocked");
         r.completeResumeLocked();
     }
 
-    private void clearLaunchTime(ActivityRecord r) {
+    private void clearLaunchTime(com.android.server.wm.ActivityRecord r) {
         // Make sure that there is no activity waiting for this to launch.
         if (!mStackSupervisor.mWaitingActivityLaunched.isEmpty()) {
             mStackSupervisor.removeIdleTimeoutForActivity(r);
@@ -953,7 +954,7 @@ class ActivityStack extends Task {
 
     void awakeFromSleepingLocked() {
         // Ensure activities are no longer sleeping.
-        forAllActivities((Consumer<ActivityRecord>) (r) -> r.setSleeping(false));
+        forAllActivities((Consumer<com.android.server.wm.ActivityRecord>) (r) -> r.setSleeping(false));
         if (mPausingActivity != null) {
             Slog.d(TAG, "awakeFromSleepingLocked: previously pausing activity didn't pause");
             mPausingActivity.activityPaused(true);
@@ -1027,8 +1028,8 @@ class ActivityStack extends Task {
                 !PRESERVE_WINDOWS);
     }
 
-    private boolean containsActivityFromStack(List<ActivityRecord> rs) {
-        for (ActivityRecord r : rs) {
+    private boolean containsActivityFromStack(List<com.android.server.wm.ActivityRecord> rs) {
+        for (com.android.server.wm.ActivityRecord r : rs) {
             if (r.getRootTask() == this) {
                 return true;
             }
@@ -1050,7 +1051,7 @@ class ActivityStack extends Task {
      * it to tell us when it is done.
      */
     final boolean startPausingLocked(boolean userLeaving, boolean uiSleeping,
-            ActivityRecord resuming) {
+            com.android.server.wm.ActivityRecord resuming) {
         if (mPausingActivity != null) {
             Slog.wtf(TAG, "Going to pause when pause is already pending for " + mPausingActivity
                     + " state=" + mPausingActivity.getState());
@@ -1061,7 +1062,7 @@ class ActivityStack extends Task {
                 completePauseLocked(false, resuming);
             }
         }
-        ActivityRecord prev = mResumedActivity;
+        com.android.server.wm.ActivityRecord prev = mResumedActivity;
 
         if (prev == null) {
             if (resuming == null) {
@@ -1078,7 +1079,8 @@ class ActivityStack extends Task {
 
         if (DEBUG_STATES) Slog.v(TAG_STATES, "Moving to PAUSING: " + prev);
         else if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Start pausing: " + prev);
-        mPausingActivity = prev;
+        // 交换参数, 以备后面使用
+        mPausingActivity = prev;// 需要暂停的 activity
         mLastPausedActivity = prev;
         mLastNoHistoryActivity = prev.isNoHistory() ? prev : null;
         prev.setState(PAUSING, "startPausingLocked");
@@ -1105,7 +1107,7 @@ class ActivityStack extends Task {
             try {
                 EventLogTags.writeWmPauseActivity(prev.mUserId, System.identityHashCode(prev),
                         prev.shortComponentName, "userLeaving=" + userLeaving);
-
+                // 回调需要暂停的 activity 的生命周期函数
                 mAtmService.getLifecycleManager().scheduleTransaction(prev.app.getThread(),
                         prev.appToken, PauseActivityItem.obtain(prev.finishing, userLeaving,
                                 prev.configChangeFlags, pauseImmediately));
@@ -1162,8 +1164,8 @@ class ActivityStack extends Task {
     }
 
     @VisibleForTesting
-    void completePauseLocked(boolean resumeNext, ActivityRecord resuming) {
-        ActivityRecord prev = mPausingActivity;
+    void completePauseLocked(boolean resumeNext, com.android.server.wm.ActivityRecord resuming) {
+        com.android.server.wm.ActivityRecord prev = mPausingActivity;
         if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Complete pause: " + prev);
 
         if (prev != null) {
@@ -1213,7 +1215,7 @@ class ActivityStack extends Task {
                 mRootWindowContainer.resumeFocusedStacksTopActivities(topStack, prev, null);
             } else {
                 checkReadyForSleep();
-                final ActivityRecord top = topStack != null ? topStack.topRunningActivity() : null;
+                final com.android.server.wm.ActivityRecord top = topStack != null ? topStack.topRunningActivity() : null;
                 if (top == null || (prev != null && top != prev)) {
                     // If there are no more activities available to run, do resume anyway to start
                     // something. Also if the top activity on the stack is not the just paused
@@ -1254,7 +1256,7 @@ class ActivityStack extends Task {
     }
 
     boolean isTopStackInDisplayArea() {
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         return taskDisplayArea != null && taskDisplayArea.isTopStack(this);
     }
 
@@ -1263,7 +1265,7 @@ class ActivityStack extends Task {
      * otherwise.
      */
     boolean isFocusedStackOnDisplay() {
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
         return display != null && this == display.getFocusedStack();
     }
 
@@ -1280,8 +1282,8 @@ class ActivityStack extends Task {
      *                      {@link mEnsureActivitiesVisibleHelper}.
      *
      */
-    void ensureActivitiesVisible(@Nullable ActivityRecord starting, int configChanges,
-            boolean preserveWindows) {
+    void ensureActivitiesVisible(@Nullable com.android.server.wm.ActivityRecord starting, int configChanges,
+                                 boolean preserveWindows) {
         ensureActivitiesVisible(starting, configChanges, preserveWindows, true /* notifyClients */);
     }
 
@@ -1301,8 +1303,8 @@ class ActivityStack extends Task {
      *                      {@link mEnsureActivitiesVisibleHelper}.
      */
     // TODO: Should be re-worked based on the fact that each task as a stack in most cases.
-    void ensureActivitiesVisible(@Nullable ActivityRecord starting, int configChanges,
-            boolean preserveWindows, boolean notifyClients) {
+    void ensureActivitiesVisible(@Nullable com.android.server.wm.ActivityRecord starting, int configChanges,
+                                 boolean preserveWindows, boolean notifyClients) {
         mTopActivityOccludesKeyguard = false;
         mTopDismissingKeyguardActivity = null;
         mStackSupervisor.beginActivityVisibilityUpdate();
@@ -1348,7 +1350,7 @@ class ActivityStack extends Task {
     /**
      * @return the top most visible activity that wants to dismiss Keyguard
      */
-    ActivityRecord getTopDismissingKeyguardActivity() {
+    com.android.server.wm.ActivityRecord getTopDismissingKeyguardActivity() {
         return mTopDismissingKeyguardActivity;
     }
 
@@ -1359,7 +1361,7 @@ class ActivityStack extends Task {
      *
      * @return true if {@param r} is visible taken Keyguard state into account, false otherwise
      */
-    boolean checkKeyguardVisibility(ActivityRecord r, boolean shouldBeVisible, boolean isTop) {
+    boolean checkKeyguardVisibility(com.android.server.wm.ActivityRecord r, boolean shouldBeVisible, boolean isTop) {
         int displayId = getDisplayId();
         if (displayId == INVALID_DISPLAY) displayId = DEFAULT_DISPLAY;
 
@@ -1403,7 +1405,7 @@ class ActivityStack extends Task {
      * {@link Display#FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD} applied.
      */
     boolean canShowWithInsecureKeyguard() {
-        final DisplayContent displayContent = getDisplay();
+        final com.android.server.wm.DisplayContent displayContent = getDisplay();
         if (displayContent == null) {
             throw new IllegalStateException("Stack is not attached to any display, stackId="
                     + getRootTaskId());
@@ -1413,7 +1415,7 @@ class ActivityStack extends Task {
         return (flags & FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD) != 0;
     }
 
-    void checkTranslucentActivityWaiting(ActivityRecord top) {
+    void checkTranslucentActivityWaiting(com.android.server.wm.ActivityRecord top) {
         if (mTranslucentActivityWaiting != top) {
             mUndrawnActivitiesBelowTopTranslucent.clear();
             if (mTranslucentActivityWaiting != null) {
@@ -1425,7 +1427,7 @@ class ActivityStack extends Task {
         }
     }
 
-    void convertActivityToTranslucent(ActivityRecord r) {
+    void convertActivityToTranslucent(com.android.server.wm.ActivityRecord r) {
         mTranslucentActivityWaiting = r;
         mUndrawnActivitiesBelowTopTranslucent.clear();
         mHandler.sendEmptyMessageDelayed(TRANSLUCENT_TIMEOUT_MSG, TRANSLUCENT_CONVERSION_TIMEOUT);
@@ -1439,13 +1441,13 @@ class ActivityStack extends Task {
      * @param r The most recent background activity to be drawn. Or, if r is null then a timeout
      * occurred and the activity will be notified immediately.
      */
-    void notifyActivityDrawnLocked(ActivityRecord r) {
+    void notifyActivityDrawnLocked(com.android.server.wm.ActivityRecord r) {
         if ((r == null)
                 || (mUndrawnActivitiesBelowTopTranslucent.remove(r) &&
                         mUndrawnActivitiesBelowTopTranslucent.isEmpty())) {
             // The last undrawn activity below the top has just been drawn. If there is an
             // opaque activity at the top, notify it that it can become translucent safely now.
-            final ActivityRecord waitingActivity = mTranslucentActivityWaiting;
+            final com.android.server.wm.ActivityRecord waitingActivity = mTranslucentActivityWaiting;
             mTranslucentActivityWaiting = null;
             mUndrawnActivitiesBelowTopTranslucent.clear();
             mHandler.removeMessages(TRANSLUCENT_TIMEOUT_MSG);
@@ -1467,7 +1469,7 @@ class ActivityStack extends Task {
     void cancelInitializingActivities() {
         // We don't want to clear starting window for activities that aren't behind fullscreen
         // activities as we need to display their starting window until they are done initializing.
-        checkBehindFullscreenActivity(null /* toCheck */, ActivityRecord::cancelInitializing);
+        checkBehindFullscreenActivity(null /* toCheck */, com.android.server.wm.ActivityRecord::cancelInitializing);
     }
 
     /**
@@ -1476,8 +1478,8 @@ class ActivityStack extends Task {
      * function {@param handleBehindFullscreenActivity} is given, this method will pass all occluded
      * activities to the function.
      */
-    boolean checkBehindFullscreenActivity(ActivityRecord toCheck,
-            Consumer<ActivityRecord> handleBehindFullscreenActivity) {
+    boolean checkBehindFullscreenActivity(com.android.server.wm.ActivityRecord toCheck,
+                                          Consumer<com.android.server.wm.ActivityRecord> handleBehindFullscreenActivity) {
         return mCheckBehindFullscreenActivityHelper.process(
                 toCheck, handleBehindFullscreenActivity);
     }
@@ -1498,7 +1500,7 @@ class ActivityStack extends Task {
      *       right activity for the current system state.
      */
     @GuardedBy("mService")
-    boolean resumeTopActivityUncheckedLocked(ActivityRecord prev, ActivityOptions options) {
+    boolean resumeTopActivityUncheckedLocked(com.android.server.wm.ActivityRecord prev, ActivityOptions options) {
         if (mInResumeTopActivity) {
             // Don't even start recursing.
             return false;
@@ -1508,6 +1510,7 @@ class ActivityStack extends Task {
         try {
             // Protect against recursion.
             mInResumeTopActivity = true;
+            // 顶部
             result = resumeTopActivityInnerLocked(prev, options);
 
             // When resuming the top activity, it may be necessary to pause the top activity (for
@@ -1517,7 +1520,7 @@ class ActivityStack extends Task {
             // to ensure any necessary pause logic occurs. In the case where the Activity will be
             // shown regardless of the lock screen, the call to
             // {@link ActivityStackSupervisor#checkReadyForSleepLocked} is skipped.
-            final ActivityRecord next = topRunningActivity(true /* focusableOnly */);
+            final com.android.server.wm.ActivityRecord next = topRunningActivity(true /* focusableOnly */);
             if (next == null || !next.canTurnScreenOn()) {
                 checkReadyForSleep();
             }
@@ -1529,7 +1532,7 @@ class ActivityStack extends Task {
     }
 
     @GuardedBy("mService")
-    private boolean resumeTopActivityInnerLocked(ActivityRecord prev, ActivityOptions options) {
+    private boolean resumeTopActivityInnerLocked(com.android.server.wm.ActivityRecord prev, ActivityOptions options) {
         if (!mAtmService.isBooting() && !mAtmService.isBooted()) {
             // Not ready yet!
             return false;
@@ -1538,7 +1541,8 @@ class ActivityStack extends Task {
         // Find the next top-most activity to resume in this stack that is not finishing and is
         // focusable. If it is not focusable, we will fall into the case below to resume the
         // top activity in the next focusable task.
-        ActivityRecord next = topRunningActivity(true /* focusableOnly */);
+        // 获取栈顶的正在运行的 activity
+        com.android.server.wm.ActivityRecord next = topRunningActivity(true /* focusableOnly */);
 
         final boolean hasRunningActivity = next != null;
 
@@ -1560,7 +1564,8 @@ class ActivityStack extends Task {
         }
 
         next.delayedResume = false;
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        // 获取屏幕显示区域
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
 
         // If the top activity is the resumed one, nothing to do.
         if (mResumedActivity == next && next.isState(RESUMED)
@@ -1644,7 +1649,8 @@ class ActivityStack extends Task {
 
         mStackSupervisor.setLaunchSource(next.info.applicationInfo.uid);
 
-        ActivityRecord lastResumed = null;
+        com.android.server.wm.ActivityRecord lastResumed = null;
+        // 获取最后有焦点的栈
         final ActivityStack lastFocusedStack = taskDisplayArea.getLastFocusedStack();
         if (lastFocusedStack != null && lastFocusedStack != this) {
             // So, why aren't we using prev here??? See the param comment on the method. prev doesn't
@@ -1659,6 +1665,7 @@ class ActivityStack extends Task {
             }
         }
 
+        // 暂停上一个 Activity，注意当前是在那个 Activity 栈内！看 mRootWindowContainer.resumeFocusedStacksTopActivities() 方法！
         boolean pausing = taskDisplayArea.pauseBackStacks(userLeaving, next);
         if (mResumedActivity != null) {
             if (DEBUG_STATES) Slog.d(TAG_STATES,
@@ -1750,7 +1757,7 @@ class ActivityStack extends Task {
         // that the previous one will be hidden soon.  This way it can know
         // to ignore it when computing the desired screen orientation.
         boolean anim = true;
-        final DisplayContent dc = taskDisplayArea.mDisplayContent;
+        final com.android.server.wm.DisplayContent dc = taskDisplayArea.mDisplayContent;
         if (prev != null) {
             if (prev.finishing) {
                 if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
@@ -1794,7 +1801,7 @@ class ActivityStack extends Task {
         }
 
         mStackSupervisor.mNoAnimActivities.clear();
-
+        // 判断 activity 需要的进程是否有了
         if (next.attachedToProcess()) {
             if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Resume running: " + next
                     + " stopped=" + next.stopped
@@ -1820,7 +1827,7 @@ class ActivityStack extends Task {
             // schedule launch ticks to collect information about slow apps.
             next.startLaunchTickingLocked();
 
-            ActivityRecord lastResumedActivity =
+            com.android.server.wm.ActivityRecord lastResumedActivity =
                     lastFocusedStack == null ? null : lastFocusedStack.mResumedActivity;
             final ActivityState lastState = next.getState();
 
@@ -1860,7 +1867,7 @@ class ActivityStack extends Task {
                 // We should be all done, but let's just make sure our activity
                 // is still at the top and schedule another run if something
                 // weird happened.
-                ActivityRecord nextNext = topRunningActivity();
+                com.android.server.wm.ActivityRecord nextNext = topRunningActivity();
                 if (DEBUG_SWITCH || DEBUG_STATES) Slog.i(TAG_STATES,
                         "Activity config changed during resume: " + next
                                 + ", new next: " + nextNext);
@@ -1952,12 +1959,14 @@ class ActivityStack extends Task {
                 next.hasBeenLaunched = true;
             } else {
                 if (SHOW_APP_STARTING_PREVIEW) {
+                    // 显示预览窗口
                     next.showStartingWindow(null /* prev */, false /* newTask */,
                             false /* taskSwich */);
                 }
                 if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Restarting: " + next);
             }
             if (DEBUG_STATES) Slog.d(TAG_STATES, "resumeTopActivityLocked: Restarting " + next);
+            // 启动进程
             mStackSupervisor.startSpecificActivity(next, true, true);
         }
 
@@ -1971,8 +1980,8 @@ class ActivityStack extends Task {
      * is a home stack - we have to keep it focused, start and resume a home activity on the current
      * display instead to make sure that the display is not empty.
      */
-    private boolean resumeNextFocusableActivityWhenStackIsEmpty(ActivityRecord prev,
-            ActivityOptions options) {
+    private boolean resumeNextFocusableActivityWhenStackIsEmpty(com.android.server.wm.ActivityRecord prev,
+                                                                ActivityOptions options) {
         final String reason = "noMoreActivities";
 
         if (!isActivityTypeHome()) {
@@ -1994,8 +2003,8 @@ class ActivityStack extends Task {
         return mRootWindowContainer.resumeHomeActivity(prev, reason, getDisplayArea());
     }
 
-    void startActivityLocked(ActivityRecord r, ActivityRecord focusedTopActivity,
-            boolean newTask, boolean keepCurTransition, ActivityOptions options) {
+    void startActivityLocked(com.android.server.wm.ActivityRecord r, com.android.server.wm.ActivityRecord focusedTopActivity,
+                             boolean newTask, boolean keepCurTransition, ActivityOptions options) {
         Task rTask = r.getTask();
         final boolean allowMoveToFront = options == null || !options.getAvoidMoveToFront();
         final boolean isOrhasTask = rTask == this || hasChild(rTask);
@@ -2010,7 +2019,7 @@ class ActivityStack extends Task {
         if (!newTask && isOrhasTask) {
             // Starting activity cannot be occluding activity, otherwise starting window could be
             // remove immediately without transferring to starting activity.
-            final ActivityRecord occludingActivity = getOccludingActivityAbove(r);
+            final com.android.server.wm.ActivityRecord occludingActivity = getOccludingActivityAbove(r);
             if (occludingActivity != null) {
                 // Here it is!  Now, if this is not yet visible (occluded by another task) to the
                 // user, then just add it without starting; it will get started when the user
@@ -2039,12 +2048,13 @@ class ActivityStack extends Task {
         // Slot the activity into the history stack and proceed
         if (DEBUG_ADD_REMOVE) Slog.i(TAG, "Adding activity " + r + " to stack to task " + task,
                 new RuntimeException("here").fillInStackTrace());
+        // 将活动放入栈中
         task.positionChildAtTop(r);
 
         // The transition animation and starting window are not needed if {@code allowMoveToFront}
         // is false, because the activity won't be visible.
         if ((!isHomeOrRecentsStack() || hasActivity()) && allowMoveToFront) {
-            final DisplayContent dc = getDisplay().mDisplayContent;
+            final com.android.server.wm.DisplayContent dc = getDisplay().mDisplayContent;
             if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
                     "Prepare open transition: starting " + r);
             if ((r.intent.getFlags() & Intent.FLAG_ACTIVITY_NO_ANIMATION) != 0) {
@@ -2106,7 +2116,7 @@ class ActivityStack extends Task {
                 // window manager to keep the previous window it had previously
                 // created, if it still had one.
                 Task prevTask = r.getTask();
-                ActivityRecord prev = prevTask.topActivityWithStartingWindow();
+                com.android.server.wm.ActivityRecord prev = prevTask.topActivityWithStartingWindow();
                 if (prev != null) {
                     // We don't want to reuse the previous starting preview if:
                     // (1) The current activity is in a different task.
@@ -2132,8 +2142,8 @@ class ActivityStack extends Task {
      * enter PiP while it is pausing (if supported). Only one of {@param toFrontTask} or
      * {@param toFrontActivity} should be set.
      */
-    private boolean canEnterPipOnTaskSwitch(ActivityRecord pipCandidate,
-            Task toFrontTask, ActivityRecord toFrontActivity, ActivityOptions opts) {
+    private boolean canEnterPipOnTaskSwitch(com.android.server.wm.ActivityRecord pipCandidate,
+                                            Task toFrontTask, com.android.server.wm.ActivityRecord toFrontActivity, ActivityOptions opts) {
         if (opts != null && opts.disallowEnterPictureInPictureWhileLaunching()) {
             // Ensure the caller has requested not to trigger auto-enter PiP
             return false;
@@ -2151,7 +2161,7 @@ class ActivityStack extends Task {
         return true;
     }
 
-    private boolean isTaskSwitch(ActivityRecord r, ActivityRecord topFocusedActivity) {
+    private boolean isTaskSwitch(com.android.server.wm.ActivityRecord r, com.android.server.wm.ActivityRecord topFocusedActivity) {
         return topFocusedActivity != null && r.getTask() != topFocusedActivity.getTask();
     }
 
@@ -2165,7 +2175,7 @@ class ActivityStack extends Task {
      * @return The non-finishing top activity of the task after reset or the original task top
      *         activity if all activities within the task are finishing.
      */
-    ActivityRecord resetTaskIfNeeded(ActivityRecord taskTop, ActivityRecord newActivity) {
+    com.android.server.wm.ActivityRecord resetTaskIfNeeded(com.android.server.wm.ActivityRecord taskTop, com.android.server.wm.ActivityRecord newActivity) {
         final boolean forceReset =
                 (newActivity.info.flags & ActivityInfo.FLAG_CLEAR_TASK_ON_LAUNCH) != 0;
         final Task task = taskTop.getTask();
@@ -2174,7 +2184,7 @@ class ActivityStack extends Task {
         final ActivityOptions topOptions = sResetTargetTaskHelper.process(task, forceReset);
 
         if (mChildren.contains(task)) {
-            final ActivityRecord newTop = task.getTopNonFinishingActivity();
+            final com.android.server.wm.ActivityRecord newTop = task.getTopNonFinishingActivity();
             if (newTop != null) {
                 taskTop = newTop;
             }
@@ -2197,8 +2207,8 @@ class ActivityStack extends Task {
      * @return The task that was finished in this stack, {@code null} if top running activity does
      *         not belong to the crashed app.
      */
-    final Task finishTopCrashedActivityLocked(WindowProcessController app, String reason) {
-        final ActivityRecord r = topRunningActivity();
+    final Task finishTopCrashedActivityLocked(com.android.server.wm.WindowProcessController app, String reason) {
+        final com.android.server.wm.ActivityRecord r = topRunningActivity();
         if (r == null || r.app != app) {
             return null;
         }
@@ -2218,7 +2228,7 @@ class ActivityStack extends Task {
 
         // Also terminate any activities below it that aren't yet stopped, to avoid a situation
         // where one will get re-start our crashing activity once it gets resumed again.
-        final ActivityRecord activityBelow = getActivityBelow(r);
+        final com.android.server.wm.ActivityRecord activityBelow = getActivityBelow(r);
         if (activityBelow != null) {
             if (activityBelow.isState(STARTED, RESUMED, PAUSING, PAUSED)) {
                 if (!activityBelow.isActivityTypeHome()
@@ -2250,14 +2260,14 @@ class ActivityStack extends Task {
         } else {
             // Check if any of the activities are using voice
             final PooledFunction f = PooledLambda.obtainFunction(
-                    ActivityStack::finishIfVoiceActivity, PooledLambda.__(ActivityRecord.class),
+                    ActivityStack::finishIfVoiceActivity, PooledLambda.__(com.android.server.wm.ActivityRecord.class),
                     binder);
             tr.forAllActivities(f);
             f.recycle();
         }
     }
 
-    private static boolean finishIfVoiceActivity(ActivityRecord r, IBinder binder) {
+    private static boolean finishIfVoiceActivity(com.android.server.wm.ActivityRecord r, IBinder binder) {
         if (r.voiceSession == null || r.voiceSession.asBinder() != binder) return false;
         // Inform of cancellation
         r.clearVoiceSessionLocked();
@@ -2284,7 +2294,7 @@ class ActivityStack extends Task {
 
     /** @return true if the stack behind this one is a standard activity type. */
     private boolean inFrontOfStandardStack() {
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         if (taskDisplayArea == null) {
             return false;
         }
@@ -2296,11 +2306,11 @@ class ActivityStack extends Task {
         return stackBehind.isActivityTypeStandard();
     }
 
-    boolean shouldUpRecreateTaskLocked(ActivityRecord srec, String destAffinity) {
+    boolean shouldUpRecreateTaskLocked(com.android.server.wm.ActivityRecord srec, String destAffinity) {
         // Basic case: for simple app-centric recents, we need to recreate
         // the task if the affinity has changed.
 
-        final String affinity = ActivityRecord.getTaskAffinityWithUid(destAffinity, srec.getUid());
+        final String affinity = com.android.server.wm.ActivityRecord.getTaskAffinityWithUid(destAffinity, srec.getUid());
         if (srec == null || srec.getTask().affinity == null
                 || !srec.getTask().affinity.equals(affinity)) {
             return true;
@@ -2331,8 +2341,8 @@ class ActivityStack extends Task {
         return false;
     }
 
-    boolean navigateUpTo(ActivityRecord srec, Intent destIntent, NeededUriGrants destGrants,
-            int resultCode, Intent resultData, NeededUriGrants resultGrants) {
+    boolean navigateUpTo(com.android.server.wm.ActivityRecord srec, Intent destIntent, NeededUriGrants destGrants,
+                         int resultCode, Intent resultData, NeededUriGrants resultGrants) {
         if (!srec.attachedToProcess()) {
             // Nothing to do if the caller is not attached, because this method should be called
             // from an alive activity.
@@ -2343,11 +2353,11 @@ class ActivityStack extends Task {
             return false;
         }
 
-        ActivityRecord parent = task.getActivityBelow(srec);
+        com.android.server.wm.ActivityRecord parent = task.getActivityBelow(srec);
         boolean foundParentInTask = false;
         final ComponentName dest = destIntent.getComponent();
         if (task.getBottomMostActivity() != srec && dest != null) {
-            final ActivityRecord candidate = task.getActivity((ar) ->
+            final com.android.server.wm.ActivityRecord candidate = task.getActivity((ar) ->
                     ar.info.packageName.equals(dest.getPackageName()) &&
                     ar.info.name.equals(dest.getClassName()), srec, false /*includeBoundary*/,
                     true /*traverseTopToBottom*/);
@@ -2361,7 +2371,7 @@ class ActivityStack extends Task {
         // We should consolidate.
         IActivityController controller = mAtmService.mController;
         if (controller != null) {
-            ActivityRecord next = topRunningActivity(srec.appToken, INVALID_TASK_ID);
+            com.android.server.wm.ActivityRecord next = topRunningActivity(srec.appToken, INVALID_TASK_ID);
             if (next != null) {
                 // ask watcher if this is allowed
                 boolean resumeOK = true;
@@ -2385,7 +2395,7 @@ class ActivityStack extends Task {
         resultDataHolder[0] = resultData;
         final NeededUriGrants[] resultGrantsHolder = new NeededUriGrants[1];
         resultGrantsHolder[0] = resultGrants;
-        final ActivityRecord finalParent = parent;
+        final com.android.server.wm.ActivityRecord finalParent = parent;
         task.forAllActivities((ar) -> {
             if (ar == finalParent) return true;
 
@@ -2440,12 +2450,12 @@ class ActivityStack extends Task {
     }
 
     void removeLaunchTickMessages() {
-        forAllActivities(ActivityRecord::removeLaunchTickRunnable);
+        forAllActivities(com.android.server.wm.ActivityRecord::removeLaunchTickRunnable);
     }
 
     private void updateTransitLocked(int transit, ActivityOptions options, boolean forceOverride) {
         if (options != null) {
-            ActivityRecord r = topRunningActivity();
+            com.android.server.wm.ActivityRecord r = topRunningActivity();
             if (r != null && !r.isState(RESUMED)) {
                 r.updateOptionsLocked(options);
             } else {
@@ -2466,7 +2476,7 @@ class ActivityStack extends Task {
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "moveTaskToFront: " + tr);
 
         final ActivityStack topStack = getDisplayArea().getTopStack();
-        final ActivityRecord topActivity = topStack != null
+        final com.android.server.wm.ActivityRecord topActivity = topStack != null
                 ? topStack.getTopNonFinishingActivity() : null;
 
         if (tr != this && !tr.isDescendantOf(this)) {
@@ -2490,8 +2500,8 @@ class ActivityStack extends Task {
 
         if (timeTracker != null) {
             // The caller wants a time tracker associated with this task.
-            final PooledConsumer c = PooledLambda.obtainConsumer(ActivityRecord::setAppTimeTracker,
-                    PooledLambda.__(ActivityRecord.class), timeTracker);
+            final PooledConsumer c = PooledLambda.obtainConsumer(com.android.server.wm.ActivityRecord::setAppTimeTracker,
+                    PooledLambda.__(com.android.server.wm.ActivityRecord.class), timeTracker);
             tr.forAllActivities(c);
             c.recycle();
         }
@@ -2507,7 +2517,7 @@ class ActivityStack extends Task {
             positionChildAtTop(tr);
 
             // Don't refocus if invisible to current user
-            final ActivityRecord top = tr.getTopNonFinishingActivity();
+            final com.android.server.wm.ActivityRecord top = tr.getTopNonFinishingActivity();
             if (top == null || !top.okToShowLocked()) {
                 if (top != null) {
                     mStackSupervisor.mRecentTasks.add(top.getTask());
@@ -2517,7 +2527,7 @@ class ActivityStack extends Task {
             }
 
             // Set focus to the top running activity of this stack.
-            final ActivityRecord r = topRunningActivity();
+            final com.android.server.wm.ActivityRecord r = topRunningActivity();
             if (r != null) {
                 r.moveFocusableActivityToTop(reason);
             }
@@ -2582,7 +2592,7 @@ class ActivityStack extends Task {
         // for *other* available tasks, but if none are available, then try again allowing the
         // current task to be selected.
         if (isTopStackInDisplayArea() && mAtmService.mController != null) {
-            ActivityRecord next = topRunningActivity(null, tr.mTaskId);
+            com.android.server.wm.ActivityRecord next = topRunningActivity(null, tr.mTaskId);
             if (next == null) {
                 next = topRunningActivity(null, INVALID_TASK_ID);
             }
@@ -2612,7 +2622,7 @@ class ActivityStack extends Task {
             return true;
         }
 
-        ActivityRecord topActivity = getDisplayArea().topRunningActivity();
+        com.android.server.wm.ActivityRecord topActivity = getDisplayArea().topRunningActivity();
         ActivityStack topStack = topActivity.getRootTask();
         if (topStack != null && topStack != this && topActivity.isState(RESUMED)) {
             // The new top activity is already resumed, so there's a good chance that nothing will
@@ -2633,7 +2643,7 @@ class ActivityStack extends Task {
     /**
      * Ensures all visible activities at or below the input activity have the right configuration.
      */
-    void ensureVisibleActivitiesConfiguration(ActivityRecord start, boolean preserveWindow) {
+    void ensureVisibleActivitiesConfiguration(com.android.server.wm.ActivityRecord start, boolean preserveWindow) {
         mEnsureVisibleActivitiesConfigHelper.process(start, preserveWindow);
     }
 
@@ -2693,20 +2703,20 @@ class ActivityStack extends Task {
      * Returns the top-most activity that occludes the given one, or @{code null} if none.
      */
     @Nullable
-    private ActivityRecord getOccludingActivityAbove(ActivityRecord activity) {
-        ActivityRecord top = getActivity((ar) -> ar.occludesParent(),
+    private com.android.server.wm.ActivityRecord getOccludingActivityAbove(com.android.server.wm.ActivityRecord activity) {
+        com.android.server.wm.ActivityRecord top = getActivity((ar) -> ar.occludesParent(),
                 true /* traverseTopToBottom */, activity);
         return top != activity ? top : null;
     }
 
     boolean willActivityBeVisible(IBinder token) {
-        final ActivityRecord r = ActivityRecord.forTokenLocked(token);
+        final com.android.server.wm.ActivityRecord r = com.android.server.wm.ActivityRecord.forTokenLocked(token);
         if (r == null) {
             return false;
         }
 
         // See if there is an occluding activity on-top of this one.
-        final ActivityRecord occludingActivity = getOccludingActivityAbove(r);
+        final com.android.server.wm.ActivityRecord occludingActivity = getOccludingActivityAbove(r);
         if (occludingActivity != null) return false;
 
         if (r.finishing) Slog.e(TAG, "willActivityBeVisible: Returning false,"
@@ -2715,7 +2725,7 @@ class ActivityStack extends Task {
     }
 
     void unhandledBackLocked() {
-        final ActivityRecord topActivity = getTopMostActivity();
+        final com.android.server.wm.ActivityRecord topActivity = getTopMostActivity();
         if (DEBUG_SWITCH) Slog.d(TAG_SWITCH,
                 "Performing unhandledBack(): top activity: " + topActivity);
         if (topActivity != null) {
@@ -2728,7 +2738,7 @@ class ActivityStack extends Task {
      * @param app The app of the activity that died.
      * @return result from removeHistoryRecordsForAppLocked.
      */
-    boolean handleAppDied(WindowProcessController app) {
+    boolean handleAppDied(com.android.server.wm.WindowProcessController app) {
         if (mPausingActivity != null && mPausingActivity.app == app) {
             if (DEBUG_PAUSE || DEBUG_CLEANUP) Slog.v(TAG_PAUSE,
                     "App died while pausing: " + mPausingActivity);
@@ -2820,10 +2830,10 @@ class ActivityStack extends Task {
                 headerPrinter.run();
                 headerPrinter = null;
             }
-            final ArrayList<ActivityRecord> activities = new ArrayList<>();
+            final ArrayList<com.android.server.wm.ActivityRecord> activities = new ArrayList<>();
             // Add activities by traversing the hierarchy from bottom to top, since activities
             // are dumped in reverse order in {@link ActivityStackSupervisor#dumpHistoryList()}.
-            task.forAllActivities((Consumer<ActivityRecord>) activities::add,
+            task.forAllActivities((Consumer<com.android.server.wm.ActivityRecord>) activities::add,
                     false /* traverseTopToBottom */);
             dumpHistoryList(fd, pw, activities, prefix, "Hist", true, !dumpAll, dumpClient,
                     dumpPackage, false, headerPrinter, task);
@@ -2831,13 +2841,13 @@ class ActivityStack extends Task {
         return printed.get();
     }
 
-    ArrayList<ActivityRecord> getDumpActivitiesLocked(String name) {
-        ArrayList<ActivityRecord> activities = new ArrayList<>();
+    ArrayList<com.android.server.wm.ActivityRecord> getDumpActivitiesLocked(String name) {
+        ArrayList<com.android.server.wm.ActivityRecord> activities = new ArrayList<>();
 
         if ("all".equals(name)) {
-            forAllActivities((Consumer<ActivityRecord>) activities::add);
+            forAllActivities((Consumer<com.android.server.wm.ActivityRecord>) activities::add);
         } else if ("top".equals(name)) {
-            final ActivityRecord topActivity = getTopMostActivity();
+            final com.android.server.wm.ActivityRecord topActivity = getTopMostActivity();
             if (topActivity != null) {
                 activities.add(topActivity);
             }
@@ -2855,13 +2865,13 @@ class ActivityStack extends Task {
         return activities;
     }
 
-    ActivityRecord restartPackage(String packageName) {
-        ActivityRecord starting = topRunningActivity();
+    com.android.server.wm.ActivityRecord restartPackage(String packageName) {
+        com.android.server.wm.ActivityRecord starting = topRunningActivity();
 
         // All activities that came from the package must be
         // restarted as if there was a config change.
         PooledConsumer c = PooledLambda.obtainConsumer(ActivityStack::restartPackage,
-                PooledLambda.__(ActivityRecord.class), starting, packageName);
+                PooledLambda.__(com.android.server.wm.ActivityRecord.class), starting, packageName);
         forAllActivities(c);
         c.recycle();
 
@@ -2869,7 +2879,7 @@ class ActivityStack extends Task {
     }
 
     private static void restartPackage(
-            ActivityRecord r, ActivityRecord starting, String packageName) {
+            com.android.server.wm.ActivityRecord r, com.android.server.wm.ActivityRecord starting, String packageName) {
         if (r.info.packageName.equals(packageName)) {
             r.forceNewConfig = true;
             if (starting != null && r == starting && r.mVisibleRequested) {
@@ -2885,11 +2895,11 @@ class ActivityStack extends Task {
     // TODO: Can be removed once we change callpoints creating stacks to be creating tasks.
     /** Either returns this current task to be re-used or creates a new child task. */
     Task reuseOrCreateTask(ActivityInfo info, Intent intent, IVoiceInteractionSession voiceSession,
-            IVoiceInteractor voiceInteractor, boolean toTop, ActivityRecord activity,
-            ActivityRecord source, ActivityOptions options) {
+                           IVoiceInteractor voiceInteractor, boolean toTop, com.android.server.wm.ActivityRecord activity,
+                           com.android.server.wm.ActivityRecord source, ActivityOptions options) {
 
         Task task;
-        if (DisplayContent.alwaysCreateStack(getWindowingMode(), getActivityType())) {
+        if (com.android.server.wm.DisplayContent.alwaysCreateStack(getWindowingMode(), getActivityType())) {
             // This stack will only contain one task, so just return itself since all stacks ara now
             // tasks and all tasks are now stacks.
             task = reuseAsLeafTask(voiceSession, voiceInteractor, intent, info, activity);
@@ -2918,12 +2928,12 @@ class ActivityStack extends Task {
         return task;
     }
 
-    void addChild(WindowContainer child, final boolean toTop, boolean showForAllUsers) {
+    void addChild(com.android.server.wm.WindowContainer child, final boolean toTop, boolean showForAllUsers) {
         if (isSingleTaskInstance() && hasChild()) {
             throw new IllegalStateException("Can only have one child on stack=" + this);
         }
 
-        Task task = child.asTask();
+        com.android.server.wm.Task task = child.asTask();
         try {
 
             if (task != null) {
@@ -2947,13 +2957,13 @@ class ActivityStack extends Task {
 
         task.updateOverrideConfigurationForStack(this);
 
-        final ActivityRecord topRunningActivity = task.topRunningActivityLocked();
+        final com.android.server.wm.ActivityRecord topRunningActivity = task.topRunningActivityLocked();
         final boolean wasResumed = topRunningActivity == task.getStack().mResumedActivity;
 
         boolean toTop = position >= getChildCount();
         boolean includingParents = toTop || getDisplayArea().getNextFocusableStack(this,
                 true /* ignoreCurrent */) == null;
-        if (WindowManagerDebugConfig.DEBUG_STACK) {
+        if (com.android.server.wm.WindowManagerDebugConfig.DEBUG_STACK) {
             Slog.i(TAG_WM, "positionChildAt: positioning task=" + task + " at " + position);
         }
         positionChildAt(position, task, includingParents);
@@ -2989,7 +2999,7 @@ class ActivityStack extends Task {
             return;
         }
         super.setAlwaysOnTop(alwaysOnTop);
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         // positionChildAtTop() must be called even when always on top gets turned off because we
         // need to make sure that the stack is moved from among always on top windows to below other
         // always on top windows. Since the position the stack should be inserted into is calculated
@@ -2999,8 +3009,8 @@ class ActivityStack extends Task {
     }
 
     /** NOTE: Should only be called from {@link Task#reparent}. */
-    void moveToFrontAndResumeStateIfNeeded(ActivityRecord r, boolean moveToFront, boolean setResume,
-            boolean setPause, String reason) {
+    void moveToFrontAndResumeStateIfNeeded(com.android.server.wm.ActivityRecord r, boolean moveToFront, boolean setResume,
+                                           boolean setPause, String reason) {
         if (!moveToFront) {
             return;
         }
@@ -3117,7 +3127,7 @@ class ActivityStack extends Task {
      * @param child The child to add.
      * @param position Target position to add the task to.
      */
-    private void addChild(WindowContainer child, int position, boolean moveParents) {
+    private void addChild(com.android.server.wm.WindowContainer child, int position, boolean moveParents) {
         // Add child task.
         addChild(child, null);
 
@@ -3140,7 +3150,7 @@ class ActivityStack extends Task {
         positionChildAt(POSITION_TOP, child, true /* includingParents */);
         child.updateTaskMovement(true);
 
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         displayContent.layoutAndAssignWindowLayersIfNeeded();
     }
 
@@ -3166,7 +3176,7 @@ class ActivityStack extends Task {
     }
 
     @Override
-    void onChildPositionChanged(WindowContainer child) {
+    void onChildPositionChanged(com.android.server.wm.WindowContainer child) {
         if (isOrganized()) {
             mAtmService.mTaskOrganizerController.dispatchTaskInfoChanged(this, false /* force */);
         }
@@ -3177,23 +3187,23 @@ class ActivityStack extends Task {
 
         final boolean isTop = getTopChild() == child;
 
-        final Task task = child.asTask();
+        final com.android.server.wm.Task task = child.asTask();
         if (task != null) {
             task.updateTaskMovement(isTop);
         }
 
         if (isTop) {
-            final DisplayContent displayContent = getDisplayContent();
+            final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
             displayContent.layoutAndAssignWindowLayersIfNeeded();
         }
     }
 
     @Override
-    void onParentChanged(ConfigurationContainer newParent, ConfigurationContainer oldParent) {
-        final DisplayContent display = newParent != null
-                ? ((WindowContainer) newParent).getDisplayContent() : null;
-        final DisplayContent oldDisplay = oldParent != null
-                ? ((WindowContainer) oldParent).getDisplayContent() : null;
+    void onParentChanged(com.android.server.wm.ConfigurationContainer newParent, com.android.server.wm.ConfigurationContainer oldParent) {
+        final com.android.server.wm.DisplayContent display = newParent != null
+                ? ((com.android.server.wm.WindowContainer) newParent).getDisplayContent() : null;
+        final com.android.server.wm.DisplayContent oldDisplay = oldParent != null
+                ? ((com.android.server.wm.WindowContainer) oldParent).getDisplayContent() : null;
         super.onParentChanged(newParent, oldParent);
 
         // Resume next focusable stack after reparenting to another display if we aren't removing
@@ -3203,7 +3213,7 @@ class ActivityStack extends Task {
         }
     }
 
-    void reparent(TaskDisplayArea newParent, boolean onTop) {
+    void reparent(com.android.server.wm.TaskDisplayArea newParent, boolean onTop) {
         reparent(newParent, onTop ? POSITION_TOP : POSITION_BOTTOM);
     }
 
@@ -3222,7 +3232,7 @@ class ActivityStack extends Task {
     }
 
     @Override
-    void onDisplayChanged(DisplayContent dc) {
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
         super.onDisplayChanged(dc);
         if (isRootTask()) {
             updateSurfaceBounds();
@@ -3249,7 +3259,7 @@ class ActivityStack extends Task {
             pw.println(prefix + "Exiting application tokens:");
             final String doublePrefix = prefix + "  ";
             for (int i = mExitingActivities.size() - 1; i >= 0; i--) {
-                WindowToken token = mExitingActivities.get(i);
+                com.android.server.wm.WindowToken token = mExitingActivities.get(i);
                 pw.print(doublePrefix + "Exiting App #" + i);
                 pw.print(' '); pw.print(token);
                 pw.println(':');
@@ -3268,7 +3278,7 @@ class ActivityStack extends Task {
             return;
         }
 
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         if (displayContent == null) {
             return;
         }
@@ -3277,7 +3287,7 @@ class ActivityStack extends Task {
             return;
         }
 
-        final PinnedStackController pinnedStackController =
+        final com.android.server.wm.PinnedStackController pinnedStackController =
                 getDisplayContent().getPinnedStackController();
 
         if (Float.compare(aspectRatio, pinnedStackController.getAspectRatio()) == 0) {
@@ -3324,7 +3334,7 @@ class ActivityStack extends Task {
         return mDisplayContent.getDisplayInfo();
     }
 
-    AnimatingActivityRegistry getAnimatingActivityRegistry() {
+    com.android.server.wm.AnimatingActivityRegistry getAnimatingActivityRegistry() {
         return mAnimatingActivityRegistry;
     }
 
@@ -3334,7 +3344,7 @@ class ActivityStack extends Task {
     }
 
     boolean shouldSleepActivities() {
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
 
         // Do not sleep activities in this stack if we're marked as focused and the keyguard
         // is in the process of going away.
@@ -3352,8 +3362,8 @@ class ActivityStack extends Task {
 
     @Override
     public void dumpDebug(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 

@@ -29,11 +29,8 @@ class MainActivity : AppCompatActivity() {
         testLayout = findViewById(R.id.testLayout)
 
         findViewById<View>(R.id.toAnimator).setOnClickListener {
-            var dialog = TestDialog()
-            dialog.show(supportFragmentManager,"test")
         }
 
-        Log.e("sun", "窗口类型：" + window.attributes.type)
 
 
         var w = PopupWindow();

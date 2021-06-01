@@ -99,6 +99,7 @@ import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.EventLog;
+import android.util.EventLogTags;
 import android.util.LongSparseArray;
 import android.util.Pair;
 import android.util.Slog;
@@ -364,7 +365,7 @@ public final class ProcessList {
     @EnabledAfter(targetSdkVersion = VersionCodes.Q)
     private static final long APP_DATA_DIRECTORY_ISOLATION = 143937733; // See b/143937733
 
-    ActivityManagerService mService = null;
+    com.android.server.am.ActivityManagerService mService = null;
 
     // To kill process groups asynchronously
     static KillHandler sKillHandler = null;
@@ -398,7 +399,7 @@ public final class ProcessList {
 
     private boolean mHaveDisplaySize;
 
-    private static LmkdConnection sLmkdConnection = null;
+    private static com.android.server.am.LmkdConnection sLmkdConnection = null;
 
     private boolean mOomLevelsSet = false;
 
@@ -437,13 +438,13 @@ public final class ProcessList {
      * Mapping: {@link #mProcStartSeqCounter} -> {@link ProcessRecord}
      */
     @GuardedBy("mService")
-    final LongSparseArray<ProcessRecord> mPendingStarts = new LongSparseArray<>();
+    final LongSparseArray<com.android.server.am.ProcessRecord> mPendingStarts = new LongSparseArray<>();
 
     /**
      * List of running applications, sorted by recent usage.
      * The first entry in the list is the least recently used.
      */
-    final ArrayList<ProcessRecord> mLruProcesses = new ArrayList<ProcessRecord>();
+    final ArrayList<com.android.server.am.ProcessRecord> mLruProcesses = new ArrayList<com.android.server.am.ProcessRecord>();
 
     /**
      * Where in mLruProcesses that the processes hosting activities start.
@@ -461,12 +462,12 @@ public final class ProcessList {
      */
     int mLruSeq = 0;
 
-    ActiveUids mActiveUids;
+    com.android.server.am.ActiveUids mActiveUids;
 
     /**
      * The currently running isolated processes.
      */
-    final SparseArray<ProcessRecord> mIsolatedProcesses = new SparseArray<>();
+    final SparseArray<com.android.server.am.ProcessRecord> mIsolatedProcesses = new SparseArray<>();
 
     /**
      * The currently running application zygotes.
@@ -477,13 +478,13 @@ public final class ProcessList {
      * Managees the {@link android.app.ApplicationExitInfo} records.
      */
     @GuardedBy("mAppExitInfoTracker")
-    final AppExitInfoTracker mAppExitInfoTracker = new AppExitInfoTracker();
+    final com.android.server.am.AppExitInfoTracker mAppExitInfoTracker = new com.android.server.am.AppExitInfoTracker();
 
     /**
      * The processes that are forked off an application zygote.
      */
-    final ArrayMap<AppZygote, ArrayList<ProcessRecord>> mAppZygoteProcesses =
-            new ArrayMap<AppZygote, ArrayList<ProcessRecord>>();
+    final ArrayMap<AppZygote, ArrayList<com.android.server.am.ProcessRecord>> mAppZygoteProcesses =
+            new ArrayMap<AppZygote, ArrayList<com.android.server.am.ProcessRecord>>();
 
     private PlatformCompat mPlatformCompat = null;
 
@@ -631,7 +632,7 @@ public final class ProcessList {
     /**
      * Processes that are being forcibly torn down.
      */
-    final ArrayList<ProcessRecord> mRemovedProcesses = new ArrayList<ProcessRecord>();
+    final ArrayList<com.android.server.am.ProcessRecord> mRemovedProcesses = new ArrayList<com.android.server.am.ProcessRecord>();
 
     /**
      * All of the applications we currently have running organized by name.
@@ -641,17 +642,17 @@ public final class ProcessList {
      */
     final MyProcessMap mProcessNames = new MyProcessMap();
 
-    final class MyProcessMap extends ProcessMap<ProcessRecord> {
+    final class MyProcessMap extends ProcessMap<com.android.server.am.ProcessRecord> {
         @Override
-        public ProcessRecord put(String name, int uid, ProcessRecord value) {
-            final ProcessRecord r = super.put(name, uid, value);
+        public com.android.server.am.ProcessRecord put(String name, int uid, com.android.server.am.ProcessRecord value) {
+            final com.android.server.am.ProcessRecord r = super.put(name, uid, value);
             mService.mAtmInternal.onProcessAdded(r.getWindowProcessController());
             return r;
         }
 
         @Override
-        public ProcessRecord remove(String name, int uid) {
-            final ProcessRecord r = super.remove(name, uid);
+        public com.android.server.am.ProcessRecord remove(String name, int uid) {
+            final com.android.server.am.ProcessRecord r = super.remove(name, uid);
             mService.mAtmInternal.onProcessRemoved(name, uid);
             return r;
         }
@@ -702,8 +703,8 @@ public final class ProcessList {
         updateOomLevels(0, 0, false);
     }
 
-    void init(ActivityManagerService service, ActiveUids activeUids,
-            PlatformCompat platformCompat) {
+    void init(com.android.server.am.ActivityManagerService service, com.android.server.am.ActiveUids activeUids,
+              PlatformCompat platformCompat) {
         mService = service;
         mActiveUids = activeUids;
         mPlatformCompat = platformCompat;
@@ -726,8 +727,8 @@ public final class ProcessList {
                     THREAD_PRIORITY_BACKGROUND, true /* allowIo */);
             sKillThread.start();
             sKillHandler = new KillHandler(sKillThread.getLooper());
-            sLmkdConnection = new LmkdConnection(sKillThread.getLooper().getQueue(),
-                    new LmkdConnection.LmkdConnectionListener() {
+            sLmkdConnection = new com.android.server.am.LmkdConnection(sKillThread.getLooper().getQueue(),
+                    new com.android.server.am.LmkdConnection.LmkdConnectionListener() {
                         @Override
                         public boolean onConnect(OutputStream ostream) {
                             Slog.i(TAG, "Connection with lmkd established");
@@ -807,7 +808,7 @@ public final class ProcessList {
         final Map<Integer, String> pidPackageMap = new HashMap<>();
         synchronized (mService) {
             for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-                final ProcessRecord record = mLruProcesses.get(i);
+                final com.android.server.am.ProcessRecord record = mLruProcesses.get(i);
                 if (record.userId != userId || !record.bindMountPending) {
                     continue;
                 }
@@ -1510,13 +1511,13 @@ public final class ProcessList {
         }
     }
 
-    final ProcessRecord getProcessRecordLocked(String processName, int uid, boolean
+    final com.android.server.am.ProcessRecord getProcessRecordLocked(String processName, int uid, boolean
             keepIfLarge) {
         if (uid == SYSTEM_UID) {
             // The system gets to run in any process.  If there are multiple
             // processes with the same uid, just pick the first (this
             // should never happen).
-            SparseArray<ProcessRecord> procs = mProcessNames.getMap().get(processName);
+            SparseArray<com.android.server.am.ProcessRecord> procs = mProcessNames.getMap().get(processName);
             if (procs == null) return null;
             final int procCount = procs.size();
             for (int i = 0; i < procCount; i++) {
@@ -1528,7 +1529,7 @@ public final class ProcessList {
                 return procs.valueAt(i);
             }
         }
-        ProcessRecord proc = mProcessNames.get(processName, uid);
+        com.android.server.am.ProcessRecord proc = mProcessNames.get(processName, uid);
         if (false && proc != null && !keepIfLarge
                 && proc.setProcState >= ActivityManager.PROCESS_STATE_CACHED_EMPTY
                 && proc.lastCachedPss >= 4000) {
@@ -1588,13 +1589,13 @@ public final class ProcessList {
         outInfo.foregroundAppThreshold = getMemLevel(FOREGROUND_APP_ADJ);
     }
 
-    ProcessRecord findAppProcessLocked(IBinder app, String reason) {
+    com.android.server.am.ProcessRecord findAppProcessLocked(IBinder app, String reason) {
         final int NP = mProcessNames.getMap().size();
         for (int ip = 0; ip < NP; ip++) {
-            SparseArray<ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
+            SparseArray<com.android.server.am.ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
             final int NA = apps.size();
             for (int ia = 0; ia < NA; ia++) {
-                ProcessRecord p = apps.valueAt(ia);
+                com.android.server.am.ProcessRecord p = apps.valueAt(ia);
                 if (p.thread != null && p.thread.asBinder() == app) {
                     return p;
                 }
@@ -1669,7 +1670,7 @@ public final class ProcessList {
         return gidArray;
     }
 
-    private boolean shouldEnableTaggedPointers(ProcessRecord app) {
+    private boolean shouldEnableTaggedPointers(com.android.server.am.ProcessRecord app) {
         // Ensure we have platform + kernel support for TBI.
         if (!Zygote.nativeSupportsTaggedPointers()) {
             return false;
@@ -1688,7 +1689,7 @@ public final class ProcessList {
         return true;
     }
 
-    private int decideTaggingLevel(ProcessRecord app) {
+    private int decideTaggingLevel(com.android.server.am.ProcessRecord app) {
         if (shouldEnableTaggedPointers(app)) {
             return Zygote.MEMORY_TAG_LEVEL_TBI;
         }
@@ -1696,7 +1697,7 @@ public final class ProcessList {
         return 0;
     }
 
-    private int decideGwpAsanLevel(ProcessRecord app) {
+    private int decideGwpAsanLevel(com.android.server.am.ProcessRecord app) {
         // Look at the process attribute first.
        if (app.processInfo != null
                 && app.processInfo.gwpAsanMode != ApplicationInfo.GWP_ASAN_DEFAULT) {
@@ -1725,14 +1726,14 @@ public final class ProcessList {
      * @return {@code true} if process start is successful, false otherwise.
      */
     @GuardedBy("mService")
-    boolean startProcessLocked(ProcessRecord app, HostingRecord hostingRecord,
-            int zygotePolicyFlags, boolean disableHiddenApiChecks, boolean disableTestApiChecks,
-            boolean mountExtStorageFull, String abiOverride) {
+    boolean startProcessLocked(com.android.server.am.ProcessRecord app, com.android.server.am.HostingRecord hostingRecord,
+                               int zygotePolicyFlags, boolean disableHiddenApiChecks, boolean disableTestApiChecks,
+                               boolean mountExtStorageFull, String abiOverride) {
         if (app.pendingStart) {
             return true;
         }
         long startTime = SystemClock.uptimeMillis();
-        if (app.pid > 0 && app.pid != ActivityManagerService.MY_PID) {
+        if (app.pid > 0 && app.pid != com.android.server.am.ActivityManagerService.MY_PID) {
             checkSlow(startTime, "startProcess: removing from pids map");
             mService.removePidLocked(app);
             app.bindMountPending = false;
@@ -1930,7 +1931,7 @@ public final class ProcessList {
 
             // the per-user SELinux context must be set
             if (TextUtils.isEmpty(app.info.seInfoUser)) {
-                Slog.wtf(ActivityManagerService.TAG, "SELinux tag not defined",
+                Slog.wtf(com.android.server.am.ActivityManagerService.TAG, "SELinux tag not defined",
                         new IllegalStateException("SELinux tag not defined for "
                                 + app.info.packageName + " (uid " + app.uid + ")"));
             }
@@ -1944,7 +1945,7 @@ public final class ProcessList {
                     runtimeFlags, zygotePolicyFlags, mountExternal, seInfo, requiredAbi,
                     instructionSet, invokeWith, startTime);
         } catch (RuntimeException e) {
-            Slog.e(ActivityManagerService.TAG, "Failure starting process " + app.processName, e);
+            Slog.e(com.android.server.am.ActivityManagerService.TAG, "Failure starting process " + app.processName, e);
 
             // Something went very wrong while trying to start this process; one
             // common case is when the package is frozen due to an active
@@ -1959,10 +1960,10 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    boolean startProcessLocked(HostingRecord hostingRecord, String entryPoint, ProcessRecord app,
-            int uid, int[] gids, int runtimeFlags, int zygotePolicyFlags, int mountExternal,
-            String seInfo, String requiredAbi, String instructionSet, String invokeWith,
-            long startTime) {
+    boolean startProcessLocked(com.android.server.am.HostingRecord hostingRecord, String entryPoint, com.android.server.am.ProcessRecord app,
+                               int uid, int[] gids, int runtimeFlags, int zygotePolicyFlags, int mountExternal,
+                               String seInfo, String requiredAbi, String instructionSet, String invokeWith,
+                               long startTime) {
         app.pendingStart = true;
         app.killedByAm = false;
         app.removed = false;
@@ -2001,7 +2002,7 @@ public final class ProcessList {
                 handleProcessStartedLocked(app, startResult.pid, startResult.usingWrapper,
                         startSeq, false);
             } catch (RuntimeException e) {
-                Slog.e(ActivityManagerService.TAG, "Failure starting process "
+                Slog.e(com.android.server.am.ActivityManagerService.TAG, "Failure starting process "
                         + app.processName, e);
                 app.pendingStart = false;
                 mService.forceStopPackageLocked(app.info.packageName, UserHandle.getAppId(app.uid),
@@ -2016,13 +2017,13 @@ public final class ProcessList {
      *
      * <p>Note: this function doesn't hold the global AM lock intentionally.</p>
      */
-    private void handleProcessStart(final ProcessRecord app, final String entryPoint,
-            final int[] gids, final int runtimeFlags, int zygotePolicyFlags,
-            final int mountExternal, final String requiredAbi, final String instructionSet,
-            final String invokeWith, final long startSeq) {
+    private void handleProcessStart(final com.android.server.am.ProcessRecord app, final String entryPoint,
+                                    final int[] gids, final int runtimeFlags, int zygotePolicyFlags,
+                                    final int mountExternal, final String requiredAbi, final String instructionSet,
+                                    final String invokeWith, final long startSeq) {
         // If there is a precede instance of the process, wait for its death with a timeout.
         // Use local reference since we are not using locks here
-        final ProcessRecord precedence = app.mPrecedence;
+        final com.android.server.am.ProcessRecord precedence = app.mPrecedence;
         if (precedence != null) {
             final int pid = precedence.pid;
             long now = System.currentTimeMillis();
@@ -2062,7 +2063,7 @@ public final class ProcessList {
             }
         } catch (RuntimeException e) {
             synchronized (mService) {
-                Slog.e(ActivityManagerService.TAG, "Failure starting process "
+                Slog.e(com.android.server.am.ActivityManagerService.TAG, "Failure starting process "
                         + app.processName, e);
                 mPendingStarts.remove(startSeq);
                 app.pendingStart = false;
@@ -2076,7 +2077,7 @@ public final class ProcessList {
     @GuardedBy("mService")
     public void killAppZygoteIfNeededLocked(AppZygote appZygote, boolean force) {
         final ApplicationInfo appInfo = appZygote.getAppInfo();
-        ArrayList<ProcessRecord> zygoteProcesses = mAppZygoteProcesses.get(appZygote);
+        ArrayList<com.android.server.am.ProcessRecord> zygoteProcesses = mAppZygoteProcesses.get(appZygote);
         if (zygoteProcesses != null && (force || zygoteProcesses.size() == 0)) {
             // Only remove if no longer in use now, or forced kill
             mAppZygotes.remove(appInfo.processName, appInfo.uid);
@@ -2087,7 +2088,7 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    private void removeProcessFromAppZygoteLocked(final ProcessRecord app) {
+    private void removeProcessFromAppZygoteLocked(final com.android.server.am.ProcessRecord app) {
         // Free the isolated uid for this process
         final IsolatedUidRange appUidRange =
                 mAppIsolatedUidRangeAllocator.getIsolatedUidRangeLocked(app.info.processName,
@@ -2099,7 +2100,7 @@ public final class ProcessList {
         final AppZygote appZygote = mAppZygotes.get(app.info.processName,
                 app.hostingRecord.getDefiningUid());
         if (appZygote != null) {
-            ArrayList<ProcessRecord> zygoteProcesses = mAppZygoteProcesses.get(appZygote);
+            ArrayList<com.android.server.am.ProcessRecord> zygoteProcesses = mAppZygoteProcesses.get(appZygote);
             zygoteProcesses.remove(app);
             if (zygoteProcesses.size() == 0) {
                 mService.mHandler.removeMessages(KILL_APP_ZYGOTE_MSG);
@@ -2116,13 +2117,13 @@ public final class ProcessList {
         }
     }
 
-    private AppZygote createAppZygoteForProcessIfNeeded(final ProcessRecord app) {
+    private AppZygote createAppZygoteForProcessIfNeeded(final com.android.server.am.ProcessRecord app) {
         synchronized (mService) {
             // The UID for the app zygote should be the UID of the application hosting
             // the service.
             final int uid = app.hostingRecord.getDefiningUid();
             AppZygote appZygote = mAppZygotes.get(app.info.processName, uid);
-            final ArrayList<ProcessRecord> zygoteProcessList;
+            final ArrayList<com.android.server.am.ProcessRecord> zygoteProcessList;
             if (appZygote == null) {
                 if (DEBUG_PROCESSES) {
                     Slog.d(TAG_PROCESSES, "Creating new app zygote.");
@@ -2146,7 +2147,7 @@ public final class ProcessList {
                 appInfo.uid = uid;
                 appZygote = new AppZygote(appInfo, uid, firstUid, lastUid);
                 mAppZygotes.put(app.info.processName, uid, appZygote);
-                zygoteProcessList = new ArrayList<ProcessRecord>();
+                zygoteProcessList = new ArrayList<com.android.server.am.ProcessRecord>();
                 mAppZygoteProcesses.put(appZygote, zygoteProcessList);
             } else {
                 if (DEBUG_PROCESSES) {
@@ -2188,7 +2189,7 @@ public final class ProcessList {
     }
 
     private boolean needsStorageDataIsolation(StorageManagerInternal storageManagerInternal,
-            ProcessRecord app) {
+            com.android.server.am.ProcessRecord app) {
         return mVoldAppDataIsolationEnabled && UserHandle.isApp(app.uid)
                 && !storageManagerInternal.isExternalStorageService(app.uid)
                 // Special mounting mode doesn't need to have data isolation as they won't
@@ -2198,10 +2199,10 @@ public final class ProcessList {
                 && app.mountMode != Zygote.MOUNT_EXTERNAL_INSTALLER;
     }
 
-    private Process.ProcessStartResult startProcess(HostingRecord hostingRecord, String entryPoint,
-            ProcessRecord app, int uid, int[] gids, int runtimeFlags, int zygotePolicyFlags,
-            int mountExternal, String seInfo, String requiredAbi, String instructionSet,
-            String invokeWith, long startTime) {
+    private Process.ProcessStartResult startProcess(com.android.server.am.HostingRecord hostingRecord, String entryPoint,
+                                                    com.android.server.am.ProcessRecord app, int uid, int[] gids, int runtimeFlags, int zygotePolicyFlags,
+                                                    int mountExternal, String seInfo, String requiredAbi, String instructionSet,
+                                                    String invokeWith, long startTime) {
         try {
             Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "Start proc: " +
                     app.processName);
@@ -2293,6 +2294,7 @@ public final class ProcessList {
                         false, false,
                         new String[]{PROC_START_SEQ_IDENT + app.startSeq});
             } else {
+                // 一般走这里
                 startResult = Process.start(entryPoint,
                         app.processName, uid, uid, gids, runtimeFlags, mountExternal,
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
@@ -2309,26 +2311,26 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    void startProcessLocked(ProcessRecord app, HostingRecord hostingRecord, int zygotePolicyFlags) {
+    void startProcessLocked(com.android.server.am.ProcessRecord app, com.android.server.am.HostingRecord hostingRecord, int zygotePolicyFlags) {
         startProcessLocked(app, hostingRecord, zygotePolicyFlags, null /* abiOverride */);
     }
 
     @GuardedBy("mService")
-    final boolean startProcessLocked(ProcessRecord app, HostingRecord hostingRecord,
-            int zygotePolicyFlags, String abiOverride) {
+    final boolean startProcessLocked(com.android.server.am.ProcessRecord app, com.android.server.am.HostingRecord hostingRecord,
+                                     int zygotePolicyFlags, String abiOverride) {
         return startProcessLocked(app, hostingRecord, zygotePolicyFlags,
                 false /* disableHiddenApiChecks */, false /* disableTestApiChecks */,
                 false /* mountExtStorageFull */, abiOverride);
     }
 
     @GuardedBy("mService")
-    final ProcessRecord startProcessLocked(String processName, ApplicationInfo info,
-            boolean knownToBeDead, int intentFlags, HostingRecord hostingRecord,
-            int zygotePolicyFlags, boolean allowWhileBooting, boolean isolated, int isolatedUid,
-            boolean keepIfLarge, String abiOverride, String entryPoint, String[] entryPointArgs,
-            Runnable crashHandler) {
+    final com.android.server.am.ProcessRecord startProcessLocked(String processName, ApplicationInfo info,
+                                                                 boolean knownToBeDead, int intentFlags, com.android.server.am.HostingRecord hostingRecord,
+                                                                 int zygotePolicyFlags, boolean allowWhileBooting, boolean isolated, int isolatedUid,
+                                                                 boolean keepIfLarge, String abiOverride, String entryPoint, String[] entryPointArgs,
+                                                                 Runnable crashHandler) {
         long startTime = SystemClock.uptimeMillis();
-        ProcessRecord app;
+        com.android.server.am.ProcessRecord app;
         if (!isolated) {
             app = getProcessRecordLocked(processName, info.uid, keepIfLarge);
             checkSlow(startTime, "startProcess: after getProcessRecord");
@@ -2374,7 +2376,7 @@ public final class ProcessList {
                 + " app=" + app + " knownToBeDead=" + knownToBeDead
                 + " thread=" + (app != null ? app.thread : null)
                 + " pid=" + (app != null ? app.pid : -1));
-        ProcessRecord precedence = null;
+        com.android.server.am.ProcessRecord precedence = null;
         if (app != null && app.pid > 0) {
             if ((!knownToBeDead && !app.killed) || app.thread == null) {
                 // We already have the app running, or are waiting for it to
@@ -2402,6 +2404,7 @@ public final class ProcessList {
 
         if (app == null) {
             checkSlow(startTime, "startProcess: creating new process record");
+            // 创建一个
             app = newProcessRecordLocked(info, processName, isolated, isolatedUid, hostingRecord);
             if (app == null) {
                 Slog.w(TAG, "Failed making new process record for "
@@ -2444,7 +2447,7 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    private String isProcStartValidLocked(ProcessRecord app, long expectedStartSeq) {
+    private String isProcStartValidLocked(com.android.server.am.ProcessRecord app, long expectedStartSeq) {
         StringBuilder sb = null;
         if (app.killedByAm) {
             if (sb == null) sb = new StringBuilder();
@@ -2479,8 +2482,8 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    private boolean handleProcessStartedLocked(ProcessRecord pending,
-            Process.ProcessStartResult startResult, long expectedStartSeq) {
+    private boolean handleProcessStartedLocked(com.android.server.am.ProcessRecord pending,
+                                               Process.ProcessStartResult startResult, long expectedStartSeq) {
         // Indicates that this process start has been taken care of.
         if (mPendingStarts.get(expectedStartSeq) == null) {
             if (pending.pid == startResult.pid) {
@@ -2494,8 +2497,8 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    boolean handleProcessStartedLocked(ProcessRecord app, int pid, boolean usingWrapper,
-            long expectedStartSeq, boolean procAttached) {
+    boolean handleProcessStartedLocked(com.android.server.am.ProcessRecord app, int pid, boolean usingWrapper,
+                                       long expectedStartSeq, boolean procAttached) {
         mPendingStarts.remove(expectedStartSeq);
         final String reason = isProcStartValidLocked(app, expectedStartSeq);
         if (reason != null) {
@@ -2551,7 +2554,7 @@ public final class ProcessList {
         app.setUsingWrapper(usingWrapper);
         app.pendingStart = false;
         checkSlow(app.startTime, "startProcess: starting to update pids map");
-        ProcessRecord oldApp;
+        com.android.server.am.ProcessRecord oldApp;
         synchronized (mService.mPidsSelfLocked) {
             oldApp = mService.mPidsSelfLocked.get(pid);
         }
@@ -2579,7 +2582,7 @@ public final class ProcessList {
         return true;
     }
 
-    final void removeLruProcessLocked(ProcessRecord app) {
+    final void removeLruProcessLocked(com.android.server.am.ProcessRecord app) {
         int lrui = mLruProcesses.lastIndexOf(app);
         if (lrui >= 0) {
             if (!app.killed) {
@@ -2648,17 +2651,17 @@ public final class ProcessList {
             int userId, int minOomAdj, boolean callerWillRestart, boolean allowRestart,
             boolean doit, boolean evenPersistent, boolean setRemoved, int reasonCode,
             int subReason, String reason) {
-        ArrayList<ProcessRecord> procs = new ArrayList<>();
+        ArrayList<com.android.server.am.ProcessRecord> procs = new ArrayList<>();
 
         // Remove all processes this package may have touched: all with the
         // same UID (except for the system or root user), and all whose name
         // matches the package name.
         final int NP = mProcessNames.getMap().size();
         for (int ip = 0; ip < NP; ip++) {
-            SparseArray<ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
+            SparseArray<com.android.server.am.ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
             final int NA = apps.size();
             for (int ia = 0; ia < NA; ia++) {
-                ProcessRecord app = apps.valueAt(ia);
+                com.android.server.am.ProcessRecord app = apps.valueAt(ia);
                 if (app.isPersistent() && !evenPersistent) {
                     // we don't kill persistent processes
                     continue;
@@ -2723,26 +2726,26 @@ public final class ProcessList {
                     reasonCode, subReason, reason);
         }
         killAppZygotesLocked(packageName, appId, userId, false /* force */);
-        mService.updateOomAdjLocked(OomAdjuster.OOM_ADJ_REASON_PROCESS_END);
+        mService.updateOomAdjLocked(com.android.server.am.OomAdjuster.OOM_ADJ_REASON_PROCESS_END);
         return N > 0;
     }
 
     @GuardedBy("mService")
-    boolean removeProcessLocked(ProcessRecord app,
-            boolean callerWillRestart, boolean allowRestart, int reasonCode, String reason) {
+    boolean removeProcessLocked(com.android.server.am.ProcessRecord app,
+                                boolean callerWillRestart, boolean allowRestart, int reasonCode, String reason) {
         return removeProcessLocked(app, callerWillRestart, allowRestart, reasonCode,
                 ApplicationExitInfo.SUBREASON_UNKNOWN, reason);
     }
 
     @GuardedBy("mService")
-    boolean removeProcessLocked(ProcessRecord app, boolean callerWillRestart,
-            boolean allowRestart, int reasonCode, int subReason, String reason) {
+    boolean removeProcessLocked(com.android.server.am.ProcessRecord app, boolean callerWillRestart,
+                                boolean allowRestart, int reasonCode, int subReason, String reason) {
         final String name = app.processName;
         final int uid = app.uid;
         if (DEBUG_PROCESSES) Slog.d(TAG_PROCESSES,
                 "Force removing proc " + app.toShortString() + " (" + name + "/" + uid + ")");
 
-        ProcessRecord old = mProcessNames.get(name, uid);
+        com.android.server.am.ProcessRecord old = mProcessNames.get(name, uid);
         if (old != app) {
             // This process is no longer active, so nothing to do.
             Slog.w(TAG, "Ignoring remove of inactive process: " + app);
@@ -2752,7 +2755,7 @@ public final class ProcessList {
         mService.mAtmInternal.clearHeavyWeightProcessIfEquals(app.getWindowProcessController());
 
         boolean needRestart = false;
-        if ((app.pid > 0 && app.pid != ActivityManagerService.MY_PID) || (app.pid == 0 && app
+        if ((app.pid > 0 && app.pid != com.android.server.am.ActivityManagerService.MY_PID) || (app.pid == 0 && app
                 .pendingStart)) {
             int pid = app.pid;
             if (pid > 0) {
@@ -2788,19 +2791,19 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    final void addProcessNameLocked(ProcessRecord proc) {
+    final void addProcessNameLocked(com.android.server.am.ProcessRecord proc) {
         // We shouldn't already have a process under this name, but just in case we
         // need to clean up whatever may be there now.
-        ProcessRecord old = removeProcessNameLocked(proc.processName, proc.uid);
+        com.android.server.am.ProcessRecord old = removeProcessNameLocked(proc.processName, proc.uid);
         if (old == proc && proc.isPersistent()) {
             // We are re-adding a persistent process.  Whatevs!  Just leave it there.
             Slog.w(TAG, "Re-adding persistent process " + proc);
         } else if (old != null) {
             Slog.wtf(TAG, "Already have existing proc " + old + " when adding " + proc);
         }
-        UidRecord uidRec = mActiveUids.get(proc.uid);
+        com.android.server.am.UidRecord uidRec = mActiveUids.get(proc.uid);
         if (uidRec == null) {
-            uidRec = new UidRecord(proc.uid);
+            uidRec = new com.android.server.am.UidRecord(proc.uid);
             // This is the first appearance of the uid, report it now!
             if (DEBUG_UID_OBSERVERS) Slog.i(TAG_UID_OBSERVERS,
                     "Creating new process uid: " + uidRec);
@@ -2829,7 +2832,7 @@ public final class ProcessList {
 
     @GuardedBy("mService")
     private IsolatedUidRange getOrCreateIsolatedUidRangeLocked(ApplicationInfo info,
-            HostingRecord hostingRecord) {
+            com.android.server.am.HostingRecord hostingRecord) {
         if (hostingRecord == null || !hostingRecord.usesAppZygote()) {
             // Allocate an isolated UID from the global range
             return mGlobalIsolatedUids;
@@ -2840,8 +2843,8 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    final ProcessRecord newProcessRecordLocked(ApplicationInfo info, String customProcess,
-            boolean isolated, int isolatedUid, HostingRecord hostingRecord) {
+    final com.android.server.am.ProcessRecord newProcessRecordLocked(ApplicationInfo info, String customProcess,
+                                                                     boolean isolated, int isolatedUid, com.android.server.am.HostingRecord hostingRecord) {
         String proc = customProcess != null ? customProcess : info.processName;
         final int userId = UserHandle.getUserId(info.uid);
         int uid = info.uid;
@@ -2873,7 +2876,7 @@ public final class ProcessList {
             FrameworkStatsLog.write(FrameworkStatsLog.ISOLATED_UID_CHANGED, info.uid, uid,
                     FrameworkStatsLog.ISOLATED_UID_CHANGED__EVENT__CREATED);
         }
-        final ProcessRecord r = new ProcessRecord(mService, info, proc, uid);
+        final com.android.server.am.ProcessRecord r = new com.android.server.am.ProcessRecord(mService, info, proc, uid);
 
         if (!mService.mBooted && !mService.mBooting
                 && userId == UserHandle.USER_SYSTEM
@@ -2894,14 +2897,14 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    final ProcessRecord removeProcessNameLocked(final String name, final int uid) {
+    final com.android.server.am.ProcessRecord removeProcessNameLocked(final String name, final int uid) {
         return removeProcessNameLocked(name, uid, null);
     }
 
     @GuardedBy("mService")
-    final ProcessRecord removeProcessNameLocked(final String name, final int uid,
-            final ProcessRecord expecting) {
-        ProcessRecord old = mProcessNames.get(name, uid);
+    final com.android.server.am.ProcessRecord removeProcessNameLocked(final String name, final int uid,
+                                                                      final com.android.server.am.ProcessRecord expecting) {
+        com.android.server.am.ProcessRecord old = mProcessNames.get(name, uid);
         // Only actually remove when the currently recorded value matches the
         // record that we expected; if it doesn't match then we raced with a
         // newly created process and we don't want to destroy the new one.
@@ -2915,7 +2918,7 @@ public final class ProcessList {
                 // No more processes using this uid, tell clients it is gone.
                 if (DEBUG_UID_OBSERVERS) Slog.i(TAG_UID_OBSERVERS,
                         "No more processes in " + old.uidRecord);
-                mService.enqueueUidChangeLocked(old.uidRecord, -1, UidRecord.CHANGE_GONE);
+                mService.enqueueUidChangeLocked(old.uidRecord, -1, com.android.server.am.UidRecord.CHANGE_GONE);
                 EventLogTags.writeAmUidStopped(uid);
                 mActiveUids.remove(uid);
                 mService.noteUidProcessState(uid, ActivityManager.PROCESS_STATE_NONEXISTENT,
@@ -2926,7 +2929,7 @@ public final class ProcessList {
         mIsolatedProcesses.remove(uid);
         mGlobalIsolatedUids.freeIsolatedUidLocked(uid);
         // Remove the (expected) ProcessRecord from the app zygote
-        final ProcessRecord record = expecting != null ? expecting : old;
+        final com.android.server.am.ProcessRecord record = expecting != null ? expecting : old;
         if (record != null && record.appZygote) {
             removeProcessFromAppZygoteLocked(record);
         }
@@ -2938,7 +2941,7 @@ public final class ProcessList {
     @GuardedBy("mService")
     void updateCoreSettingsLocked(Bundle settings) {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord processRecord = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord processRecord = mLruProcesses.get(i);
             try {
                 if (processRecord.thread != null) {
                     processRecord.thread.setCoreSettings(settings);
@@ -2957,13 +2960,13 @@ public final class ProcessList {
      */
     @GuardedBy("mService")
     void killAllBackgroundProcessesExceptLocked(int minTargetSdk, int maxProcState) {
-        final ArrayList<ProcessRecord> procs = new ArrayList<>();
+        final ArrayList<com.android.server.am.ProcessRecord> procs = new ArrayList<>();
         final int NP = mProcessNames.getMap().size();
         for (int ip = 0; ip < NP; ip++) {
-            final SparseArray<ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
+            final SparseArray<com.android.server.am.ProcessRecord> apps = mProcessNames.getMap().valueAt(ip);
             final int NA = apps.size();
             for (int ia = 0; ia < NA; ia++) {
-                final ProcessRecord app = apps.valueAt(ia);
+                final com.android.server.am.ProcessRecord app = apps.valueAt(ia);
                 if (app.removed || ((minTargetSdk < 0 || app.info.targetSdkVersion < minTargetSdk)
                         && (maxProcState < 0 || app.setProcState > maxProcState))) {
                     procs.add(app);
@@ -2985,7 +2988,7 @@ public final class ProcessList {
     @GuardedBy("mService")
     void updateAllTimePrefsLocked(int timePref) {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord r = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord r = mLruProcesses.get(i);
             if (r.thread != null) {
                 try {
                     r.thread.updateTimePrefs(timePref);
@@ -3001,11 +3004,11 @@ public final class ProcessList {
         // Update the HTTP proxy for each application thread.
         synchronized (mService) {
             for (int i = mLruProcesses.size() - 1 ; i >= 0 ; i--) {
-                ProcessRecord r = mLruProcesses.get(i);
+                com.android.server.am.ProcessRecord r = mLruProcesses.get(i);
                 // Don't dispatch to isolated processes as they can't access ConnectivityManager and
                 // don't have network privileges anyway. Exclude system server and update it
                 // separately outside the AMS lock, to avoid deadlock with Connectivity Service.
-                if (r.pid != ActivityManagerService.MY_PID && r.thread != null && !r.isolated) {
+                if (r.pid != com.android.server.am.ActivityManagerService.MY_PID && r.thread != null && !r.isolated) {
                     try {
                         r.thread.updateHttpProxy();
                     } catch (RemoteException ex) {
@@ -3021,7 +3024,7 @@ public final class ProcessList {
     @GuardedBy("mService")
     void clearAllDnsCacheLocked() {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord r = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord r = mLruProcesses.get(i);
             if (r.thread != null) {
                 try {
                     r.thread.clearDnsCache();
@@ -3035,7 +3038,7 @@ public final class ProcessList {
     @GuardedBy("mService")
     void handleAllTrustStorageUpdateLocked() {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord r = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord r = mLruProcesses.get(i);
             if (r.thread != null) {
                 try {
                     r.thread.handleTrustStorageUpdate();
@@ -3048,8 +3051,8 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    int updateLruProcessInternalLocked(ProcessRecord app, long now, int index,
-            int lruSeq, String what, Object obj, ProcessRecord srcApp) {
+    int updateLruProcessInternalLocked(com.android.server.am.ProcessRecord app, long now, int index,
+                                       int lruSeq, String what, Object obj, com.android.server.am.ProcessRecord srcApp) {
         app.lastActivityTime = now;
 
         if (app.hasActivitiesOrRecentTasks()) {
@@ -3102,8 +3105,8 @@ public final class ProcessList {
      * @param endIndex The current end of the top being processed.  Typically topI - 1.  That is,
      *                 where we are going to start potentially adjusting other entries in the list.
      */
-    private void updateClientActivitiesOrdering(final ProcessRecord topApp, final int topI,
-            final int bottomI, int endIndex) {
+    private void updateClientActivitiesOrdering(final com.android.server.am.ProcessRecord topApp, final int topI,
+                                                final int bottomI, int endIndex) {
         if (topApp.hasActivitiesOrRecentTasks() || topApp.treatLikeActivity
                 || !topApp.hasClientActivities()) {
             // If this is not a special process that has client activities, then there is
@@ -3115,7 +3118,7 @@ public final class ProcessList {
         if (topApp.connectionGroup > 0) {
             int endImportance = topApp.connectionImportance;
             for (int i = endIndex; i >= bottomI; i--) {
-                final ProcessRecord subProc = mLruProcesses.get(i);
+                final com.android.server.am.ProcessRecord subProc = mLruProcesses.get(i);
                 if (subProc.info.uid == uid
                         && subProc.connectionGroup == topApp.connectionGroup) {
                     if (i == endIndex && subProc.connectionImportance >= endImportance) {
@@ -3138,7 +3141,7 @@ public final class ProcessList {
                                         + subProc.connectionImportance);
                         boolean moved = false;
                         for (int pos = topI; pos > endIndex; pos--) {
-                            final ProcessRecord posProc = mLruProcesses.get(pos);
+                            final com.android.server.am.ProcessRecord posProc = mLruProcesses.get(pos);
                             if (subProc.connectionImportance
                                     <= posProc.connectionImportance) {
                                 mLruProcesses.remove(i);
@@ -3172,7 +3175,7 @@ public final class ProcessList {
         // we will distribute other entries owned by it to be in-between other apps.
         int i = endIndex;
         while (i >= bottomI) {
-            ProcessRecord subProc = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord subProc = mLruProcesses.get(i);
             if (DEBUG_LRU) Slog.d(TAG_LRU,
                     "Looking to spread old procs, at " + subProc + " @ " + i);
             if (subProc.info.uid != uid) {
@@ -3241,7 +3244,7 @@ public final class ProcessList {
                 // relative order of apps) and then after the next last group of processes
                 // of the target app.
                 for (endIndex--; endIndex >= bottomI; endIndex--) {
-                    final ProcessRecord endProc = mLruProcesses.get(endIndex);
+                    final com.android.server.am.ProcessRecord endProc = mLruProcesses.get(endIndex);
                     if (endProc.info.uid == uid) {
                         if (DEBUG_LRU) Slog.d(TAG_LRU,
                                 "Found next group of app: " + endProc + " @ "
@@ -3250,9 +3253,9 @@ public final class ProcessList {
                     }
                 }
                 if (endIndex >= bottomI) {
-                    final ProcessRecord endProc = mLruProcesses.get(endIndex);
+                    final com.android.server.am.ProcessRecord endProc = mLruProcesses.get(endIndex);
                     for (endIndex--; endIndex >= bottomI; endIndex--) {
-                        final ProcessRecord nextEndProc = mLruProcesses.get(endIndex);
+                        final com.android.server.am.ProcessRecord nextEndProc = mLruProcesses.get(endIndex);
                         if (nextEndProc.info.uid != uid
                                 || nextEndProc.connectionGroup != endProc.connectionGroup) {
                             if (DEBUG_LRU) Slog.d(TAG_LRU,
@@ -3271,8 +3274,8 @@ public final class ProcessList {
         }
     }
 
-    final void updateLruProcessLocked(ProcessRecord app, boolean activityChange,
-            ProcessRecord client) {
+    final void updateLruProcessLocked(com.android.server.am.ProcessRecord app, boolean activityChange,
+                                      com.android.server.am.ProcessRecord client) {
         final boolean hasActivity = app.hasActivitiesOrRecentTasks() || app.hasClientActivities()
                 || app.treatLikeActivity;
         final boolean hasService = false; // not impl yet. app.services.size() > 0;
@@ -3390,7 +3393,7 @@ public final class ProcessList {
                         + " importance=" + app.connectionImportance);
                 int pos = N - 1;
                 while (pos > mLruProcessActivityStart) {
-                    final ProcessRecord posproc = mLruProcesses.get(pos);
+                    final com.android.server.am.ProcessRecord posproc = mLruProcesses.get(pos);
                     if (posproc.info.uid == app.info.uid) {
                         // Technically this app could have multiple processes with different
                         // activities and so we should be looking for the actual process that
@@ -3453,7 +3456,7 @@ public final class ProcessList {
         // If the app is currently using a content provider or service,
         // bump those processes as well.
         for (int j = app.connections.size() - 1; j >= 0; j--) {
-            ConnectionRecord cr = app.connections.valueAt(j);
+            com.android.server.am.ConnectionRecord cr = app.connections.valueAt(j);
             if (cr.binding != null && !cr.serviceDead && cr.binding.service != null
                     && cr.binding.service.app != null
                     && cr.binding.service.app.lruSeq != mLruSeq
@@ -3475,7 +3478,7 @@ public final class ProcessList {
             }
         }
         for (int j = app.conProviders.size() - 1; j >= 0; j--) {
-            ContentProviderRecord cpr = app.conProviders.get(j).provider;
+            com.android.server.am.ContentProviderRecord cpr = app.conProviders.get(j).provider;
             if (cpr.proc != null && cpr.proc.lruSeq != mLruSeq && !cpr.proc.isPersistent()) {
                 nextIndex = updateLruProcessInternalLocked(cpr.proc, now, nextIndex, mLruSeq,
                         "provider reference", cpr, app);
@@ -3483,14 +3486,14 @@ public final class ProcessList {
         }
     }
 
-    final ProcessRecord getLRURecordForAppLocked(IApplicationThread thread) {
+    final com.android.server.am.ProcessRecord getLRURecordForAppLocked(IApplicationThread thread) {
         if (thread == null) {
             return null;
         }
         final IBinder threadBinder = thread.asBinder();
         // Find the application record.
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            final ProcessRecord rec = mLruProcesses.get(i);
+            final com.android.server.am.ProcessRecord rec = mLruProcesses.get(i);
             if (rec.thread != null && rec.thread.asBinder() == threadBinder) {
                 return rec;
             }
@@ -3500,7 +3503,7 @@ public final class ProcessList {
 
     boolean haveBackgroundProcessLocked() {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            final ProcessRecord rec = mLruProcesses.get(i);
+            final com.android.server.am.ProcessRecord rec = mLruProcesses.get(i);
             if (rec.thread != null
                     && rec.setProcState >= PROCESS_STATE_CACHED_ACTIVITY) {
                 return true;
@@ -3523,9 +3526,9 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    void fillInProcMemInfoLocked(ProcessRecord app,
-            ActivityManager.RunningAppProcessInfo outInfo,
-            int clientTargetSdk) {
+    void fillInProcMemInfoLocked(com.android.server.am.ProcessRecord app,
+                                 ActivityManager.RunningAppProcessInfo outInfo,
+                                 int clientTargetSdk) {
         outInfo.pid = app.pid;
         outInfo.uid = app.info.uid;
         if (mService.mAtmInternal.isHeavyWeightProcess(app.getWindowProcessController())) {
@@ -3555,7 +3558,7 @@ public final class ProcessList {
         List<ActivityManager.RunningAppProcessInfo> runList = null;
 
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord app = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord app = mLruProcesses.get(i);
             if ((!allUsers && app.userId != userId)
                     || (!allUids && app.uid != callingUid)) {
                 continue;
@@ -3566,8 +3569,8 @@ public final class ProcessList {
                         new ActivityManager.RunningAppProcessInfo(app.processName,
                                 app.pid, app.getPackageList());
                 fillInProcMemInfoLocked(app, currApp, clientTargetSdk);
-                if (app.adjSource instanceof ProcessRecord) {
-                    currApp.importanceReasonPid = ((ProcessRecord)app.adjSource).pid;
+                if (app.adjSource instanceof com.android.server.am.ProcessRecord) {
+                    currApp.importanceReasonPid = ((com.android.server.am.ProcessRecord)app.adjSource).pid;
                     currApp.importanceReasonImportance =
                             ActivityManager.RunningAppProcessInfo.procStateToImportance(
                                     app.adjSourceProcState);
@@ -3609,18 +3612,18 @@ public final class ProcessList {
     }
 
     @GuardedBy("mService")
-    ArrayList<ProcessRecord> collectProcessesLocked(int start, boolean allPkgs, String[] args) {
-        ArrayList<ProcessRecord> procs;
+    ArrayList<com.android.server.am.ProcessRecord> collectProcessesLocked(int start, boolean allPkgs, String[] args) {
+        ArrayList<com.android.server.am.ProcessRecord> procs;
         if (args != null && args.length > start
                 && args[start].charAt(0) != '-') {
-            procs = new ArrayList<ProcessRecord>();
+            procs = new ArrayList<com.android.server.am.ProcessRecord>();
             int pid = -1;
             try {
                 pid = Integer.parseInt(args[start]);
             } catch (NumberFormatException e) {
             }
             for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-                ProcessRecord proc = mLruProcesses.get(i);
+                com.android.server.am.ProcessRecord proc = mLruProcesses.get(i);
                 if (proc.pid > 0 && proc.pid == pid) {
                     procs.add(proc);
                 } else if (allPkgs && proc.pkgList != null
@@ -3634,7 +3637,7 @@ public final class ProcessList {
                 return null;
             }
         } else {
-            procs = new ArrayList<ProcessRecord>(mLruProcesses);
+            procs = new ArrayList<com.android.server.am.ProcessRecord>(mLruProcesses);
         }
         return procs;
     }
@@ -3643,7 +3646,7 @@ public final class ProcessList {
     void updateApplicationInfoLocked(List<String> packagesToUpdate, int userId,
             boolean updateFrameworkRes) {
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            final ProcessRecord app = mLruProcesses.get(i);
+            final com.android.server.am.ProcessRecord app = mLruProcesses.get(i);
             if (app.thread == null) {
                 continue;
             }
@@ -3680,7 +3683,7 @@ public final class ProcessList {
     void sendPackageBroadcastLocked(int cmd, String[] packages, int userId) {
         boolean foundProcess = false;
         for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
-            ProcessRecord r = mLruProcesses.get(i);
+            com.android.server.am.ProcessRecord r = mLruProcesses.get(i);
             if (r.thread != null && (userId == UserHandle.USER_ALL || r.userId == userId)) {
                 try {
                     for (int index = packages.length - 1; index >= 0 && !foundProcess; index--) {
@@ -3705,13 +3708,13 @@ public final class ProcessList {
     /** Returns the uid's process state or PROCESS_STATE_NONEXISTENT if not running */
     @GuardedBy("mService")
     int getUidProcStateLocked(int uid) {
-        UidRecord uidRec = mActiveUids.get(uid);
+        com.android.server.am.UidRecord uidRec = mActiveUids.get(uid);
         return uidRec == null ? PROCESS_STATE_NONEXISTENT : uidRec.getCurProcState();
     }
 
     /** Returns the UidRecord for the given uid, if it exists. */
     @GuardedBy("mService")
-    UidRecord getUidRecordLocked(int uid) {
+    com.android.server.am.UidRecord getUidRecordLocked(int uid) {
         return mActiveUids.get(uid);
     }
 
@@ -3727,7 +3730,7 @@ public final class ProcessList {
             if (UserHandle.isCore(uid)) {
                 continue;
             }
-            final UidRecord uidRec = mActiveUids.valueAt(i);
+            final com.android.server.am.UidRecord uidRec = mActiveUids.valueAt(i);
             if (!uidRec.idle) {
                 continue;
             }
@@ -3745,7 +3748,7 @@ public final class ProcessList {
      *         {@link #NETWORK_STATE_NO_CHANGE}.
      */
     @VisibleForTesting
-    int getBlockStateForUid(UidRecord uidRec) {
+    int getBlockStateForUid(com.android.server.am.UidRecord uidRec) {
         // Denotes whether uid's process state is currently allowed network access.
         final boolean isAllowed =
                 isProcStateAllowedWhileIdleOrPowerSaveMode(uidRec.getCurProcState())
@@ -3774,14 +3777,14 @@ public final class ProcessList {
      */
     @VisibleForTesting
     @GuardedBy("mService")
-    void incrementProcStateSeqAndNotifyAppsLocked(ActiveUids activeUids) {
+    void incrementProcStateSeqAndNotifyAppsLocked(com.android.server.am.ActiveUids activeUids) {
         if (mService.mWaitForNetworkTimeoutMs <= 0) {
             return;
         }
         // Used for identifying which uids need to block for network.
         ArrayList<Integer> blockingUids = null;
         for (int i = activeUids.size() - 1; i >= 0; --i) {
-            final UidRecord uidRec = activeUids.valueAt(i);
+            final com.android.server.am.UidRecord uidRec = activeUids.valueAt(i);
             // If the network is not restricted for uid, then nothing to do here.
             if (!mService.mInjector.isNetworkRestrictedForUid(uidRec.uid)) {
                 continue;
@@ -3824,12 +3827,12 @@ public final class ProcessList {
         }
 
         for (int i = mLruProcesses.size() - 1; i >= 0; --i) {
-            final ProcessRecord app = mLruProcesses.get(i);
+            final com.android.server.am.ProcessRecord app = mLruProcesses.get(i);
             if (!blockingUids.contains(app.uid)) {
                 continue;
             }
             if (!app.killedByAm && app.thread != null) {
-                final UidRecord uidRec = getUidRecordLocked(app.uid);
+                final com.android.server.am.UidRecord uidRec = getUidRecordLocked(app.uid);
                 try {
                     if (DEBUG_NETWORK) {
                         Slog.d(TAG_NETWORK, "Informing app thread that it needs to block: "
@@ -3903,7 +3906,7 @@ public final class ProcessList {
      * Called by ActivityManagerService when a process died.
      */
     @GuardedBy("mService")
-    void noteProcessDiedLocked(final ProcessRecord app) {
+    void noteProcessDiedLocked(final com.android.server.am.ProcessRecord app) {
         if (DEBUG_PROCESSES) {
             Slog.i(TAG, "note: " + app + " died, saving the exit info");
         }
@@ -3915,8 +3918,8 @@ public final class ProcessList {
     /**
      * Called by ActivityManagerService when it decides to kill an application process.
      */
-    void noteAppKill(final ProcessRecord app, final @Reason int reason,
-            final @SubReason int subReason, final String msg) {
+    void noteAppKill(final com.android.server.am.ProcessRecord app, final @Reason int reason,
+                     final @SubReason int subReason, final String msg) {
         if (DEBUG_PROCESSES) {
             Slog.i(TAG, "note: " + app + " is being killed, reason: " + reason
                     + ", sub-reason: " + subReason + ", message: " + msg);
@@ -3943,7 +3946,7 @@ public final class ProcessList {
         }
 
         synchronized (mService) {
-            ProcessRecord app;
+            com.android.server.am.ProcessRecord app;
             for (int i = 0; i < pids.length; i++) {
                 synchronized (mService.mPidsSelfLocked) {
                     app = mService.mPidsSelfLocked.get(pids[i]);
@@ -4021,7 +4024,7 @@ public final class ProcessList {
         }
 
         @GuardedBy("mService")
-        boolean enqueueLocked(ProcessRecord app, String reason, int requester) {
+        boolean enqueueLocked(com.android.server.am.ProcessRecord app, String reason, int requester) {
             // Throttle the killing request for potential bad app to avoid cpu thrashing
             Long last = app.isolated ? null : mLastProcessKillTimes.get(app.processName, app.uid);
             if (last != null && SystemClock.uptimeMillis() < last + MIN_CRASH_INTERVAL) {
@@ -4119,7 +4122,7 @@ public final class ProcessList {
         private boolean killProcessLocked(final int pid, final int uid, final long timestamp,
                 final String reason, final int requester, final DropBoxManager dbox,
                 final boolean logToDropbox) {
-            ProcessRecord app = null;
+            com.android.server.am.ProcessRecord app = null;
             synchronized (mService.mPidsSelfLocked) {
                 app = mService.mPidsSelfLocked.get(pid);
             }

@@ -201,6 +201,7 @@ import android.text.format.DateUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
+import android.util.EventLogTags;
 import android.util.MergedConfiguration;
 import android.util.Slog;
 import android.util.SparseArray;
@@ -439,13 +440,13 @@ public class WindowManagerService extends IWindowManager.Stub
     /** System UI can create more window context... */
     private static final int SYSTEM_UI_MULTIPLIER = 2;
 
-    final WindowManagerConstants mConstants;
+    final com.android.server.wm.WindowManagerConstants mConstants;
 
-    final WindowTracing mWindowTracing;
+    final com.android.server.wm.WindowTracing mWindowTracing;
 
-    final DisplayAreaPolicy.Provider mDisplayAreaPolicyProvider;
+    final com.android.server.wm.DisplayAreaPolicy.Provider mDisplayAreaPolicyProvider;
 
-    final private KeyguardDisableHandler mKeyguardDisableHandler;
+    final private com.android.server.wm.KeyguardDisableHandler mKeyguardDisableHandler;
     // TODO: eventually unify all keyguard state in a common place instead of having it spread over
     // AM's KeyguardController and the policy's KeyguardServiceDelegate.
     boolean mKeyguardGoingAway;
@@ -473,7 +474,7 @@ public class WindowManagerService extends IWindowManager.Stub
             synchronized (mGlobalLock) {
                 mVrModeEnabled = enabled;
                 final PooledConsumer c = PooledLambda.obtainConsumer(
-                        DisplayPolicy::onVrStateChangedLw, PooledLambda.__(), enabled);
+                        com.android.server.wm.DisplayPolicy::onVrStateChangedLw, PooledLambda.__(), enabled);
                 mRoot.forAllDisplayPolicies(c);
                 c.recycle();
             }
@@ -490,7 +491,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
         }
     };
-    final WindowSurfacePlacer mWindowPlacerLocked;
+    final com.android.server.wm.WindowSurfacePlacer mWindowPlacerLocked;
 
     private final PriorityDump.PriorityDumper mPriorityDumper = new PriorityDump.PriorityDumper() {
         @Override
@@ -546,12 +547,12 @@ public class WindowManagerService extends IWindowManager.Stub
     // TODO: Probably not needed once activities are fully in WM.
     final IActivityTaskManager mActivityTaskManager;
     final ActivityManagerInternal mAmInternal;
-    final ActivityTaskManagerInternal mAtmInternal;
+    final com.android.server.wm.ActivityTaskManagerInternal mAtmInternal;
 
     final AppOpsManager mAppOps;
     final PackageManagerInternal mPmInternal;
 
-    final DisplayWindowSettings mDisplayWindowSettings;
+    final com.android.server.wm.DisplayWindowSettings mDisplayWindowSettings;
 
     /** If the system should display notifications for apps displaying an alert window. */
     boolean mShowAlertWindowNotifications = true;
@@ -568,13 +569,13 @@ public class WindowManagerService extends IWindowManager.Stub
     final HashMap<IBinder, WindowState> mInputToWindowMap = new HashMap<>();
 
     /** Global service lock used by the package the owns this service. */
-    final WindowManagerGlobalLock mGlobalLock;
+    final com.android.server.wm.WindowManagerGlobalLock mGlobalLock;
 
     /**
      * List of app window tokens that are waiting for replacing windows. If the
      * replacement doesn't come in time the stale windows needs to be disposed of.
      */
-    final ArrayList<ActivityRecord> mWindowReplacementTimeouts = new ArrayList<>();
+    final ArrayList<com.android.server.wm.ActivityRecord> mWindowReplacementTimeouts = new ArrayList<>();
 
     /**
      * Windows that are being resized.  Used so we can tell the client about
@@ -619,17 +620,17 @@ public class WindowManagerService extends IWindowManager.Stub
      * The callbacks to make when the windows all have been drawn for a given
      * {@link WindowContainer}.
      */
-    final HashMap<WindowContainer, Runnable> mWaitingForDrawnCallbacks = new HashMap<>();
+    final HashMap<com.android.server.wm.WindowContainer, Runnable> mWaitingForDrawnCallbacks = new HashMap<>();
 
     /** List of window currently causing non-system overlay windows to be hidden. */
     private ArrayList<WindowState> mHidingNonSystemOverlayWindows = new ArrayList<>();
 
     AccessibilityController mAccessibilityController;
-    private RecentsAnimationController mRecentsAnimationController;
+    private com.android.server.wm.RecentsAnimationController mRecentsAnimationController;
 
-    Watermark mWatermark;
-    StrictModeFlash mStrictModeFlash;
-    EmulatorDisplayOverlay mEmulatorDisplayOverlay;
+    com.android.server.wm.Watermark mWatermark;
+    com.android.server.wm.StrictModeFlash mStrictModeFlash;
+    com.android.server.wm.EmulatorDisplayOverlay mEmulatorDisplayOverlay;
 
     final float[] mTmpFloats = new float[9];
     final Rect mTmpRect = new Rect();
@@ -657,7 +658,8 @@ public class WindowManagerService extends IWindowManager.Stub
     String mLastANRState;
 
     // The root of the device window hierarchy.
-    RootWindowContainer mRoot;
+    // 设备窗口结构的根
+    com.android.server.wm.RootWindowContainer mRoot;
 
     // Whether the system should use BLAST for ViewRootImpl
     final boolean mUseBLAST;
@@ -691,14 +693,14 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     ArrayList<RotationWatcher> mRotationWatchers = new ArrayList<>();
-    final WallpaperVisibilityListeners mWallpaperVisibilityListeners =
-            new WallpaperVisibilityListeners();
+    final com.android.server.wm.WallpaperVisibilityListeners mWallpaperVisibilityListeners =
+            new com.android.server.wm.WallpaperVisibilityListeners();
 
     IDisplayWindowRotationController mDisplayRotationController = null;
     private final DeathRecipient mDisplayRotationControllerDeath =
             () -> mDisplayRotationController = null;
 
-    final DisplayWindowListenerController mDisplayNotificationController;
+    final com.android.server.wm.DisplayWindowListenerController mDisplayNotificationController;
 
     boolean mDisplayFrozen = false;
     long mDisplayFreezeTime = 0;
@@ -725,7 +727,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // changes the orientation.
     private final PowerManager.WakeLock mScreenFrozenLock;
 
-    final TaskSnapshotController mTaskSnapshotController;
+    final com.android.server.wm.TaskSnapshotController mTaskSnapshotController;
 
     boolean mIsTouchDevice;
 
@@ -739,9 +741,9 @@ public class WindowManagerService extends IWindowManager.Stub
     final Handler mAnimationHandler = new Handler(AnimationThread.getHandler().getLooper());
 
     boolean mHardKeyboardAvailable;
-    WindowManagerInternal.OnHardKeyboardStatusChangeListener mHardKeyboardStatusChangeListener;
+    com.android.server.wm.WindowManagerInternal.OnHardKeyboardStatusChangeListener mHardKeyboardStatusChangeListener;
     SettingsObserver mSettingsObserver;
-    final EmbeddedWindowController mEmbeddedWindowController;
+    final com.android.server.wm.EmbeddedWindowController mEmbeddedWindowController;
 
     @VisibleForTesting
     final class SettingsObserver extends ContentObserver {
@@ -860,8 +862,8 @@ public class WindowManagerService extends IWindowManager.Stub
         void updateSystemUiSettings() {
             boolean changed;
             synchronized (mGlobalLock) {
-                changed = ImmersiveModeConfirmation.loadSetting(mCurrentUserId, mContext)
-                        || PolicyControl.reloadFromSetting(mContext);
+                changed = com.android.server.wm.ImmersiveModeConfirmation.loadSetting(mCurrentUserId, mContext)
+                        || com.android.server.wm.PolicyControl.reloadFromSetting(mContext);
             }
             if (changed) {
                 updateRotation(false /* alwaysSendConfiguration */, false /* forceRelayout */);
@@ -879,7 +881,7 @@ public class WindowManagerService extends IWindowManager.Stub
             mPointerLocationEnabled = enablePointerLocation;
             synchronized (mGlobalLock) {
                 final PooledConsumer c = PooledLambda.obtainConsumer(
-                        DisplayPolicy::setPointerLocationEnabled, PooledLambda.__(),
+                        com.android.server.wm.DisplayPolicy::setPointerLocationEnabled, PooledLambda.__(),
                         mPointerLocationEnabled);
                 mRoot.forAllDisplayPolicies(c);
                 c.recycle();
@@ -945,7 +947,7 @@ public class WindowManagerService extends IWindowManager.Stub
     final InputManagerService mInputManager;
     final DisplayManagerInternal mDisplayManagerInternal;
     final DisplayManager mDisplayManager;
-    final ActivityTaskManagerService mAtmService;
+    final com.android.server.wm.ActivityTaskManagerService mAtmService;
 
     /** Indicates whether this device supports wide color gamut / HDR rendering */
     private boolean mHasWideColorGamutSupport;
@@ -958,8 +960,8 @@ public class WindowManagerService extends IWindowManager.Stub
     /** Whether or not a layout can cause a wake up when theater mode is enabled. */
     boolean mAllowTheaterModeWakeFromLayout;
 
-    final TaskPositioningController mTaskPositioningController;
-    final DragDropController mDragDropController;
+    final com.android.server.wm.TaskPositioningController mTaskPositioningController;
+    final com.android.server.wm.DragDropController mDragDropController;
 
     /** For frozen screen animations. */
     private int mExitAnimId, mEnterAnimId;
@@ -971,14 +973,14 @@ public class WindowManagerService extends IWindowManager.Stub
      * is a long initialized to Long.MIN_VALUE so that it doesn't match this value on startup. */
     int mTransactionSequence;
 
-    final WindowAnimator mAnimator;
-    SurfaceAnimationRunner mSurfaceAnimationRunner;
+    final com.android.server.wm.WindowAnimator mAnimator;
+    com.android.server.wm.SurfaceAnimationRunner mSurfaceAnimationRunner;
 
     /**
      * Keeps track of which animations got transferred to which animators. Entries will get cleaned
      * up when the animation finishes.
      */
-    final ArrayMap<AnimationAdapter, SurfaceAnimator> mAnimationTransferMap = new ArrayMap<>();
+    final ArrayMap<com.android.server.wm.AnimationAdapter, com.android.server.wm.SurfaceAnimator> mAnimationTransferMap = new ArrayMap<>();
 
     private WindowContentFrameStats mTempWindowRenderStats;
 
@@ -990,7 +992,7 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     private boolean mInTouchMode;
 
-    private ViewServer mViewServer;
+    private com.android.server.wm.ViewServer mViewServer;
     final ArrayList<WindowChangeListener> mWindowChangeListeners = new ArrayList<>();
     boolean mWindowsChanged = false;
 
@@ -1001,15 +1003,15 @@ public class WindowManagerService extends IWindowManager.Stub
 
     final Configuration mTempConfiguration = new Configuration();
 
-    final HighRefreshRateBlacklist mHighRefreshRateBlacklist;
+    final com.android.server.wm.HighRefreshRateBlacklist mHighRefreshRateBlacklist;
 
     // If true, only the core apps and services are being launched because the device
     // is in a special boot mode, such as being encrypted or waiting for a decryption password.
     // For example, when this flag is true, there will be no wallpaper service.
     final boolean mOnlyCore;
 
-    static WindowManagerThreadPriorityBooster sThreadPriorityBooster =
-            new WindowManagerThreadPriorityBooster();
+    static com.android.server.wm.WindowManagerThreadPriorityBooster sThreadPriorityBooster =
+            new com.android.server.wm.WindowManagerThreadPriorityBooster();
 
     Function<SurfaceSession, SurfaceControl.Builder> mSurfaceControlFactory;
     Supplier<SurfaceControl.Transaction> mTransactionFactory;
@@ -1049,8 +1051,8 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     /** Listener to notify activity manager about app transitions. */
-    final WindowManagerInternal.AppTransitionListener mActivityManagerAppTransitionNotifier
-            = new WindowManagerInternal.AppTransitionListener() {
+    final com.android.server.wm.WindowManagerInternal.AppTransitionListener mActivityManagerAppTransitionNotifier
+            = new com.android.server.wm.WindowManagerInternal.AppTransitionListener() {
 
         @Override
         public void onAppTransitionCancelledLocked(int transit) {
@@ -1058,7 +1060,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         @Override
         public void onAppTransitionFinishedLocked(IBinder token) {
-            final ActivityRecord atoken = mRoot.getActivityRecord(token);
+            final com.android.server.wm.ActivityRecord atoken = mRoot.getActivityRecord(token);
             if (atoken == null) {
                 return;
             }
@@ -1102,7 +1104,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     public static WindowManagerService main(final Context context, final InputManagerService im,
             final boolean showBootMsgs, final boolean onlyCore, WindowManagerPolicy policy,
-            ActivityTaskManagerService atm) {
+            com.android.server.wm.ActivityTaskManagerService atm) {
         return main(context, im, showBootMsgs, onlyCore, policy, atm,
                 SurfaceControl.Transaction::new, Surface::new, SurfaceControl.Builder::new);
     }
@@ -1113,10 +1115,10 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     @VisibleForTesting
     public static WindowManagerService main(final Context context, final InputManagerService im,
-            final boolean showBootMsgs, final boolean onlyCore, WindowManagerPolicy policy,
-            ActivityTaskManagerService atm, Supplier<SurfaceControl.Transaction> transactionFactory,
-            Supplier<Surface> surfaceFactory,
-            Function<SurfaceSession, SurfaceControl.Builder> surfaceControlFactory) {
+                                            final boolean showBootMsgs, final boolean onlyCore, WindowManagerPolicy policy,
+                                            com.android.server.wm.ActivityTaskManagerService atm, Supplier<SurfaceControl.Transaction> transactionFactory,
+                                            Supplier<Surface> surfaceFactory,
+                                            Function<SurfaceSession, SurfaceControl.Builder> surfaceControlFactory) {
         DisplayThread.getHandler().runWithScissors(() ->
                 sInstance = new WindowManagerService(context, im, showBootMsgs, onlyCore, policy,
                         atm, transactionFactory, surfaceFactory, surfaceControlFactory), 0);
@@ -1136,14 +1138,14 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void onShellCommand(FileDescriptor in, FileDescriptor out, FileDescriptor err,
             String[] args, ShellCallback callback, ResultReceiver result) {
-        new WindowManagerShellCommand(this).exec(this, in, out, err, args, callback, result);
+        new com.android.server.wm.WindowManagerShellCommand(this).exec(this, in, out, err, args, callback, result);
     }
 
     private WindowManagerService(Context context, InputManagerService inputManager,
-            boolean showBootMsgs, boolean onlyCore, WindowManagerPolicy policy,
-            ActivityTaskManagerService atm, Supplier<SurfaceControl.Transaction> transactionFactory,
-            Supplier<Surface> surfaceFactory,
-            Function<SurfaceSession, SurfaceControl.Builder> surfaceControlFactory) {
+                                 boolean showBootMsgs, boolean onlyCore, WindowManagerPolicy policy,
+                                 com.android.server.wm.ActivityTaskManagerService atm, Supplier<SurfaceControl.Transaction> transactionFactory,
+                                 Supplier<Surface> surfaceFactory,
+                                 Function<SurfaceSession, SurfaceControl.Builder> surfaceControlFactory) {
         installLock(this, INDEX_WINDOW);
         mGlobalLock = atm.getGlobalLock();
         mAtmService = atm;
@@ -1178,26 +1180,26 @@ public class WindowManagerService extends IWindowManager.Stub
         mSurfaceFactory = surfaceFactory;
         mTransaction = mTransactionFactory.get();
 
-        mDisplayWindowSettings = new DisplayWindowSettings(this);
+        mDisplayWindowSettings = new com.android.server.wm.DisplayWindowSettings(this);
         mPolicy = policy;
-        mAnimator = new WindowAnimator(this);
-        mRoot = new RootWindowContainer(this);
+        mAnimator = new com.android.server.wm.WindowAnimator(this);
+        mRoot = new com.android.server.wm.RootWindowContainer(this);
 
         mUseBLAST = DeviceConfig.getBoolean(
                     DeviceConfig.NAMESPACE_WINDOW_MANAGER_NATIVE_BOOT,
                     WM_USE_BLAST_ADAPTER_FLAG, false);
 
-        mWindowPlacerLocked = new WindowSurfacePlacer(this);
-        mTaskSnapshotController = new TaskSnapshotController(this);
+        mWindowPlacerLocked = new com.android.server.wm.WindowSurfacePlacer(this);
+        mTaskSnapshotController = new com.android.server.wm.TaskSnapshotController(this);
 
-        mWindowTracing = WindowTracing.createDefaultAndStartLooper(this,
+        mWindowTracing = com.android.server.wm.WindowTracing.createDefaultAndStartLooper(this,
                 Choreographer.getInstance());
 
         LocalServices.addService(WindowManagerPolicy.class, mPolicy);
 
         mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);
 
-        mKeyguardDisableHandler = KeyguardDisableHandler.create(mContext, mPolicy, mH);
+        mKeyguardDisableHandler = com.android.server.wm.KeyguardDisableHandler.create(mContext, mPolicy, mH);
 
         mPowerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         mPowerManagerInternal = LocalServices.getService(PowerManagerInternal.class);
@@ -1228,12 +1230,12 @@ public class WindowManagerService extends IWindowManager.Stub
                 PowerManager.PARTIAL_WAKE_LOCK, "SCREEN_FROZEN");
         mScreenFrozenLock.setReferenceCounted(false);
 
-        mDisplayNotificationController = new DisplayWindowListenerController(this);
+        mDisplayNotificationController = new com.android.server.wm.DisplayWindowListenerController(this);
 
         mActivityManager = ActivityManager.getService();
         mActivityTaskManager = ActivityTaskManager.getService();
         mAmInternal = LocalServices.getService(ActivityManagerInternal.class);
-        mAtmInternal = LocalServices.getService(ActivityTaskManagerInternal.class);
+        mAtmInternal = LocalServices.getService(com.android.server.wm.ActivityTaskManagerInternal.class);
         mAppOps = (AppOpsManager)context.getSystemService(Context.APP_OPS_SERVICE);
         AppOpsManager.OnOpChangedInternalListener opListener =
                 new AppOpsManager.OnOpChangedInternalListener() {
@@ -1288,25 +1290,25 @@ public class WindowManagerService extends IWindowManager.Stub
                 PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, TAG_WM);
         mHoldingScreenWakeLock.setReferenceCounted(false);
 
-        mSurfaceAnimationRunner = new SurfaceAnimationRunner(mTransactionFactory,
+        mSurfaceAnimationRunner = new com.android.server.wm.SurfaceAnimationRunner(mTransactionFactory,
                 mPowerManagerInternal);
 
         mAllowTheaterModeWakeFromLayout = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_allowTheaterModeWakeFromWindowLayout);
 
-        mTaskPositioningController = new TaskPositioningController(
+        mTaskPositioningController = new com.android.server.wm.TaskPositioningController(
                 this, mInputManager, mActivityTaskManager, mH.getLooper());
-        mDragDropController = new DragDropController(this, mH.getLooper());
+        mDragDropController = new com.android.server.wm.DragDropController(this, mH.getLooper());
 
-        mHighRefreshRateBlacklist = HighRefreshRateBlacklist.create(context.getResources());
+        mHighRefreshRateBlacklist = com.android.server.wm.HighRefreshRateBlacklist.create(context.getResources());
 
-        mConstants = new WindowManagerConstants(this, DeviceConfigInterface.REAL);
+        mConstants = new com.android.server.wm.WindowManagerConstants(this, DeviceConfigInterface.REAL);
         mConstants.start(new HandlerExecutor(mH));
 
-        LocalServices.addService(WindowManagerInternal.class, new LocalService());
-        mEmbeddedWindowController = new EmbeddedWindowController(mAtmService);
+        LocalServices.addService(com.android.server.wm.WindowManagerInternal.class, new LocalService());
+        mEmbeddedWindowController = new com.android.server.wm.EmbeddedWindowController(mAtmService);
 
-        mDisplayAreaPolicyProvider = DisplayAreaPolicy.Provider.fromResources(
+        mDisplayAreaPolicyProvider = com.android.server.wm.DisplayAreaPolicy.Provider.fromResources(
                 mContext.getResources());
 
         setGlobalShadowSettings();
@@ -1339,7 +1341,7 @@ public class WindowManagerService extends IWindowManager.Stub
         showEmulatorDisplayOverlayIfNeeded();
     }
 
-    public InputManagerCallback getInputManagerCallback() {
+    public com.android.server.wm.InputManagerCallback getInputManagerCallback() {
         return mInputManagerCallback;
     }
 
@@ -1397,7 +1399,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 throw new IllegalStateException("Display has not been initialialized");
             }
 
-            final DisplayContent displayContent = getDisplayContentOrCreate(displayId, attrs.token);
+            final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, attrs.token);
 
             if (displayContent == null) {
                 ProtoLog.w(WM_ERROR, "Attempted to add window to a display that does "
@@ -1459,11 +1461,11 @@ public class WindowManagerService extends IWindowManager.Stub
                 userId = requestUserId;
             }
 
-            ActivityRecord activity = null;
+            com.android.server.wm.ActivityRecord activity = null;
             final boolean hasParent = parentWindow != null;
             // Use existing parent window token for child windows since they go in the same token
             // as there parent window so we can apply the same policy on them.
-            WindowToken token = displayContent.getWindowToken(
+            com.android.server.wm.WindowToken token = displayContent.getWindowToken(
                     hasParent ? parentWindow.mAttrs.token : attrs.token);
             // If this is a child window, we want to apply the same type checking rules as the
             // parent window type.
@@ -1477,7 +1479,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
                 }
                 final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
-                token = new WindowToken(this, binder, type, false, displayContent,
+                token = new com.android.server.wm.WindowToken(this, binder, type, false, displayContent,
                         session.mCanAddInternalSystemWindow, isRoundedCornerOverlay);
             } else if (rootType >= FIRST_APPLICATION_WINDOW
                     && rootType <= LAST_APPLICATION_WINDOW) {
@@ -1542,7 +1544,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 // It is not valid to use an app token with other system types; we will
                 // instead make a new token for it (as if null had been passed in for the token).
                 attrs.token = null;
-                token = new WindowToken(this, client.asBinder(), type, false, displayContent,
+                token = new com.android.server.wm.WindowToken(this, client.asBinder(), type, false, displayContent,
                         session.mCanAddInternalSystemWindow);
             }
 
@@ -1562,7 +1564,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return WindowManagerGlobal.ADD_INVALID_DISPLAY;
             }
 
-            final DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
+            final com.android.server.wm.DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
             displayPolicy.adjustWindowParamsLw(win, win.mAttrs, callingPid, callingUid);
 
             res = displayPolicy.validateAddingWindowLw(attrs, callingPid, callingUid);
@@ -1636,7 +1638,7 @@ public class WindowManagerService extends IWindowManager.Stub
             final boolean hideSystemAlertWindows = !mHidingNonSystemOverlayWindows.isEmpty();
             win.setForceHideNonSystemOverlayWindowIfNeeded(hideSystemAlertWindows);
 
-            final ActivityRecord tokenActivity = token.asActivityRecord();
+            final com.android.server.wm.ActivityRecord tokenActivity = token.asActivityRecord();
             if (type == TYPE_APPLICATION_STARTING && tokenActivity != null) {
                 tokenActivity.startingWindow = win;
                 ProtoLog.v(WM_DEBUG_STARTING_WINDOW, "addWindow: %s startingWindow=%s",
@@ -1669,7 +1671,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
 
-            final WindowStateAnimator winAnimator = win.mWinAnimator;
+            final com.android.server.wm.WindowStateAnimator winAnimator = win.mWinAnimator;
             winAnimator.mEnterAnimationPending = true;
             winAnimator.mEnteringAnimation = true;
             // Check if we need to prepare a transition for replacing window first.
@@ -1793,9 +1795,9 @@ public class WindowManagerService extends IWindowManager.Stub
      *              is there isn't an a token associated with the request.
      * @see RootWindowContainer#getDisplayContent(int)
      */
-    private DisplayContent getDisplayContentOrCreate(int displayId, IBinder token) {
+    private com.android.server.wm.DisplayContent getDisplayContentOrCreate(int displayId, IBinder token) {
         if (token != null) {
-            final WindowToken wToken = mRoot.getWindowToken(token);
+            final com.android.server.wm.WindowToken wToken = mRoot.getWindowToken(token);
             if (wToken != null) {
                 return wToken.getDisplayContent();
             }
@@ -1833,7 +1835,7 @@ public class WindowManagerService extends IWindowManager.Stub
     /**
      * Returns true if we're done setting up any transitions.
      */
-    private boolean prepareWindowReplacementTransition(ActivityRecord activity) {
+    private boolean prepareWindowReplacementTransition(com.android.server.wm.ActivityRecord activity) {
         activity.clearAllDrawn();
         final WindowState replacedWindow = activity.getReplacingWindow();
         if (replacedWindow == null) {
@@ -1846,7 +1848,7 @@ public class WindowManagerService extends IWindowManager.Stub
         Rect frame = replacedWindow.getVisibleFrameLw();
         // We treat this as if this activity was opening, so we can trigger the app transition
         // animation and piggy-back on existing transition animation infrastructure.
-        final DisplayContent dc = activity.getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = activity.getDisplayContent();
         dc.mOpeningApps.add(activity);
         dc.prepareAppTransition(WindowManager.TRANSIT_ACTIVITY_RELAUNCH, ALWAYS_KEEP_CURRENT,
                 0 /* flags */, false /* forceOverride */);
@@ -1856,12 +1858,12 @@ public class WindowManagerService extends IWindowManager.Stub
         return true;
     }
 
-    private void prepareNoneTransitionForRelaunching(ActivityRecord activity) {
+    private void prepareNoneTransitionForRelaunching(com.android.server.wm.ActivityRecord activity) {
         // Set up a none-transition and add the app to opening apps, so that the display
         // unfreeze wait for the apps to be drawn.
         // Note that if the display unfroze already because app unfreeze timed out,
         // we don't set up the transition anymore and just let it go.
-        final DisplayContent dc = activity.getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = activity.getDisplayContent();
         if (mDisplayFrozen && !dc.mOpeningApps.contains(activity) && activity.isRelaunching()) {
             dc.mOpeningApps.add(activity);
             dc.prepareAppTransition(WindowManager.TRANSIT_NONE, !ALWAYS_KEEP_CURRENT, 0 /* flags */,
@@ -1911,7 +1913,7 @@ public class WindowManagerService extends IWindowManager.Stub
         ProtoLog.v(WM_DEBUG_ADD_REMOVE, "postWindowRemoveCleanupLocked: %s", win);
         mWindowMap.remove(win.mClient.asBinder());
 
-        final DisplayContent dc = win.getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = win.getDisplayContent();
         dc.getDisplayRotation().markForSeamlessRotation(win, false /* seamlesslyRotated */);
 
         win.resetAppOpsState();
@@ -1926,13 +1928,13 @@ public class WindowManagerService extends IWindowManager.Stub
         mWindowsChanged = true;
         ProtoLog.v(WM_DEBUG_WINDOW_MOVEMENT, "Final remove of window: %s", win);
 
-        final DisplayContent displayContent = win.getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = win.getDisplayContent();
         if (displayContent.mInputMethodWindow == win) {
             displayContent.setInputMethodWindowLocked(null);
         }
 
-        final WindowToken token = win.mToken;
-        final ActivityRecord activity = win.mActivityRecord;
+        final com.android.server.wm.WindowToken token = win.mToken;
+        final com.android.server.wm.ActivityRecord activity = win.mActivityRecord;
         ProtoLog.v(WM_DEBUG_ADD_REMOVE, "Removing %s from %s", win, token);
         // Window will already be removed from token before this post clean-up method is called.
         if (token.isEmpty()) {
@@ -1943,7 +1945,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 // re-factor.
                 activity.firstWindowDrawn = false;
                 activity.clearAllDrawn();
-                final ActivityStack stack = activity.getStack();
+                final com.android.server.wm.ActivityStack stack = activity.getStack();
                 if (stack != null) {
                     stack.mExitingActivities.remove(activity);
                 }
@@ -2123,17 +2125,17 @@ public class WindowManagerService extends IWindowManager.Stub
             if (win == null) {
                 return 0;
             }
-            final DisplayContent displayContent = win.getDisplayContent();
-            final DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
+            final com.android.server.wm.DisplayContent displayContent = win.getDisplayContent();
+            final com.android.server.wm.DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
 
-            WindowStateAnimator winAnimator = win.mWinAnimator;
+            com.android.server.wm.WindowStateAnimator winAnimator = win.mWinAnimator;
             if (viewVisibility != View.GONE) {
                 win.setRequestedSize(requestedWidth, requestedHeight);
             }
 
             win.setFrameNumber(frameNumber);
 
-            final DisplayContent dc = win.getDisplayContent();
+            final com.android.server.wm.DisplayContent dc = win.getDisplayContent();
             if (!dc.mWaitingForConfig) {
                 win.finishSeamlessRotation(false /* timeout */);
             }
@@ -2468,7 +2470,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    private boolean tryStartExitingAnimation(WindowState win, WindowStateAnimator winAnimator,
+    private boolean tryStartExitingAnimation(WindowState win, com.android.server.wm.WindowStateAnimator winAnimator,
             boolean focusMayChange) {
         // Try starting an animation; if there isn't one, we
         // can destroy the surface right away.
@@ -2513,12 +2515,12 @@ public class WindowManagerService extends IWindowManager.Stub
 
     private int createSurfaceControl(SurfaceControl outSurfaceControl,
             SurfaceControl outBLASTSurfaceControl, int result,
-            WindowState win, WindowStateAnimator winAnimator) {
+            WindowState win, com.android.server.wm.WindowStateAnimator winAnimator) {
         if (!win.mHasSurface) {
             result |= RELAYOUT_RES_SURFACE_CHANGED;
         }
 
-        WindowSurfaceController surfaceController;
+        com.android.server.wm.WindowSurfaceController surfaceController;
         try {
             Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "createSurfaceControl");
             surfaceController = winAnimator.createSurfaceLocked(win.mAttrs.type, win.mOwnerUid);
@@ -2652,14 +2654,14 @@ public class WindowManagerService extends IWindowManager.Stub
                     }
                 }
 
-                final DisplayContent dc = getDisplayContentOrCreate(displayId, null /* token */);
+                final com.android.server.wm.DisplayContent dc = getDisplayContentOrCreate(displayId, null /* token */);
                 if (dc == null) {
                     ProtoLog.w(WM_ERROR, "addWindowToken: Attempted to add token: %s"
                             + " for non-exiting displayId=%d", binder, displayId);
                     return WindowManagerGlobal.ADD_INVALID_DISPLAY;
                 }
 
-                WindowToken token = dc.getWindowToken(binder);
+                com.android.server.wm.WindowToken token = dc.getWindowToken(binder);
                 if (token != null) {
                     ProtoLog.w(WM_ERROR, "addWindowToken: Attempted to add binder token: %s"
                             + " for already created window token: %s"
@@ -2668,9 +2670,9 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 // TODO(window-container): Clean up dead tokens
                 if (type == TYPE_WALLPAPER) {
-                    new WallpaperWindowToken(this, binder, true, dc, callerCanManageAppTokens);
+                    new com.android.server.wm.WallpaperWindowToken(this, binder, true, dc, callerCanManageAppTokens);
                 } else {
-                    new WindowToken(this, binder, type, true, dc, callerCanManageAppTokens,
+                    new com.android.server.wm.WindowToken(this, binder, type, true, dc, callerCanManageAppTokens,
                             callingUid, false /* roundedCornerOverlay */, fromClientToken);
                 }
             }
@@ -2683,7 +2685,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean isWindowToken(IBinder binder) {
         synchronized (mGlobalLock) {
-            final WindowToken windowToken = mRoot.getWindowToken(binder);
+            final com.android.server.wm.WindowToken windowToken = mRoot.getWindowToken(binder);
             if (windowToken == null) {
                 return false;
             }
@@ -2696,7 +2698,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public void removeWindowToken(IBinder binder, int displayId) {
         final boolean callerCanManageAppTokens =
                 checkCallingPermission(MANAGE_APP_TOKENS, "removeWindowToken()");
-        final WindowToken windowToken;
+        final com.android.server.wm.WindowToken windowToken;
         synchronized (mGlobalLock) {
             windowToken = mRoot.getWindowToken(binder);
         }
@@ -2718,7 +2720,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     ProtoLog.w(WM_ERROR, "removeWindowToken: Attempted to remove token: %s"
                             + " for non-exiting displayId=%d", binder, displayId);
@@ -2734,7 +2736,7 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     void setNewDisplayOverrideConfiguration(Configuration overrideConfig,
-            @NonNull DisplayContent dc) {
+            @NonNull com.android.server.wm.DisplayContent dc) {
         if (dc.mWaitingForConfig) {
             dc.mWaitingForConfig = false;
             mLastFinishedFreezeSource = "new-config";
@@ -2759,7 +2761,7 @@ public class WindowManagerService extends IWindowManager.Stub
             IAppTransitionAnimationSpecsFuture specsFuture, IRemoteCallback callback,
             boolean scaleUp, int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 Slog.w(TAG, "Attempted to call overridePendingAppTransitionMultiThumbFuture"
                         + " for the display " + displayId + " that does not exist.");
@@ -2779,7 +2781,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     "Requires CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS permission");
         }
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 Slog.w(TAG, "Attempted to call overridePendingAppTransitionRemote"
                         + " for the display " + displayId + " that does not exist.");
@@ -2806,26 +2808,26 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     void initializeRecentsAnimation(int targetActivityType,
-            IRecentsAnimationRunner recentsAnimationRunner,
-            RecentsAnimationController.RecentsAnimationCallbacks callbacks, int displayId,
-            SparseBooleanArray recentTaskIds, ActivityRecord targetActivity) {
-        mRecentsAnimationController = new RecentsAnimationController(this, recentsAnimationRunner,
+                                    IRecentsAnimationRunner recentsAnimationRunner,
+                                    com.android.server.wm.RecentsAnimationController.RecentsAnimationCallbacks callbacks, int displayId,
+                                    SparseBooleanArray recentTaskIds, com.android.server.wm.ActivityRecord targetActivity) {
+        mRecentsAnimationController = new com.android.server.wm.RecentsAnimationController(this, recentsAnimationRunner,
                 callbacks, displayId);
         mRoot.getDisplayContent(displayId).mAppTransition.updateBooster();
         mRecentsAnimationController.initialize(targetActivityType, recentTaskIds, targetActivity);
     }
 
     @VisibleForTesting
-    void setRecentsAnimationController(RecentsAnimationController controller) {
+    void setRecentsAnimationController(com.android.server.wm.RecentsAnimationController controller) {
         mRecentsAnimationController = controller;
     }
 
-    RecentsAnimationController getRecentsAnimationController() {
+    com.android.server.wm.RecentsAnimationController getRecentsAnimationController() {
         return mRecentsAnimationController;
     }
 
     void cancelRecentsAnimation(
-            @RecentsAnimationController.ReorderMode int reorderMode, String reason) {
+            @com.android.server.wm.RecentsAnimationController.ReorderMode int reorderMode, String reason) {
         if (mRecentsAnimationController != null) {
             // This call will call through to cleanupAnimation() below after the animation is
             // canceled
@@ -2833,9 +2835,9 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void cleanupRecentsAnimation(@RecentsAnimationController.ReorderMode int reorderMode) {
+    void cleanupRecentsAnimation(@com.android.server.wm.RecentsAnimationController.ReorderMode int reorderMode) {
         if (mRecentsAnimationController != null) {
-            final RecentsAnimationController controller = mRecentsAnimationController;
+            final com.android.server.wm.RecentsAnimationController controller = mRecentsAnimationController;
             mRecentsAnimationController = null;
             controller.cleanupAnimation(reorderMode);
             // TODO(mult-display): currently only default display support recents animation.
@@ -2844,19 +2846,19 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     void setWindowOpaqueLocked(IBinder token, boolean isOpaque) {
-        final ActivityRecord wtoken = mRoot.getActivityRecord(token);
+        final com.android.server.wm.ActivityRecord wtoken = mRoot.getActivityRecord(token);
         if (wtoken != null) {
             wtoken.setMainWindowOpaque(isOpaque);
         }
     }
 
-    boolean isValidPictureInPictureAspectRatio(DisplayContent displayContent, float aspectRatio) {
+    boolean isValidPictureInPictureAspectRatio(com.android.server.wm.DisplayContent displayContent, float aspectRatio) {
         return displayContent.getPinnedStackController().isValidPictureInPictureAspectRatio(
                 aspectRatio);
     }
 
     void getStackBounds(int windowingMode, int activityType, Rect bounds) {
-        final ActivityStack stack = mRoot.getStack(windowingMode, activityType);
+        final com.android.server.wm.ActivityStack stack = mRoot.getStack(windowingMode, activityType);
         if (stack != null) {
             stack.getBounds(bounds);
             return;
@@ -2900,7 +2902,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void onPowerKeyDown(boolean isScreenOn) {
         final PooledConsumer c = PooledLambda.obtainConsumer(
-                DisplayPolicy::onPowerKeyDown, PooledLambda.__(), isScreenOn);
+                com.android.server.wm.DisplayPolicy::onPowerKeyDown, PooledLambda.__(), isScreenOn);
         mRoot.forAllDisplayPolicies(c);
         c.recycle();
     }
@@ -2910,16 +2912,16 @@ public class WindowManagerService extends IWindowManager.Stub
         mSettingsObserver.updateSystemUiSettings();
         synchronized (mGlobalLock) {
             // force a re-application of focused window sysui visibility on each display.
-            mRoot.forAllDisplayPolicies(DisplayPolicy::resetSystemUiVisibilityLw);
+            mRoot.forAllDisplayPolicies(com.android.server.wm.DisplayPolicy::resetSystemUiVisibilityLw);
         }
     }
 
     @Override
     public void moveDisplayToTop(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null && mRoot.getTopChild() != displayContent) {
-                displayContent.positionDisplayAt(WindowContainer.POSITION_TOP,
+                displayContent.positionDisplayAt(com.android.server.wm.WindowContainer.POSITION_TOP,
                         true /* includingParents */);
             }
         }
@@ -3210,7 +3212,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void registerPointerEventListener(PointerEventListener listener, int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null) {
                 displayContent.registerPointerEventListener(listener);
             }
@@ -3220,7 +3222,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void unregisterPointerEventListener(PointerEventListener listener, int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null) {
                 displayContent.unregisterPointerEventListener(listener);
             }
@@ -3315,7 +3317,7 @@ public class WindowManagerService extends IWindowManager.Stub
             mWindowPlacerLocked.performSurfacePlacement();
 
             // Notify whether the docked stack exists for the current user
-            final DisplayContent displayContent = getDefaultDisplayContentLocked();
+            final com.android.server.wm.DisplayContent displayContent = getDefaultDisplayContentLocked();
 
             mRoot.forAllDisplays(dc -> dc.mAppTransition.setCurrentUser(newUserId));
 
@@ -3556,7 +3558,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             if (SHOW_LIGHT_TRANSACTIONS) Slog.i(TAG_WM, ">>> showEmulatorDisplayOverlay");
             if (mEmulatorDisplayOverlay == null) {
-                mEmulatorDisplayOverlay = new EmulatorDisplayOverlay(mSurfaceFactory, mContext,
+                mEmulatorDisplayOverlay = new com.android.server.wm.EmulatorDisplayOverlay(mSurfaceFactory, mContext,
                         getDefaultDisplayContentLocked(),
                         mPolicy.getWindowLayerFromTypeLw(WindowManager.LayoutParams.TYPE_POINTER)
                                 * TYPE_LAYER_MULTIPLIER + 10, mTransaction);
@@ -3596,7 +3598,7 @@ public class WindowManagerService extends IWindowManager.Stub
             // b/31532461
             // TODO(multi-display): support multiple displays
             if (mStrictModeFlash == null) {
-                mStrictModeFlash = new StrictModeFlash(mSurfaceFactory,
+                mStrictModeFlash = new com.android.server.wm.StrictModeFlash(mSurfaceFactory,
                         getDefaultDisplayContentLocked(), mTransaction);
             }
             mStrictModeFlash.setVisibility(on, mTransaction);
@@ -3618,7 +3620,7 @@ public class WindowManagerService extends IWindowManager.Stub
             Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "screenshotWallpaper");
             synchronized (mGlobalLock) {
                 // TODO(b/115486823) Screenshot at secondary displays if needed.
-                final DisplayContent dc = mRoot.getDisplayContent(DEFAULT_DISPLAY);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(DEFAULT_DISPLAY);
                 return dc.mWallpaperController.screenshotWallpaperLocked();
             }
         } finally {
@@ -3639,7 +3641,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         final Bitmap bm;
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(DEFAULT_DISPLAY);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(DEFAULT_DISPLAY);
             if (displayContent == null) {
                 if (DEBUG_SCREENSHOT) {
                     Slog.i(TAG_WM, "Screenshot returning null. No Display for displayId="
@@ -3692,7 +3694,7 @@ public class WindowManagerService extends IWindowManager.Stub
             throw new SecurityException("Requires SET_ORIENTATION permission");
         }
         synchronized (mGlobalLock) {
-            final DisplayContent display = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
             if (display == null) {
                 Slog.w(TAG, "Trying to set rotate for app for a missing display.");
                 return;
@@ -3727,7 +3729,7 @@ public class WindowManagerService extends IWindowManager.Stub
         long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent display = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
                 if (display == null) {
                     Slog.w(TAG, "Trying to freeze rotation for a missing display.");
                     return;
@@ -3762,7 +3764,7 @@ public class WindowManagerService extends IWindowManager.Stub
         long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent display = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
                 if (display == null) {
                     Slog.w(TAG, "Trying to thaw rotation for a missing display.");
                     return;
@@ -3784,7 +3786,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean isDisplayRotationFrozen(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent display = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
             if (display == null) {
                 Slog.w(TAG, "Trying to thaw rotation for a missing display.");
                 return false;
@@ -3819,7 +3821,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 boolean layoutNeeded = false;
                 final int displayCount = mRoot.mChildren.size();
                 for (int i = 0; i < displayCount; ++i) {
-                    final DisplayContent displayContent = mRoot.mChildren.get(i);
+                    final com.android.server.wm.DisplayContent displayContent = mRoot.mChildren.get(i);
                     Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "updateRotation: display");
                     final boolean rotationChanged = displayContent.updateRotationUnchecked();
                     Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
@@ -3888,7 +3890,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     return null;
                 }
@@ -3908,11 +3910,11 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     return;
                 }
-                ShellRoot root = dc.mShellRoots.get(windowType);
+                com.android.server.wm.ShellRoot root = dc.mShellRoots.get(windowType);
                 if (root == null) {
                     return;
                 }
@@ -3933,7 +3935,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     return;
                 }
@@ -3953,7 +3955,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null || dc.mRemoteInsetsControlTarget == null) {
                     return;
                 }
@@ -3967,7 +3969,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     @Override
     public int watchRotation(IRotationWatcher watcher, int displayId) {
-        final DisplayContent displayContent;
+        final com.android.server.wm.DisplayContent displayContent;
         synchronized (mGlobalLock) {
             displayContent = mRoot.getDisplayContent(displayId);
         }
@@ -4029,7 +4031,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public boolean registerWallpaperVisibilityListener(IWallpaperVisibilityListener listener,
             int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 throw new IllegalArgumentException("Trying to register visibility event "
                         + "for invalid display: " + displayId);
@@ -4052,7 +4054,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public void registerSystemGestureExclusionListener(ISystemGestureExclusionListener listener,
             int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 throw new IllegalArgumentException("Trying to register visibility event "
                         + "for invalid display: " + displayId);
@@ -4065,7 +4067,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public void unregisterSystemGestureExclusionListener(ISystemGestureExclusionListener listener,
             int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 throw new IllegalArgumentException("Trying to register visibility event "
                         + "for invalid display: " + displayId);
@@ -4157,7 +4159,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public int getPreferredOptionsPanelGravity(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 return Gravity.CENTER | Gravity.BOTTOM;
             }
@@ -4201,7 +4203,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         try {
-            mViewServer = new ViewServer(this, port);
+            mViewServer = new com.android.server.wm.ViewServer(this, port);
             return mViewServer.start();
         } catch (IOException e) {
             ProtoLog.w(WM_ERROR, "View server did not start");
@@ -4520,14 +4522,14 @@ public class WindowManagerService extends IWindowManager.Stub
             return null;
         }
         final Configuration config = new Configuration();
-        final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
         displayContent.computeScreenConfiguration(config);
         return config;
     }
 
     void notifyHardKeyboardStatusChange() {
         final boolean available;
-        final WindowManagerInternal.OnHardKeyboardStatusChangeListener listener;
+        final com.android.server.wm.WindowManagerInternal.OnHardKeyboardStatusChangeListener listener;
         synchronized (mGlobalLock) {
             listener = mHardKeyboardStatusChangeListener;
             available = mHardKeyboardAvailable;
@@ -4541,7 +4543,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // Input Events and Focus Management
     // -------------------------------------------------------------
 
-    final InputManagerCallback mInputManagerCallback = new InputManagerCallback(this);
+    final com.android.server.wm.InputManagerCallback mInputManagerCallback = new com.android.server.wm.InputManagerCallback(this);
     private boolean mEventDispatchingEnabled;
 
     @Override
@@ -4569,14 +4571,14 @@ public class WindowManagerService extends IWindowManager.Stub
         return mRoot.getTopFocusedDisplayContent().mCurrentFocus;
     }
 
-    ActivityStack getImeFocusStackLocked() {
+    com.android.server.wm.ActivityStack getImeFocusStackLocked() {
         // Don't use mCurrentFocus.getStack() because it returns home stack for system windows.
         // Also don't use mInputMethodTarget's stack, because some window with FLAG_NOT_FOCUSABLE
         // and FLAG_ALT_FOCUSABLE_IM flags both set might be set to IME target so they're moved
         // to make room for IME, but the window is not the focused window that's taking input.
         // TODO (b/111080190): Consider the case of multiple IMEs on multi-display.
-        final DisplayContent topFocusedDisplay = mRoot.getTopFocusedDisplayContent();
-        final ActivityRecord focusedApp = topFocusedDisplay.mFocusedApp;
+        final com.android.server.wm.DisplayContent topFocusedDisplay = mRoot.getTopFocusedDisplayContent();
+        final com.android.server.wm.ActivityRecord focusedApp = topFocusedDisplay.mFocusedApp;
         return (focusedApp != null && focusedApp.getTask() != null)
                 ? focusedApp.getTask().getStack() : null;
     }
@@ -4637,7 +4639,7 @@ public class WindowManagerService extends IWindowManager.Stub
             mDisplayReady = true;
             // Reconfigure all displays to make sure that forced properties and
             // DisplayWindowSettings are applied.
-            mRoot.forAllDisplays(DisplayContent::reconfigureDisplayLocked);
+            mRoot.forAllDisplays(com.android.server.wm.DisplayContent::reconfigureDisplayLocked);
             mIsTouchDevice = mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_TOUCHSCREEN);
         }
@@ -4651,7 +4653,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public void systemReady() {
         mSystemReady = true;
         mPolicy.systemReady();
-        mRoot.forAllDisplayPolicies(DisplayPolicy::systemReady);
+        mRoot.forAllDisplayPolicies(com.android.server.wm.DisplayPolicy::systemReady);
         mTaskSnapshotController.systemReady();
         mHasWideColorGamutSupport = queryWideColorGamutSupport();
         mHasHdrSupport = queryHdrSupport();
@@ -4774,7 +4776,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             switch (msg.what) {
                 case REPORT_FOCUS_CHANGE: {
-                    final DisplayContent displayContent = (DisplayContent) msg.obj;
+                    final com.android.server.wm.DisplayContent displayContent = (com.android.server.wm.DisplayContent) msg.obj;
                     WindowState lastFocus;
                     WindowState newFocus;
 
@@ -4823,7 +4825,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
 
                 case REPORT_LOSING_FOCUS: {
-                    final DisplayContent displayContent = (DisplayContent) msg.obj;
+                    final com.android.server.wm.DisplayContent displayContent = (com.android.server.wm.DisplayContent) msg.obj;
                     ArrayList<WindowState> losers;
 
                     synchronized (mGlobalLock) {
@@ -4841,7 +4843,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
 
                 case WINDOW_FREEZE_TIMEOUT: {
-                    final DisplayContent displayContent = (DisplayContent) msg.obj;
+                    final com.android.server.wm.DisplayContent displayContent = (com.android.server.wm.DisplayContent) msg.obj;
                     synchronized (mGlobalLock) {
                         displayContent.onWindowFreezeTimeout();
                     }
@@ -4958,7 +4960,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
                 case WAITING_FOR_DRAWN_TIMEOUT: {
                     Runnable callback = null;
-                    final WindowContainer container = (WindowContainer) msg.obj;
+                    final com.android.server.wm.WindowContainer container = (com.android.server.wm.WindowContainer) msg.obj;
                     synchronized (mGlobalLock) {
                         ProtoLog.w(WM_ERROR, "Timeout waiting for drawn: undrawn=%s",
                                 container.mWaitingForDrawn);
@@ -4990,7 +4992,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 case ALL_WINDOWS_DRAWN: {
                     Runnable callback;
-                    final WindowContainer container = (WindowContainer) msg.obj;
+                    final com.android.server.wm.WindowContainer container = (com.android.server.wm.WindowContainer) msg.obj;
                     synchronized (mGlobalLock) {
                         callback = mWaitingForDrawnCallbacks.remove(container);
                     }
@@ -5046,8 +5048,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 case WALLPAPER_DRAW_PENDING_TIMEOUT: {
                     synchronized (mGlobalLock) {
-                        final WallpaperController wallpaperController =
-                                (WallpaperController) msg.obj;
+                        final com.android.server.wm.WallpaperController wallpaperController =
+                                (com.android.server.wm.WallpaperController) msg.obj;
                         if (wallpaperController != null
                                 && wallpaperController.processWallpaperDrawPendingTimeout()) {
                             mWindowPlacerLocked.performSurfacePlacement();
@@ -5057,7 +5059,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 case UPDATE_MULTI_WINDOW_STACKS: {
                     synchronized (mGlobalLock) {
-                        final DisplayContent displayContent = getDefaultDisplayContentLocked();
+                        final com.android.server.wm.DisplayContent displayContent = getDefaultDisplayContentLocked();
                         if (displayContent != null) {
                             displayContent.adjustForImeIfNeeded();
                         }
@@ -5067,7 +5069,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 case WINDOW_REPLACEMENT_TIMEOUT: {
                     synchronized (mGlobalLock) {
                         for (int i = mWindowReplacementTimeouts.size() - 1; i >= 0; i--) {
-                            final ActivityRecord activity = mWindowReplacementTimeouts.get(i);
+                            final com.android.server.wm.ActivityRecord activity = mWindowReplacementTimeouts.get(i);
                             activity.onWindowReplacementTimeout();
                         }
                         mWindowReplacementTimeouts.clear();
@@ -5097,12 +5099,12 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 case RESTORE_POINTER_ICON: {
                     synchronized (mGlobalLock) {
-                        restorePointerIconLocked((DisplayContent)msg.obj, msg.arg1, msg.arg2);
+                        restorePointerIconLocked((com.android.server.wm.DisplayContent)msg.obj, msg.arg1, msg.arg2);
                     }
                     break;
                 }
                 case SEAMLESS_ROTATION_TIMEOUT: {
-                    final DisplayContent displayContent = (DisplayContent) msg.obj;
+                    final com.android.server.wm.DisplayContent displayContent = (com.android.server.wm.DisplayContent) msg.obj;
                     synchronized (mGlobalLock) {
                         displayContent.getDisplayRotation().onSeamlessRotationTimeout();
                     }
@@ -5136,7 +5138,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 case LAYOUT_AND_ASSIGN_WINDOW_LAYERS_IF_NEEDED: {
                     synchronized (mGlobalLock) {
-                        final DisplayContent displayContent = (DisplayContent) msg.obj;
+                        final com.android.server.wm.DisplayContent displayContent = (com.android.server.wm.DisplayContent) msg.obj;
                         displayContent.layoutAndAssignWindowLayersIfNeeded();
                     }
                     break;
@@ -5186,7 +5188,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void getInitialDisplaySize(int displayId, Point size) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null && displayContent.hasAccess(Binder.getCallingUid())) {
                 size.x = displayContent.mInitialDisplayWidth;
                 size.y = displayContent.mInitialDisplayHeight;
@@ -5197,7 +5199,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void getBaseDisplaySize(int displayId, Point size) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null && displayContent.hasAccess(Binder.getCallingUid())) {
                 size.x = displayContent.mBaseDisplayWidth;
                 size.y = displayContent.mBaseDisplayHeight;
@@ -5215,7 +5217,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.setForcedSize(width, height);
                 }
@@ -5235,7 +5237,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.setForcedScalingMode(mode);
                 }
@@ -5248,7 +5250,7 @@ public class WindowManagerService extends IWindowManager.Stub
     /** The global settings only apply to default display. */
     private boolean applyForcedPropertiesForDefaultDisplay() {
         boolean changed = false;
-        final DisplayContent displayContent = getDefaultDisplayContentLocked();
+        final com.android.server.wm.DisplayContent displayContent = getDefaultDisplayContentLocked();
         // Display size.
         String sizeStr = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.DISPLAY_SIZE_FORCED);
@@ -5302,7 +5304,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.setForcedSize(displayContent.mInitialDisplayWidth,
                             displayContent.mInitialDisplayHeight);
@@ -5316,7 +5318,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public int getInitialDisplayDensity(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null && displayContent.hasAccess(Binder.getCallingUid())) {
                 return displayContent.mInitialDisplayDensity;
             }
@@ -5327,7 +5329,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public int getBaseDisplayDensity(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null && displayContent.hasAccess(Binder.getCallingUid())) {
                 return displayContent.mBaseDisplayDensity;
             }
@@ -5348,7 +5350,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.setForcedDensity(density, targetUserId);
                 }
@@ -5371,7 +5373,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.setForcedDensity(displayContent.mInitialDisplayDensity,
                             callingUserId);
@@ -5548,12 +5550,12 @@ public class WindowManagerService extends IWindowManager.Stub
         startFreezingDisplay(exitAnim, enterAnim, getDefaultDisplayContentLocked());
     }
 
-    void startFreezingDisplay(int exitAnim, int enterAnim, DisplayContent displayContent) {
+    void startFreezingDisplay(int exitAnim, int enterAnim, com.android.server.wm.DisplayContent displayContent) {
         startFreezingDisplay(exitAnim, enterAnim, displayContent,
                 ROTATION_UNDEFINED /* overrideOriginalRotation */);
     }
 
-    void startFreezingDisplay(int exitAnim, int enterAnim, DisplayContent displayContent,
+    void startFreezingDisplay(int exitAnim, int enterAnim, com.android.server.wm.DisplayContent displayContent,
             int overrideOriginalRotation) {
         if (mDisplayFrozen || displayContent.getDisplayRotation().isRotatingSeamlessly()) {
             return;
@@ -5597,7 +5599,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final int originalRotation = overrideOriginalRotation != ROTATION_UNDEFINED
                 ? overrideOriginalRotation
                 : displayContent.getDisplayInfo().rotation;
-        displayContent.setRotationAnimation(new ScreenRotationAnimation(displayContent,
+        displayContent.setRotationAnimation(new com.android.server.wm.ScreenRotationAnimation(displayContent,
                 originalRotation));
     }
 
@@ -5606,7 +5608,7 @@ public class WindowManagerService extends IWindowManager.Stub
             return;
         }
 
-        final DisplayContent displayContent = mRoot.getDisplayContent(mFrozenDisplayId);
+        final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(mFrozenDisplayId);
         final int numOpeningApps;
         final boolean waitingForConfig;
         final boolean waitingForRemoteRotation;
@@ -5659,7 +5661,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         boolean updateRotation = false;
 
-        ScreenRotationAnimation screenRotationAnimation = displayContent == null ? null
+        com.android.server.wm.ScreenRotationAnimation screenRotationAnimation = displayContent == null ? null
                 : displayContent.getRotationAnimation();
         if (screenRotationAnimation != null && screenRotationAnimation.hasScreenshot()) {
             ProtoLog.i(WM_DEBUG_ORIENTATION, "**** Dismissing screen rotation animation");
@@ -5750,8 +5752,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 String[] toks = line.split("%");
                 if (toks != null && toks.length > 0) {
                     // TODO(multi-display): Show watermarks on secondary displays.
-                    final DisplayContent displayContent = getDefaultDisplayContentLocked();
-                    mWatermark = new Watermark(mSurfaceFactory, displayContent,
+                    final com.android.server.wm.DisplayContent displayContent = getDefaultDisplayContentLocked();
+                    mWatermark = new com.android.server.wm.Watermark(mSurfaceFactory, displayContent,
                             displayContent.mRealDisplayMetrics, toks, mTransaction);
                     mTransaction.apply();
                 }
@@ -5804,7 +5806,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null) {
                 displayContent.statusBarVisibilityChanged(visibility);
             } else {
@@ -5818,7 +5820,7 @@ public class WindowManagerService extends IWindowManager.Stub
         mAtmInternal.enforceCallerIsRecentsOrHasPermission(android.Manifest.permission.STATUS_BAR,
                 "hideTransientBars()");
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent != null) {
                 displayContent.hideTransientBars();
             } else {
@@ -5842,7 +5844,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
         synchronized (mGlobalLock) {
             final PooledConsumer c = PooledLambda.obtainConsumer(
-                    DisplayPolicy::setForceShowSystemBars, PooledLambda.__(), show);
+                    com.android.server.wm.DisplayPolicy::setForceShowSystemBars, PooledLambda.__(), show);
             mRoot.forAllDisplayPolicies(c);
             c.recycle();
         }
@@ -5871,7 +5873,7 @@ public class WindowManagerService extends IWindowManager.Stub
         synchronized (mGlobalLock) {
             // Perform layout if it was scheduled before to make sure that we get correct nav bar
             // position when doing rotations.
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 Slog.w(TAG, "getNavBarPosition with invalid displayId=" + displayId
                         + " callers=" + Debug.getCallers(3));
@@ -5887,7 +5889,7 @@ public class WindowManagerService extends IWindowManager.Stub
     public void createInputConsumer(IBinder token, String name, int displayId,
             InputChannel inputChannel) {
         synchronized (mGlobalLock) {
-            DisplayContent display = mRoot.getDisplayContent(displayId);
+            com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
             if (display != null) {
                 display.getInputMonitor().createInputConsumer(token, name, inputChannel,
                         Binder.getCallingPid(), Binder.getCallingUserHandle());
@@ -5898,7 +5900,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean destroyInputConsumer(String name, int displayId) {
         synchronized (mGlobalLock) {
-            DisplayContent display = mRoot.getDisplayContent(displayId);
+            com.android.server.wm.DisplayContent display = mRoot.getDisplayContent(displayId);
             if (display != null) {
                 return display.getInputMonitor().destroyInputConsumer(name);
             }
@@ -5917,7 +5919,7 @@ public class WindowManagerService extends IWindowManager.Stub
             // For Multi-Session IME, will need to add API for given display Id to
             // get the right IME touch region.
             for (int i = mRoot.mChildren.size() - 1; i >= 0; --i) {
-                final DisplayContent displayContent = mRoot.mChildren.get(i);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.mChildren.get(i);
                 if (displayContent.mInputMethodWindow != null) {
                     displayContent.mInputMethodWindow.getTouchableRegion(r);
                     return r;
@@ -5930,7 +5932,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean hasNavigationBar(int displayId) {
         synchronized (mGlobalLock) {
-            final DisplayContent dc = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
             if (dc == null) {
                 return false;
             }
@@ -5963,7 +5965,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (windowState == null) {
                 return false;
             }
-            WindowSurfaceController surfaceController = windowState.mWinAnimator.mSurfaceController;
+            com.android.server.wm.WindowSurfaceController surfaceController = windowState.mWinAnimator.mSurfaceController;
             if (surfaceController == null) {
                 return false;
             }
@@ -5982,7 +5984,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (windowState == null) {
                 return null;
             }
-            WindowSurfaceController surfaceController = windowState.mWinAnimator.mSurfaceController;
+            com.android.server.wm.WindowSurfaceController surfaceController = windowState.mWinAnimator.mSurfaceController;
             if (surfaceController == null) {
                 return null;
             }
@@ -6044,10 +6046,10 @@ public class WindowManagerService extends IWindowManager.Stub
      * @param proto     Stream to write the WindowContainer object to.
      * @param logLevel  Determines the amount of data to be written to the Protobuf.
      */
-    void dumpDebugLocked(ProtoOutputStream proto, @WindowTraceLogLevel int logLevel) {
+    void dumpDebugLocked(ProtoOutputStream proto, @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         mPolicy.dumpDebug(proto, POLICY);
         mRoot.dumpDebug(proto, ROOT_WINDOW_CONTAINER, logLevel);
-        final DisplayContent topFocusedDisplayContent = mRoot.getTopFocusedDisplayContent();
+        final com.android.server.wm.DisplayContent topFocusedDisplayContent = mRoot.getTopFocusedDisplayContent();
         if (topFocusedDisplayContent.mCurrentFocus != null) {
             topFocusedDisplayContent.mCurrentFocus.writeIdentifierToProto(proto, FOCUSED_WINDOW);
         }
@@ -6059,7 +6061,7 @@ public class WindowManagerService extends IWindowManager.Stub
             imeWindow.writeIdentifierToProto(proto, INPUT_METHOD_WINDOW);
         }
         proto.write(DISPLAY_FROZEN, mDisplayFrozen);
-        final DisplayContent defaultDisplayContent = getDefaultDisplayContentLocked();
+        final com.android.server.wm.DisplayContent defaultDisplayContent = getDefaultDisplayContentLocked();
         proto.write(ROTATION, defaultDisplayContent.getRotation());
         proto.write(LAST_ORIENTATION, defaultDisplayContent.getLastOrientation());
         proto.write(FOCUSED_DISPLAY_ID, topFocusedDisplayContent.getDisplayId());
@@ -6177,7 +6179,7 @@ public class WindowManagerService extends IWindowManager.Stub
             final int displayId = dc.getDisplayId();
             final WindowState inputMethodTarget = dc.mInputMethodTarget;
             final WindowState inputMethodInputTarget = dc.mInputMethodInputTarget;
-            final InsetsControlTarget inputMethodControlTarget = dc.mInputMethodControlTarget;
+            final com.android.server.wm.InsetsControlTarget inputMethodControlTarget = dc.mInputMethodControlTarget;
             if (inputMethodTarget != null) {
                 pw.print("  mInputMethodTarget in display# "); pw.print(displayId);
                 pw.print(' '); pw.println(inputMethodTarget);
@@ -6225,7 +6227,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     pw.print(" windows="); pw.print(mWindowsFreezingScreen);
                     pw.print(" client="); pw.print(mClientFreezingScreen);
                     pw.print(" apps="); pw.print(mAppsFreezingScreen);
-            final DisplayContent defaultDisplayContent = getDefaultDisplayContentLocked();
+            final com.android.server.wm.DisplayContent defaultDisplayContent = getDefaultDisplayContentLocked();
             pw.print("  mRotation="); pw.print(defaultDisplayContent.getRotation());
             pw.print("  mLastOrientation=");
                     pw.println(defaultDisplayContent.getLastOrientation());
@@ -6240,7 +6242,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 pw.print("  mRecentsAnimationController="); pw.println(mRecentsAnimationController);
                 mRecentsAnimationController.dump(pw, "    ");
             }
-            PolicyControl.dump("  ", pw);
+            com.android.server.wm.PolicyControl.dump("  ", pw);
         }
     }
 
@@ -6296,7 +6298,7 @@ public class WindowManagerService extends IWindowManager.Stub
      * @param windowState The window that ANR'd, may be null.
      * @param reason The reason for the ANR, may be null.
      */
-    void saveANRStateLocked(ActivityRecord activity, WindowState windowState, String reason) {
+    void saveANRStateLocked(com.android.server.wm.ActivityRecord activity, WindowState windowState, String reason) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new FastPrintWriter(sw, false, 1024);
         pw.println("  ANR time: " + DateFormat.getDateTimeInstance().format(new Date()));
@@ -6310,7 +6312,7 @@ public class WindowManagerService extends IWindowManager.Stub
             pw.println("  Reason: " + reason);
         }
         for (int i = mRoot.getChildCount() - 1; i >= 0; i--) {
-            final DisplayContent dc = mRoot.getChildAt(i);
+            final com.android.server.wm.DisplayContent dc = mRoot.getChildAt(i);
             final int displayId = dc.getDisplayId();
             if (!dc.mWinAddedSinceNullFocus.isEmpty()) {
                 pw.println("  Windows added in display #" + displayId + " since null focus: "
@@ -6381,7 +6383,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (useProto) {
             final ProtoOutputStream proto = new ProtoOutputStream(fd);
             synchronized (mGlobalLock) {
-                dumpDebugLocked(proto, WindowTraceLogLevel.ALL);
+                dumpDebugLocked(proto, com.android.server.wm.WindowTraceLogLevel.ALL);
             }
             proto.flush();
             return;
@@ -6528,7 +6530,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // There is an inherent assumption that this will never return null.
     // TODO(multi-display): Inspect all the call-points of this method to see if they make sense to
     // support non-default display.
-    DisplayContent getDefaultDisplayContentLocked() {
+    com.android.server.wm.DisplayContent getDefaultDisplayContentLocked() {
         return mRoot.getDisplayContent(DEFAULT_DISPLAY);
     }
 
@@ -6554,7 +6556,7 @@ public class WindowManagerService extends IWindowManager.Stub
      * @param token Application token for which the activity will be relaunched.
      */
     void setWillReplaceWindow(IBinder token, boolean animate) {
-        final ActivityRecord activity = mRoot.getActivityRecord(token);
+        final com.android.server.wm.ActivityRecord activity = mRoot.getActivityRecord(token);
         if (activity == null) {
             ProtoLog.w(WM_ERROR, "Attempted to set replacing window on non-existing app token %s",
                     token);
@@ -6583,7 +6585,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // above. We should combine them or find better names.
     void setWillReplaceWindows(IBinder token, boolean childrenOnly) {
         synchronized (mGlobalLock) {
-            final ActivityRecord activity = mRoot.getActivityRecord(token);
+            final com.android.server.wm.ActivityRecord activity = mRoot.getActivityRecord(token);
             if (activity == null) {
                 ProtoLog.w(WM_ERROR,
                         "Attempted to set replacing window on non-existing app token %s",
@@ -6617,7 +6619,7 @@ public class WindowManagerService extends IWindowManager.Stub
      * @param replacing Whether the window is being replaced or not.
      */
     void scheduleClearWillReplaceWindows(IBinder token, boolean replacing) {
-        final ActivityRecord activity = mRoot.getActivityRecord(token);
+        final com.android.server.wm.ActivityRecord activity = mRoot.getActivityRecord(token);
         if (activity == null) {
             ProtoLog.w(WM_ERROR, "Attempted to reset replacing window on non-existing app token %s",
                     token);
@@ -6630,7 +6632,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void scheduleWindowReplacementTimeouts(ActivityRecord activity) {
+    void scheduleWindowReplacementTimeouts(com.android.server.wm.ActivityRecord activity) {
         if (!mWindowReplacementTimeouts.contains(activity)) {
             mWindowReplacementTimeouts.add(activity);
         }
@@ -6652,7 +6654,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void setDockedStackDividerTouchRegion(Rect touchRegion) {
         synchronized (mGlobalLock) {
-            final DisplayContent dc = getDefaultDisplayContentLocked();
+            final com.android.server.wm.DisplayContent dc = getDefaultDisplayContentLocked();
             dc.getDockedDividerController().setTouchRegion(touchRegion);
             dc.updateTouchExcludeRegion();
         }
@@ -6685,7 +6687,7 @@ public class WindowManagerService extends IWindowManager.Stub
             return;
         }
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             displayContent.getPinnedStackController().registerPinnedStackListener(listener);
         }
     }
@@ -6710,7 +6712,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void getStableInsetsLocked(int displayId, Rect outInsets) {
         outInsets.setEmpty();
-        final DisplayContent dc = mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
         if (dc != null) {
             final DisplayInfo di = dc.getDisplayInfo();
             dc.getDisplayPolicy().getStableInsetsLw(di.rotation, di.logicalWidth, di.logicalHeight,
@@ -6721,7 +6723,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void setForwardedInsets(int displayId, Insets insets) throws RemoteException {
         synchronized (mGlobalLock) {
-            final DisplayContent dc = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
             if (dc == null) {
                 return;
             }
@@ -6789,7 +6791,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 ProtoLog.w(WM_ERROR, "Bad requesting window %s", client);
                 return;
             }
-            final DisplayContent displayContent = callingWin.getDisplayContent();
+            final com.android.server.wm.DisplayContent displayContent = callingWin.getDisplayContent();
             if (displayContent == null) {
                 return;
             }
@@ -6808,7 +6810,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void restorePointerIconLocked(DisplayContent displayContent, float latestX, float latestY) {
+    void restorePointerIconLocked(com.android.server.wm.DisplayContent displayContent, float latestX, float latestY) {
         // Mouse position tracker has not been getting updates while dragging, update it now.
         mMousePositionTracker.updatePosition(latestX, latestY);
 
@@ -6878,7 +6880,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     ProtoLog.w(WM_ERROR, "Bad requesting window %s", client);
                     return;
                 }
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 if (displayContent != null) {
                     displayContent.updateLocation(win, x, y);
                 }
@@ -6927,7 +6929,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long token = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                DisplayContent dc = mRoot.getDisplayContent(displayId);
+                com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     ProtoLog.e(WM_ERROR,
                             "Invalid displayId for requestScrollCapture: %d", displayId);
@@ -6966,7 +6968,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long token = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = getDisplayContentOrCreate(displayId, null /* token */);
+                final com.android.server.wm.DisplayContent dc = getDisplayContentOrCreate(displayId, null /* token */);
                 if (dc == null) {
                     throw new IllegalArgumentException(
                             "Trying to configure a non existent display.");
@@ -6991,7 +6993,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 ProtoLog.w(WM_ERROR,
                         "Attempted to get windowing mode of a display that does not exist: %d",
@@ -7011,7 +7013,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
                 if (displayContent == null) {
                     ProtoLog.w(WM_ERROR,
                             "Attempted to set windowing mode to a display that does not exist: %d",
@@ -7044,7 +7046,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 ProtoLog.w(WM_ERROR,
                         "Attempted to get remove mode of a display that does not exist: %d",
@@ -7064,7 +7066,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
                 if (displayContent == null) {
                     ProtoLog.w(WM_ERROR,
                             "Attempted to set remove mode to a display that does not exist: %d",
@@ -7087,7 +7089,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 ProtoLog.w(WM_ERROR, "Attempted to get flag of a display that does not exist: %d",
                         displayId);
@@ -7106,7 +7108,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
                 if (displayContent == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to set flag to a display that does not exist: "
                             + "%d", displayId);
@@ -7130,7 +7132,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized (mGlobalLock) {
-            final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 ProtoLog.w(WM_ERROR, "Attempted to get system decors flag of a display that does "
                         + "not exist: %d", displayId);
@@ -7148,7 +7150,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
                 if (displayContent == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to set system decors flag to a display that "
                             + "does not exist: %d", displayId);
@@ -7174,7 +7176,7 @@ public class WindowManagerService extends IWindowManager.Stub
             throw new SecurityException("Requires INTERNAL_SYSTEM_WINDOW permission");
         }
         boolean show;
-        final DisplayContent dc = mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
         if (dc == null) {
             ProtoLog.w(WM_ERROR,
                     "Attempted to get IME flag of a display that does not exist: %d",
@@ -7196,7 +7198,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, null);
                 if (displayContent == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to set IME flag to a display that does not "
                             + "exist: %d", displayId);
@@ -7226,7 +7228,7 @@ public class WindowManagerService extends IWindowManager.Stub
         mPolicy.registerShortcutKey(shortcutCode, shortcutKeyReceiver);
     }
 
-    private final class LocalService extends WindowManagerInternal {
+    private final class LocalService extends com.android.server.wm.WindowManagerInternal {
 
         @Override
         public void clearSnapshotCache() {
@@ -7379,7 +7381,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         @Override
         public void waitForAllWindowsDrawn(Runnable callback, long timeout, int displayId) {
-            final WindowContainer container = displayId == INVALID_DISPLAY
+            final com.android.server.wm.WindowContainer container = displayId == INVALID_DISPLAY
                     ? mRoot : mRoot.getDisplayContent(displayId);
             if (container == null) {
                 // The waiting container doesn't exist, no need to wait to run the callback. Run and
@@ -7424,14 +7426,14 @@ public class WindowManagerService extends IWindowManager.Stub
         public void removeWindowToken(IBinder binder, boolean removeWindows, int displayId) {
             synchronized (mGlobalLock) {
                 if (removeWindows) {
-                    final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                    final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                     if (dc == null) {
                         ProtoLog.w(WM_ERROR, "removeWindowToken: Attempted to remove token: %s"
                                 + " for non-exiting displayId=%d", binder, displayId);
                         return;
                     }
 
-                    final WindowToken token = dc.removeWindowToken(binder);
+                    final com.android.server.wm.WindowToken token = dc.removeWindowToken(binder);
                     if (token == null) {
                         ProtoLog.w(WM_ERROR,
                                 "removeWindowToken: Attempted to remove non-existing token: %s",
@@ -7462,7 +7464,7 @@ public class WindowManagerService extends IWindowManager.Stub
         @Override
         public int getInputMethodWindowVisibleHeight(int displayId) {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 return dc.mDisplayFrames.getInputMethodWindowVisibleHeight();
             }
         }
@@ -7507,7 +7509,7 @@ public class WindowManagerService extends IWindowManager.Stub
         @Override
         public boolean isStackVisibleLw(int windowingMode) {
             // TODO(b/153090332): Support multiple task display areas & displays
-            final TaskDisplayArea tc = mRoot.getDefaultTaskDisplayArea();
+            final com.android.server.wm.TaskDisplayArea tc = mRoot.getDefaultTaskDisplayArea();
             return tc.isStackVisible(windowingMode);
         }
 
@@ -7557,7 +7559,7 @@ public class WindowManagerService extends IWindowManager.Stub
         public boolean isUidFocused(int uid) {
             synchronized (mGlobalLock) {
                 for (int i = mRoot.getChildCount() - 1; i >= 0; i--) {
-                    final DisplayContent displayContent = mRoot.getChildAt(i);
+                    final com.android.server.wm.DisplayContent displayContent = mRoot.getChildAt(i);
                     if (displayContent.mCurrentFocus != null
                             && uid == displayContent.mCurrentFocus.getOwningUid()) {
                         return true;
@@ -7573,7 +7575,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return false;
             }
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getTopFocusedDisplayContent();
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getTopFocusedDisplayContent();
                 if (displayContent == null
                         || displayContent.getDisplayId() != displayId
                         || !displayContent.hasAccess(uid)) {
@@ -7606,11 +7608,11 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (imeTarget == null) {
                     return;
                 }
-                final InsetsControlTarget controlTarget = imeTarget.getImeControlTarget();
+                final com.android.server.wm.InsetsControlTarget controlTarget = imeTarget.getImeControlTarget();
                 imeTarget = controlTarget.getWindow();
                 // If InsetsControlTarget doesn't have a window, its using remoteControlTarget which
                 // is controlled by default display
-                final DisplayContent dc = imeTarget != null
+                final com.android.server.wm.DisplayContent dc = imeTarget != null
                         ? imeTarget.getDisplayContent() : getDefaultDisplayContentLocked();
                 dc.getInsetsStateController().getImeSourceProvider()
                         .scheduleShowImePostLayout(controlTarget);
@@ -7622,7 +7624,7 @@ public class WindowManagerService extends IWindowManager.Stub
             synchronized (mGlobalLock) {
                 WindowState imeTarget = mWindowMap.get(imeTargetWindowToken);
                 ProtoLog.d(WM_DEBUG_IME, "hideIme target: %s ", imeTarget);
-                DisplayContent dc = mRoot.getDisplayContent(displayId);
+                com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (imeTarget != null) {
                     imeTarget = imeTarget.getImeControlTarget().getWindow();
                     if (imeTarget != null) {
@@ -7650,7 +7652,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return false;
             }
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 return displayContent != null && displayContent.hasAccess(uid);
             }
         }
@@ -7713,7 +7715,7 @@ public class WindowManagerService extends IWindowManager.Stub
         @Override
         public boolean isTouchableDisplay(int displayId) {
             synchronized (mGlobalLock) {
-                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
                 final Configuration configuration =
                         displayContent != null ? displayContent.getConfiguration() : null;
                 return configuration != null
@@ -7751,11 +7753,11 @@ public class WindowManagerService extends IWindowManager.Stub
         @Override
         public String getImeControlTargetNameForLogging(int displayId) {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     return null;
                 }
-                final InsetsControlTarget target = dc.mInputMethodControlTarget;
+                final com.android.server.wm.InsetsControlTarget target = dc.mInputMethodControlTarget;
                 if (target == null) {
                     return null;
                 }
@@ -7767,7 +7769,7 @@ public class WindowManagerService extends IWindowManager.Stub
         @Override
         public String getImeTargetNameForLogging(int displayId) {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = mRoot.getDisplayContent(displayId);
+                final com.android.server.wm.DisplayContent dc = mRoot.getDisplayContent(displayId);
                 if (dc == null) {
                     return null;
                 }
@@ -7872,7 +7874,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     /** Called from Accessibility Controller to apply magnification spec */
     public void applyMagnificationSpecLocked(int displayId, MagnificationSpec spec) {
-        final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+        final com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
         if (displayContent != null) {
             displayContent.applyMagnificationSpec(spec);
         }
@@ -7895,7 +7897,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // TODO: pass in displayId to determine which display the lock task state changed
         synchronized (mGlobalLock) {
             final PooledConsumer c = PooledLambda.obtainConsumer(
-                    DisplayPolicy::onLockTaskStateChangedLw, PooledLambda.__(), lockTaskState);
+                    com.android.server.wm.DisplayPolicy::onLockTaskStateChangedLw, PooledLambda.__(), lockTaskState);
             mRoot.forAllDisplayPolicies(c);
             c.recycle();
         }
@@ -8013,9 +8015,9 @@ public class WindowManagerService extends IWindowManager.Stub
             return;
         }
 
-        final DisplayContent displayContent = touchedWindow.getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = touchedWindow.getDisplayContent();
         if (!displayContent.isOnTop()) {
-            displayContent.positionDisplayAt(WindowContainer.POSITION_TOP,
+            displayContent.positionDisplayAt(com.android.server.wm.WindowContainer.POSITION_TOP,
                     true /* includingParents */);
         }
         handleTaskFocusChange(touchedWindow.getTask());
@@ -8033,7 +8035,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (task.isActivityTypeHome()) {
             // Only ignore home stack if the requested focus home Task is in the same
             // TaskDisplayArea as the current focus Task.
-            TaskDisplayArea homeTda = task.getDisplayArea();
+            com.android.server.wm.TaskDisplayArea homeTda = task.getDisplayArea();
             WindowState curFocusedWindow = getFocusedWindow();
             if (curFocusedWindow != null && homeTda != null
                     && curFocusedWindow.isDescendantOf(homeTda)) {
@@ -8061,8 +8063,8 @@ public class WindowManagerService extends IWindowManager.Stub
         final String name;
         final InputChannel clientChannel;
         synchronized (mGlobalLock) {
-            EmbeddedWindowController.EmbeddedWindow win =
-                    new EmbeddedWindowController.EmbeddedWindow(this, window,
+            com.android.server.wm.EmbeddedWindowController.EmbeddedWindow win =
+                    new com.android.server.wm.EmbeddedWindowController.EmbeddedWindow(this, window,
                             mInputToWindowMap.get(hostInputToken), callingUid, callingPid, type);
             clientChannel = win.openInputChannel();
             mEmbeddedWindowController.add(clientChannel.getToken(), win);
@@ -8123,7 +8125,7 @@ public class WindowManagerService extends IWindowManager.Stub
             int flags, Region region) {
         final InputApplicationHandle applicationHandle;
         final String name;
-        final EmbeddedWindowController.EmbeddedWindow win;
+        final com.android.server.wm.EmbeddedWindowController.EmbeddedWindow win;
         synchronized (mGlobalLock) {
             win = mEmbeddedWindowController.get(channelToken);
             if (win == null) {
@@ -8233,7 +8235,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         final SurfaceControl displaySc;
         synchronized (mGlobalLock) {
-            DisplayContent displayContent = mRoot.getDisplayContent(displayId);
+            com.android.server.wm.DisplayContent displayContent = mRoot.getDisplayContent(displayId);
             if (displayContent == null) {
                 Slog.e(TAG, "Invalid displayId " + displayId + " for mirrorDisplay");
                 return false;
@@ -8255,13 +8257,13 @@ public class WindowManagerService extends IWindowManager.Stub
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                final DisplayContent dc = getDisplayContentOrCreate(displayId, attrs.token);
+                final com.android.server.wm.DisplayContent dc = getDisplayContentOrCreate(displayId, attrs.token);
                 if (dc == null) {
                     throw new WindowManager.InvalidDisplayException("Display#" + displayId
                             + "could not be found!");
                 }
-                final WindowToken windowToken = dc.getWindowToken(attrs.token);
-                final InsetsStateController insetsStateController =
+                final com.android.server.wm.WindowToken windowToken = dc.getWindowToken(attrs.token);
+                final com.android.server.wm.InsetsStateController insetsStateController =
                         dc.getInsetsStateController();
                 outInsetsState.set(insetsStateController.getInsetsForWindowMetrics(attrs));
 
