@@ -1603,6 +1603,7 @@ class ActivityStarter {
         // 设置启动模式
         mIntent.setFlags(mLaunchFlags);
 
+        // 决定是否将新的 Activity 插进现有的 ActivityStack 中，不是则返回空
         final Task reusedTask = getReusableTask();
 
         // If requested, freeze the task list
@@ -1614,6 +1615,7 @@ class ActivityStarter {
         }
 
         // Compute if there is an existing task that should be used for.
+        // computeTargetTask() 会创建 Task!!! 启动 新 app 这里不会创建,targetTask 为 null
         final Task targetTask = reusedTask != null ? reusedTask : computeTargetTask();
         final boolean newTask = targetTask == null;
         mTargetTask = targetTask;
@@ -1647,14 +1649,15 @@ class ActivityStarter {
                 return startResult;
             }
         }
-        // 获取目标 activity 栈，没有则会创建栈
+        // 获取目标 activity 栈，没有则会创建 ActivityStack
         if (mTargetStack == null) {
             mTargetStack = getLaunchStack(mStartActivity, mLaunchFlags, targetTask, mOptions);
         }
         if (newTask) {
-            // 启用了一个新的栈
+            // 启用了一个新的栈, 这里也会创建 ActivityStack ？？不，要看情况。启动新 mSourceRecord 为 null。
             final Task taskToAffiliate = (mLaunchTaskBehind && mSourceRecord != null)
                     ? mSourceRecord.getTask() : null;
+            // 将启动的 Activity 添加到 ActivityStack 中, 会判断需不需要启动子 Task
             setNewTask(taskToAffiliate);
             if (mService.getLockTaskController().isLockTaskModeViolation(
                     mStartActivity.getTask())) {
@@ -1662,7 +1665,7 @@ class ActivityStarter {
                 return START_RETURN_LOCK_TASK_MODE_VIOLATION;
             }
         } else if (mAddingToTask) {
-            // 添加到一个栈内
+            // 将启动的 Activity 添加到 ActivityStack 中
             addOrReparentStartingActivity(targetTask, "adding to task");
         }
 
@@ -1704,7 +1707,7 @@ class ActivityStarter {
 
         mRootWindowContainer.sendPowerHintForLaunchStartIfNeeded(
                 false /* forceSend */, mStartActivity);
-        // 将需要先是的 activity 移到栈顶，判断是否需要显示启动窗口
+        // 1. 将需要先是的 activity 移到栈顶，2. 判断是否需要显示启动窗口
         mTargetStack.startActivityLocked(mStartActivity, topStack.getTopNonFinishingActivity(),
                 newTask, mKeepCurTransition, mOptions);
         // mDoResume 这里给的参数为 true
@@ -1755,9 +1758,11 @@ class ActivityStarter {
     private Task computeTargetTask() {
         if (mStartActivity.resultTo == null && mInTask == null && !mAddingToTask
                 && (mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) != 0) {
+            // 注意 FLAG_ACTIVITY_NEW_TASK 标志
             // A new task should be created instead of using existing one.
             return null;
         } else if (mSourceRecord != null) {
+            // 启动 APP  mSourceRecord 为空
             return mSourceRecord.getTask();
         } else if (mInTask != null) {
             return mInTask;

@@ -1541,7 +1541,7 @@ class ActivityStack extends Task {
         // Find the next top-most activity to resume in this stack that is not finishing and is
         // focusable. If it is not focusable, we will fall into the case below to resume the
         // top activity in the next focusable task.
-        // 获取栈顶的正在运行的 activity
+        // 获取栈顶的正在运行的 activity, 具有焦点的 activity
         com.android.server.wm.ActivityRecord next = topRunningActivity(true /* focusableOnly */);
 
         final boolean hasRunningActivity = next != null;
@@ -1666,10 +1666,12 @@ class ActivityStack extends Task {
         }
 
         // 暂停上一个 Activity，注意当前是在那个 Activity 栈内！看 mRootWindowContainer.resumeFocusedStacksTopActivities() 方法！
+        // 暂停 ActivityStack
         boolean pausing = taskDisplayArea.pauseBackStacks(userLeaving, next);
         if (mResumedActivity != null) {
             if (DEBUG_STATES) Slog.d(TAG_STATES,
                     "resumeTopActivityLocked: Pausing " + mResumedActivity);
+            // 暂停 Activitu
             pausing |= startPausingLocked(userLeaving, false /* uiSleeping */, next);
         }
         if (pausing) {
@@ -2902,6 +2904,7 @@ class ActivityStack extends Task {
         if (com.android.server.wm.DisplayContent.alwaysCreateStack(getWindowingMode(), getActivityType())) {
             // This stack will only contain one task, so just return itself since all stacks ara now
             // tasks and all tasks are now stacks.
+            // 返回自己
             task = reuseAsLeafTask(voiceSession, voiceInteractor, intent, info, activity);
         } else {
             // Create child task since this stack can contain multiple tasks.

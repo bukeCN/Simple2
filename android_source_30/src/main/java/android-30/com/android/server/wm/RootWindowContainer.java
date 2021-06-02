@@ -2346,7 +2346,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
                     // 获得了有焦点的栈，即发出 startActivity() 操作的栈.
                     result |= focusedStack.resumeTopActivityUncheckedLocked(target, targetOptions);
                 } else if (targetStack == null) {
-                    // 没找到？？显示桌面
+                    // 没找到？？显示桌面??
                     result |= resumeHomeActivity(null /* prev */, "no-focusable-task",
                             display.getDefaultTaskDisplayArea());
                 }
