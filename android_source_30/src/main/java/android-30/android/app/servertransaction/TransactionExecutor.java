@@ -50,9 +50,9 @@ public class TransactionExecutor {
     private static final boolean DEBUG_RESOLVER = false;
     private static final String TAG = "TransactionExecutor";
 
-    private ClientTransactionHandler mTransactionHandler;
-    private PendingTransactionActions mPendingActions = new PendingTransactionActions();
-    private TransactionExecutorHelper mHelper = new TransactionExecutorHelper();
+    private ClientTransactionHandler mTransactionHandler;// 实现者为ActivityThread
+    private android.app.servertransaction.PendingTransactionActions mPendingActions = new android.app.servertransaction.PendingTransactionActions();
+    private android.app.servertransaction.TransactionExecutorHelper mHelper = new android.app.servertransaction.TransactionExecutorHelper();
 
     /** Initialize an instance with transaction handler, that will execute all requested actions. */
     public TransactionExecutor(ClientTransactionHandler clientTransactionHandler) {
@@ -66,18 +66,21 @@ public class TransactionExecutor {
      * Then the client will cycle to the final lifecycle state if provided. Otherwise, it will
      * either remain in the initial state, or last state needed by a callback.
      */
-    public void execute(ClientTransaction transaction) {
+    public void execute(android.app.servertransaction.ClientTransaction transaction) {
         if (DEBUG_RESOLVER) Slog.d(TAG, tId(transaction) + "Start resolving transaction");
 
         final IBinder token = transaction.getActivityToken();
         if (token != null) {
-            final Map<IBinder, ClientTransactionItem> activitiesToBeDestroyed =
+            // 获取要销毁的 activity
+            final Map<IBinder, android.app.servertransaction.ClientTransactionItem> activitiesToBeDestroyed =
                     mTransactionHandler.getActivitiesToBeDestroyed();
-            final ClientTransactionItem destroyItem = activitiesToBeDestroyed.get(token);
+            final android.app.servertransaction.ClientTransactionItem destroyItem = activitiesToBeDestroyed.get(token);
+            // 如果要销毁的 activity 不为 null
             if (destroyItem != null) {
                 if (transaction.getLifecycleStateRequest() == destroyItem) {
                     // It is going to execute the transaction that will destroy activity with the
                     // token, so the corresponding to-be-destroyed record can be removed.
+                    // 移除处理
                     activitiesToBeDestroyed.remove(token);
                 }
                 if (mTransactionHandler.getActivityClient(token) == null) {
@@ -101,8 +104,9 @@ public class TransactionExecutor {
 
     /** Cycle through all states requested by callbacks and execute them at proper times. */
     @VisibleForTesting
-    public void executeCallbacks(ClientTransaction transaction) {
-        final List<ClientTransactionItem> callbacks = transaction.getCallbacks();
+    public void executeCallbacks(android.app.servertransaction.ClientTransaction transaction) {
+        final List<android.app.servertransaction.ClientTransactionItem> callbacks = transaction.getCallbacks();
+        // callback 对于具体的 LifecycItem
         if (callbacks == null || callbacks.isEmpty()) {
             // No callbacks to execute, return early.
             return;
@@ -110,12 +114,14 @@ public class TransactionExecutor {
         if (DEBUG_RESOLVER) Slog.d(TAG, tId(transaction) + "Resolving callbacks in transaction");
 
         final IBinder token = transaction.getActivityToken();
+        // 问题？ActivityThread 中的 ActivityClientRecord 值什么时候添加进来的？？
+        // 1. transaction = LaunchActivityItem 时，会在下面步骤创建
         ActivityClientRecord r = mTransactionHandler.getActivityClient(token);
 
         // In case when post-execution state of the last callback matches the final state requested
         // for the activity in this transaction, we won't do the last transition here and do it when
         // moving to final state instead (because it may contain additional parameters from server).
-        final ActivityLifecycleItem finalStateRequest = transaction.getLifecycleStateRequest();
+        final android.app.servertransaction.ActivityLifecycleItem finalStateRequest = transaction.getLifecycleStateRequest();
         final int finalState = finalStateRequest != null ? finalStateRequest.getTargetState()
                 : UNDEFINED;
         // Index of the last callback that requests some post-execution state.
@@ -123,7 +129,7 @@ public class TransactionExecutor {
 
         final int size = callbacks.size();
         for (int i = 0; i < size; ++i) {
-            final ClientTransactionItem item = callbacks.get(i);
+            final android.app.servertransaction.ClientTransactionItem item = callbacks.get(i);
             if (DEBUG_RESOLVER) Slog.d(TAG, tId(transaction) + "Resolving callback: " + item);
             final int postExecutionState = item.getPostExecutionState();
             final int closestPreExecutionState = mHelper.getClosestPreExecutionState(r,
@@ -131,7 +137,9 @@ public class TransactionExecutor {
             if (closestPreExecutionState != UNDEFINED) {
                 cycleToPath(r, closestPreExecutionState, transaction);
             }
-
+            // 1. 重点，LaunchActivityItem 这里会创建 ActivityClientRecord。
+            //    这里会调用 mTransactionHandler.handleLaunchActivity() 函数启动 activity。
+            // 2. 不同的 ClientTransaction 有不同的动作
             item.execute(mTransactionHandler, token, mPendingActions);
             item.postExecute(mTransactionHandler, token, mPendingActions);
             if (r == null) {
@@ -143,14 +151,15 @@ public class TransactionExecutor {
                 // Skip the very last transition and perform it by explicit state request instead.
                 final boolean shouldExcludeLastTransition =
                         i == lastCallbackRequestingState && finalState == postExecutionState;
+                // 执行后续的生命周期, 生命周期是根据执行路径来的，从开始到结束。
                 cycleToPath(r, postExecutionState, shouldExcludeLastTransition, transaction);
             }
         }
     }
 
     /** Transition to the final state if requested by the transaction. */
-    private void executeLifecycleState(ClientTransaction transaction) {
-        final ActivityLifecycleItem lifecycleItem = transaction.getLifecycleStateRequest();
+    private void executeLifecycleState(android.app.servertransaction.ClientTransaction transaction) {
+        final android.app.servertransaction.ActivityLifecycleItem lifecycleItem = transaction.getLifecycleStateRequest();
         if (lifecycleItem == null) {
             // No lifecycle request, return early.
             return;
@@ -179,7 +188,7 @@ public class TransactionExecutor {
 
     /** Transition the client between states. */
     @VisibleForTesting
-    public void cycleToPath(ActivityClientRecord r, int finish, ClientTransaction transaction) {
+    public void cycleToPath(ActivityClientRecord r, int finish, android.app.servertransaction.ClientTransaction transaction) {
         cycleToPath(r, finish, false /* excludeLastState */, transaction);
     }
 
@@ -189,7 +198,8 @@ public class TransactionExecutor {
      * be performed with some specific parameters.
      */
     private void cycleToPath(ActivityClientRecord r, int finish, boolean excludeLastState,
-            ClientTransaction transaction) {
+            android.app.servertransaction.ClientTransaction transaction) {
+        // 获取开始的生命周期开始
         final int start = r.getLifecycleState();
         if (DEBUG_RESOLVER) {
             Slog.d(TAG, tId(transaction) + "Cycle activity: "
@@ -197,13 +207,15 @@ public class TransactionExecutor {
                     + " from: " + getStateName(start) + " to: " + getStateName(finish)
                     + " excludeLastState: " + excludeLastState);
         }
+        // 计算路径
         final IntArray path = mHelper.getLifecyclePath(start, finish, excludeLastState);
+        // 循环执行后续的生命周期
         performLifecycleSequence(r, path, transaction);
     }
 
     /** Transition the client through previously initialized state sequence. */
     private void performLifecycleSequence(ActivityClientRecord r, IntArray path,
-            ClientTransaction transaction) {
+            android.app.servertransaction.ClientTransaction transaction) {
         final int size = path.size();
         for (int i = 0, state; i < size; i++) {
             state = path.get(i);

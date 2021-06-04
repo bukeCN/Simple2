@@ -3346,7 +3346,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
             component = new ComponentName(r.activityInfo.packageName,
                     r.activityInfo.targetActivity);
         }
-
+        // 创建 Context
         android.app.ContextImpl appContext = createBaseContextForActivity(r);
         Activity activity = null;
         try {
@@ -3368,6 +3368,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         }
 
         try {
+            // 这里是获取 Application 之前已经创建了
             Application app = r.packageInfo.makeApplication(false, mInstrumentation);
 
             if (localLOGV) Slog.v(TAG, "Performing launch of " + r);
@@ -3386,7 +3387,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
                 }
                 if (DEBUG_CONFIGURATION) Slog.v(TAG, "Launching activity "
                         + r.activityInfo.name + " with config " + config);
-                Window window = null;
+                Window window = null;// 一般为 null ，什么时候能有值？
                 if (r.mPendingRemoveWindow != null && r.mPreserveWindow) {
                     window = r.mPendingRemoveWindow;
                     r.mPendingRemoveWindow = null;
@@ -3399,6 +3400,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
                         app.getResources().getLoaders().toArray(new ResourcesLoader[0]));
 
                 appContext.setOuterContext(activity);
+                // 调用 attach() 函数，
                 activity.attach(appContext, this, getInstrumentation(), r.token,
                         r.ident, app, r.intent, r.activityInfo, title, r.parent,
                         r.embeddedID, r.lastNonConfigurationInstances, config,
@@ -3416,6 +3418,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
                     activity.setTheme(theme);
                 }
 
+                // 执行 onCteate() 函数
                 activity.mCalled = false;
                 if (r.isPersistable()) {
                     mInstrumentation.callActivityOnCreate(activity, r.state, r.persistentState);
@@ -3598,7 +3601,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
 
         // Hint the GraphicsEnvironment that an activity is launching on the process.
         GraphicsEnvironment.hintActivityLaunch();
-
+        // 启动 activity
         final Activity a = performLaunchActivity(r, customIntent);
 
         if (a != null) {
@@ -4470,10 +4473,12 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
             String reason) {
         // If we are getting ready to gc after going to the background, well
         // we are back active so skip it.
+        // Activity 的 Window 要显示了，不要 GC 。
         unscheduleGcIdler();
         mSomeActivitiesChanged = true;
 
         // TODO Push resumeArgs into the activity for consideration
+        // 通过 ActivityToken 获取 ACR
         final ActivityClientRecord r = performResumeActivity(token, finalStateRequest, reason);
         if (r == null) {
             // We didn't actually resume the activity, so skipping any follow-up actions.
@@ -4512,6 +4517,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         if (r.window == null && !a.mFinished && willBeVisible) {
             r.window = r.activity.getWindow();
             View decor = r.window.getDecorView();
+            // 先设置占位不可见
             decor.setVisibility(View.INVISIBLE);
             ViewManager wm = a.getWindowManager();
             WindowManager.LayoutParams l = r.window.getAttributes();
@@ -4533,6 +4539,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
             if (a.mVisibleFromClient) {
                 if (!a.mWindowAdded) {
                     a.mWindowAdded = true;
+                    // 重点，添加 View
                     wm.addView(decor, l);
                 } else {
                     // The activity will get a callback for this {@link LayoutParams} change

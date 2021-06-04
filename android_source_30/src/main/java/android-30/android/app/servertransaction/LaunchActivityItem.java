@@ -45,7 +45,7 @@ import java.util.Objects;
  * Request to launch an activity.
  * @hide
  */
-public class LaunchActivityItem extends ClientTransactionItem {
+public class LaunchActivityItem extends android.app.servertransaction.ClientTransactionItem {
 
     @UnsupportedAppUsage
     private Intent mIntent;
@@ -76,19 +76,20 @@ public class LaunchActivityItem extends ClientTransactionItem {
 
     @Override
     public void execute(ClientTransactionHandler client, IBinder token,
-            PendingTransactionActions pendingActions) {
+            android.app.servertransaction.PendingTransactionActions pendingActions) {
         Trace.traceBegin(TRACE_TAG_ACTIVITY_MANAGER, "activityStart");
         ActivityClientRecord r = new ActivityClientRecord(token, mIntent, mIdent, mInfo,
                 mOverrideConfig, mCompatInfo, mReferrer, mVoiceInteractor, mState, mPersistentState,
                 mPendingResults, mPendingNewIntents, mIsForward,
                 mProfilerInfo, client, mAssistToken, mFixedRotationAdjustments);
+        // client 是 ActivityThread 启动 activity
         client.handleLaunchActivity(r, pendingActions, null /* customIntent */);
         Trace.traceEnd(TRACE_TAG_ACTIVITY_MANAGER);
     }
 
     @Override
     public void postExecute(ClientTransactionHandler client, IBinder token,
-            PendingTransactionActions pendingActions) {
+            android.app.servertransaction.PendingTransactionActions pendingActions) {
         client.countLaunchingActivities(-1);
     }
 
@@ -104,7 +105,7 @@ public class LaunchActivityItem extends ClientTransactionItem {
             PersistableBundle persistentState, List<ResultInfo> pendingResults,
             List<ReferrerIntent> pendingNewIntents, boolean isForward, ProfilerInfo profilerInfo,
             IBinder assistToken, FixedRotationAdjustments fixedRotationAdjustments) {
-        LaunchActivityItem instance = ObjectPool.obtain(LaunchActivityItem.class);
+        LaunchActivityItem instance = android.app.servertransaction.ObjectPool.obtain(LaunchActivityItem.class);
         if (instance == null) {
             instance = new LaunchActivityItem();
         }
@@ -119,7 +120,7 @@ public class LaunchActivityItem extends ClientTransactionItem {
     public void recycle() {
         setValues(this, null, 0, null, null, null, null, null, null, 0, null, null, null, null,
                 false, null, null, null);
-        ObjectPool.recycle(this);
+        android.app.servertransaction.ObjectPool.recycle(this);
     }
 
 

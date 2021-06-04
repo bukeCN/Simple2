@@ -186,7 +186,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     // This is the view in which the window contents are placed. It is either
     // mDecor itself, or a child of mDecor where the contents go.
-    ViewGroup mContentParent;
+    ViewGroup mContentParent;// DecorView 的子 View
     // Whether the client has explicitly set the content view. If false and mContentParent is not
     // null, then the content parent was set due to window preservation.
     private boolean mContentParentExplicitlySet = false;
@@ -442,12 +442,14 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         // decor, when theme attributes and the like are crystalized. Do not check the feature
         // before this happens.
         if (mContentParent == null) {
+            // 初始化 DecorView
             installDecor();
         } else if (!hasFeature(FEATURE_CONTENT_TRANSITIONS)) {
             mContentParent.removeAllViews();
         }
 
         if (hasFeature(FEATURE_CONTENT_TRANSITIONS)) {
+            // 标志动画？？比如：共享元素动画的启动？
             final Scene newScene = Scene.getSceneForLayout(mContentParent, layoutResID,
                     getContext());
             transitionTo(newScene);
@@ -2345,7 +2347,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             if (applicationContext == null) {
                 context = getContext();
             } else {
-                context = new DecorContext(applicationContext, this);
+                context = new com.android.internal.policy.DecorContext(applicationContext, this);
                 if (mTheme != -1) {
                     context.setTheme(mTheme);
                 }
@@ -2680,6 +2682,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private void installDecor() {
         mForceDecorInstall = false;
         if (mDecor == null) {
+            // 创建 DecorView
             mDecor = generateDecor(-1);
             mDecor.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             mDecor.setIsRootNamespace(true);
@@ -2690,6 +2693,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             mDecor.setWindow(this);
         }
         if (mContentParent == null) {
+            // 获取 Decor 的子view
             mContentParent = generateLayout(mDecor);
 
             // Set up decor part of UI to ignore fitsSystemWindows if appropriate.
@@ -3844,7 +3848,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         mTheme = resid;
         if (mDecor != null) {
             Context context = mDecor.getContext();
-            if (context instanceof DecorContext) {
+            if (context instanceof com.android.internal.policy.DecorContext) {
                 context.setTheme(resid);
             }
         }

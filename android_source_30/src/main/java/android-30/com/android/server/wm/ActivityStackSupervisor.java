@@ -728,7 +728,7 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
                     + " some activities pausing...");
             return false;
         }
-
+        // 获取启动的 Task 和 Stack ？？ 啥区别，都 tm 一个类！
         final com.android.server.wm.Task task = r.getTask();
         final com.android.server.wm.ActivityStack stack = task.getStack();
 
@@ -739,7 +739,7 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
 
             // schedule launch ticks to collect information about slow apps.
             r.startLaunchTickingLocked();
-
+            // 设置进程
             r.setProcess(proc);
 
             // Ensure activity is allowed to be resumed after process has set.
@@ -754,6 +754,7 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
             // manager with a new orientation.  We don't care about that, because the activity is
             // not currently running so we are just restarting it anyway.
             if (checkConfig) {
+                // 新启动 App 这里为 true。
                 // Deferring resume here because we're going to launch new activity shortly.
                 // We don't want to perform a redundant launch of the same record while ensuring
                 // configurations and trying to resume top activity of focused stack.
@@ -836,10 +837,12 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
 
 
                 // Create activity launch transaction.
+                // 创建活动启动事务
                 final ClientTransaction clientTransaction = ClientTransaction.obtain(
                         proc.getThread(), r.appToken);
 
                 final com.android.server.wm.DisplayContent dc = r.getDisplay().mDisplayContent;
+                // 添加 LaunchAct
                 clientTransaction.addCallback(LaunchActivityItem.obtain(new Intent(r.intent),
                         System.identityHashCode(r), r.info,
                         // TODO: Have this take the merged configuration instead of separate global
@@ -861,6 +864,7 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
                 clientTransaction.setLifecycleStateRequest(lifecycleItem);
 
                 // Schedule transaction.
+                // AMTS 执行事务
                 mService.getLifecycleManager().scheduleTransaction(clientTransaction);
 
                 if ((proc.mInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0

@@ -1089,8 +1089,10 @@ final class TaskDisplayArea extends com.android.server.wm.DisplayArea<com.androi
     /**
      * Get the preferred focusable stack in priority. If the preferred stack does not exist, find a
      * focusable and visible stack from the top of stacks in this display.
+     * 获得可聚焦的栈, 没有确定的就到栈中找
      */
     com.android.server.wm.ActivityStack getFocusedStack() {
+        // 在 addChild 时，可能会被赋值
         if (mPreferredTopFocusableStack != null) {
             return mPreferredTopFocusableStack;
         }

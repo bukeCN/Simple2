@@ -1935,12 +1935,13 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
         // 遍历所有屏幕
         for (int displayNdx = getChildCount() - 1; displayNdx >= 0; --displayNdx) {
             final com.android.server.wm.DisplayContent display = getChildAt(displayNdx);
-            // 获取屏幕中具有焦点的 Activity 栈
+            // 获取屏幕中具有焦点的 Activity 栈，在那一步中将最新的 Stack 设置获取焦点了？创建栈和创建 ActivityRecord 时。
             final com.android.server.wm.ActivityStack stack = display.getFocusedStack();
             if (stack == null) {
                 continue;
             }
 
+            // 重点，找到了需要启动的栈，然后就可能获取栈顶 Activity 启动了
             mTmpRemoteException = null;
             mTmpBoolean = false; // Set to true if an activity was started.// 启动 activity 成功会置为 true
             final PooledFunction c = PooledLambda.obtainFunction(

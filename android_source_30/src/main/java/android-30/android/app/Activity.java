@@ -1587,6 +1587,7 @@ public class Activity extends ContextThemeWrapper
                     ? mLastNonConfigurationInstances.fragments : null);
         }
         mFragments.dispatchCreate();
+        // 回调创建通知，主要是调用 Application 中的生命周期监听
         dispatchActivityCreated(savedInstanceState);
         if (mVoiceInteractor != null) {
             mVoiceInteractor.attachActivity(this);
@@ -7899,10 +7900,11 @@ public class Activity extends ContextThemeWrapper
             NonConfigurationInstances lastNonConfigurationInstances,
             Configuration config, String referrer, IVoiceInteractor voiceInteractor,
             Window window, ActivityConfigCallback activityConfigCallback, IBinder assistToken) {
+        // 1. 添加 Context
         attachBaseContext(context);
 
         mFragments.attachHost(null /*parent*/);
-
+        // 2. 创建 PhoneWindow
         mWindow = new PhoneWindow(this, window, activityConfigCallback);
         mWindow.setWindowControllerCallback(mWindowControllerCallback);
         mWindow.setCallback(this);
@@ -7938,7 +7940,7 @@ public class Activity extends ContextThemeWrapper
                         Looper.myLooper());
             }
         }
-
+        // 设置 wms
         mWindow.setWindowManager(
                 (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),
                 mToken, mComponent.flattenToString(),

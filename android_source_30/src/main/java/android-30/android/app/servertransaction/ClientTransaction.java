@@ -41,17 +41,17 @@ import java.util.Objects;
  * @see ActivityLifecycleItem
  * @hide
  */
-public class ClientTransaction implements Parcelable, ObjectPoolItem {
+public class ClientTransaction implements Parcelable, android.app.servertransaction.ObjectPoolItem {
 
     /** A list of individual callbacks to a client. */
     @UnsupportedAppUsage
-    private List<ClientTransactionItem> mActivityCallbacks;
+    private List<android.app.servertransaction.ClientTransactionItem> mActivityCallbacks;
 
     /**
      * Final lifecycle state in which the client activity should be after the transaction is
      * executed.
      */
-    private ActivityLifecycleItem mLifecycleStateRequest;
+    private android.app.servertransaction.ActivityLifecycleItem mLifecycleStateRequest;
 
     /** Target client. */
     private IApplicationThread mClient;
@@ -68,7 +68,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
      * Add a message to the end of the sequence of callbacks.
      * @param activityCallback A single message that can contain a lifecycle request/callback.
      */
-    public void addCallback(ClientTransactionItem activityCallback) {
+    public void addCallback(android.app.servertransaction.ClientTransactionItem activityCallback) {
         if (mActivityCallbacks == null) {
             mActivityCallbacks = new ArrayList<>();
         }
@@ -79,7 +79,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
     @Nullable
     @VisibleForTesting
     @UnsupportedAppUsage
-    public List<ClientTransactionItem> getCallbacks() {
+    public List<android.app.servertransaction.ClientTransactionItem> getCallbacks() {
         return mActivityCallbacks;
     }
 
@@ -93,7 +93,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
     /** Get the target state lifecycle request. */
     @VisibleForTesting
     @UnsupportedAppUsage
-    public ActivityLifecycleItem getLifecycleStateRequest() {
+    public android.app.servertransaction.ActivityLifecycleItem getLifecycleStateRequest() {
         return mLifecycleStateRequest;
     }
 
@@ -101,7 +101,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
      * Set the lifecycle state in which the client should be after executing the transaction.
      * @param stateRequest A lifecycle request initialized with right parameters.
      */
-    public void setLifecycleStateRequest(ActivityLifecycleItem stateRequest) {
+    public void setLifecycleStateRequest(android.app.servertransaction.ActivityLifecycleItem stateRequest) {
         mLifecycleStateRequest = stateRequest;
     }
 
@@ -133,6 +133,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
      *    all callbacks and necessary lifecycle transitions.
      */
     public void schedule() throws RemoteException {
+        // Binder 远程调用 App 端的能力，mClient > ApplicationThread
         mClient.scheduleTransaction(this);
     }
 
@@ -143,7 +144,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
 
     /** Obtain an instance initialized with provided params. */
     public static ClientTransaction obtain(IApplicationThread client, IBinder activityToken) {
-        ClientTransaction instance = ObjectPool.obtain(ClientTransaction.class);
+        ClientTransaction instance = android.app.servertransaction.ObjectPool.obtain(ClientTransaction.class);
         if (instance == null) {
             instance = new ClientTransaction();
         }
@@ -168,7 +169,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
         }
         mClient = null;
         mActivityToken = null;
-        ObjectPool.recycle(this);
+        android.app.servertransaction.ObjectPool.recycle(this);
     }
 
     // Parcelable implementation
