@@ -54,6 +54,12 @@ public abstract  class Stub extends Binder implements BookManager {
                 // 写入结果
                 reply.writeString(result);
                 return true;
+            case TRANSACTION_bindIClient:
+                Log.e("sun","TRANSACTION_bindIClient");
+                data.enforceInterface(DESCRIPTOR);// 这一步？？
+                // 如何从 data 中获取数据。
+                bindIClient(data.readStrongBinder());
+                return true;
         }
         return super.onTransact(code, data, reply, flags);
     }

@@ -251,8 +251,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /** A window in the window manager. */
-class WindowState extends WindowContainer<WindowState> implements WindowManagerPolicy.WindowState,
-        InsetsControlTarget {
+class WindowState extends com.android.server.wm.WindowContainer<WindowState> implements WindowManagerPolicy.WindowState,
+        com.android.server.wm.InsetsControlTarget {
     static final String TAG = TAG_WITH_CLASS_NAME ? "WindowState" : TAG_WM;
 
     // The minimal size of a window within the usable area of the freeform stack.
@@ -284,9 +284,9 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     /** The owner has {@link android.Manifest.permission#INTERNAL_SYSTEM_WINDOW} */
     final boolean mOwnerCanAddInternalSystemWindow;
     final WindowId mWindowId;
-    WindowToken mToken;
+    com.android.server.wm.WindowToken mToken;
     // The same object as mToken if this is an app window and null for non-app windows.
-    ActivityRecord mActivityRecord;
+    com.android.server.wm.ActivityRecord mActivityRecord;
 
     // mAttrs.flags is tested in animation without being locked. If the bits tested are ever
     // modified they will need to be locked.
@@ -349,7 +349,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * rotation.
      */
     final boolean mForceSeamlesslyRotate;
-    SeamlessRotator mPendingSeamlessRotate;
+    com.android.server.wm.SeamlessRotator mPendingSeamlessRotate;
     long mFinishSeamlessRotateFrameNumber;
 
     private RemoteCallbackList<IWindowFocusObserver> mFocusCallbacks;
@@ -370,7 +370,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     int mLayoutSeq = -1;
 
     /** @see #addEmbeddedDisplayContent(DisplayContent dc) */
-    private final ArraySet<DisplayContent> mEmbeddedDisplayContents = new ArraySet<>();
+    private final ArraySet<com.android.server.wm.DisplayContent> mEmbeddedDisplayContents = new ArraySet<>();
 
     /**
      * Used to store last reported to client configuration and check if we have newer available.
@@ -432,10 +432,10 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     final Matrix mTmpMatrix = new Matrix();
     final float[] mTmpMatrixArray = new float[9];
 
-    private final WindowFrames mWindowFrames = new WindowFrames();
+    private final com.android.server.wm.WindowFrames mWindowFrames = new com.android.server.wm.WindowFrames();
 
     /** The frames used to compute a temporal layout appearance. */
-    private WindowFrames mSimulatedWindowFrames;
+    private com.android.server.wm.WindowFrames mSimulatedWindowFrames;
 
     /**
      * Usually empty. Set to the task's tempInsetFrame. See
@@ -567,7 +567,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     private CharSequence mLastTitle;
     private boolean mWasExiting;
 
-    final WindowStateAnimator mWinAnimator;
+    final com.android.server.wm.WindowStateAnimator mWinAnimator;
 
     boolean mHasSurface = false;
 
@@ -695,7 +695,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      */
     private boolean mIsDimming = false;
 
-    private @Nullable InsetsSourceProvider mControllableInsetProvider;
+    private @Nullable
+    com.android.server.wm.InsetsSourceProvider mControllableInsetProvider;
     private final InsetsState mRequestedInsetsState = new InsetsState();
 
     private static final float DEFAULT_DIM_AMOUNT_DEAD_WINDOW = 0.5f;
@@ -706,7 +707,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * when deciding about the refresh rate of the display. All windows have the lowest priority by
      * default. The variable is cached, so we do not send too many updates to SF.
      */
-    int mFrameRateSelectionPriority = RefreshRatePolicy.LAYER_PRIORITY_UNSET;
+    int mFrameRateSelectionPriority = com.android.server.wm.RefreshRatePolicy.LAYER_PRIORITY_UNSET;
 
     /**
      * BLASTSyncEngine ID corresponding to a sync-set for all
@@ -719,7 +720,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     static final int BLAST_TIMEOUT_DURATION = 5000; /* milliseconds */
 
-    private final WindowProcessController mWpcForDisplayConfigChanges;
+    private final com.android.server.wm.WindowProcessController mWpcForDisplayConfigChanges;
 
     /**
      * @return The insets state as requested by the client, i.e. the dispatched insets state
@@ -768,7 +769,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             if (mControllableInsetProvider != null) {
                 mControllableInsetProvider.startSeamlessRotation();
             }
-            mPendingSeamlessRotate = new SeamlessRotator(oldRotation, rotation, getDisplayInfo(),
+            mPendingSeamlessRotate = new com.android.server.wm.SeamlessRotator(oldRotation, rotation, getDisplayInfo(),
                     false /* applyFixedTransformationHint */);
             mPendingSeamlessRotate.unrotate(transaction, this);
             getDisplayContent().getDisplayRotation().markForSeamlessRotation(this,
@@ -837,10 +838,10 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     }
 
-    WindowState(WindowManagerService service, Session s, IWindow c, WindowToken token,
-            WindowState parentWindow, int appOp, int seq, WindowManager.LayoutParams a,
-            int viewVisibility, int ownerId, int showUserId,
-            boolean ownerCanAddInternalSystemWindow) {
+    WindowState(com.android.server.wm.WindowManagerService service, Session s, IWindow c, com.android.server.wm.WindowToken token,
+                WindowState parentWindow, int appOp, int seq, WindowManager.LayoutParams a,
+                int viewVisibility, int ownerId, int showUserId,
+                boolean ownerCanAddInternalSystemWindow) {
         this(service, s, c, token, parentWindow, appOp, seq, a, viewVisibility, ownerId, showUserId,
                 ownerCanAddInternalSystemWindow, new PowerManagerWrapper() {
                     @Override
@@ -855,10 +856,10 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
                 });
     }
 
-    WindowState(WindowManagerService service, Session s, IWindow c, WindowToken token,
-            WindowState parentWindow, int appOp, int seq, WindowManager.LayoutParams a,
-            int viewVisibility, int ownerId, int showUserId,
-            boolean ownerCanAddInternalSystemWindow, PowerManagerWrapper powerManagerWrapper) {
+    WindowState(com.android.server.wm.WindowManagerService service, Session s, IWindow c, com.android.server.wm.WindowToken token,
+                WindowState parentWindow, int appOp, int seq, WindowManager.LayoutParams a,
+                int viewVisibility, int ownerId, int showUserId,
+                boolean ownerCanAddInternalSystemWindow, PowerManagerWrapper powerManagerWrapper) {
         super(service);
         mSession = s;
         mClient = c;
@@ -900,11 +901,15 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         }
         mDeathRecipient = deathRecipient;
 
+        // 计算 window 显示次序
         if (mAttrs.type >= FIRST_SUB_WINDOW && mAttrs.type <= LAST_SUB_WINDOW) {
+            // 子窗口
             // The multiplier here is to reserve space for multiple
             // windows in the same type layer.
+            // getWindowLayerLw() 函数，根据窗口 type 返回排序,值在 [1,35]
             mBaseLayer = mPolicy.getWindowLayerLw(parentWindow)
                     * TYPE_LAYER_MULTIPLIER + TYPE_LAYER_OFFSET;
+            // 获取子窗口顺序，相对于父窗口而言
             mSubLayer = mPolicy.getSubWindowLayerFromTypeLw(a.type);
             mIsChildWindow = true;
 
@@ -914,6 +919,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
                     || parentWindow.mAttrs.type == TYPE_INPUT_METHOD_DIALOG;
             mIsWallpaper = parentWindow.mAttrs.type == TYPE_WALLPAPER;
         } else {
+            // 非子窗口
             // The multiplier here is to reserve space for multiple
             // windows in the same type layer.
             mBaseLayer = mPolicy.getWindowLayerLw(this)
@@ -933,7 +939,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             mAttrs.flags |= FLAG_SHOW_WHEN_LOCKED;
         }
 
-        mWinAnimator = new WindowStateAnimator(this);
+        mWinAnimator = new com.android.server.wm.WindowStateAnimator(this);
         mWinAnimator.mAlpha = a.alpha;
 
         mRequestedWidth = 0;
@@ -991,7 +997,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     @Override
-    void onParentChanged(ConfigurationContainer newParent, ConfigurationContainer oldParent) {
+    void onParentChanged(com.android.server.wm.ConfigurationContainer newParent, com.android.server.wm.ConfigurationContainer oldParent) {
         super.onParentChanged(newParent, oldParent);
         setDrawnStateEvaluated(false /*evaluated*/);
 
@@ -1033,7 +1039,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         frame.inset(left, top, right, bottom);
     }
 
-    void computeFrame(DisplayFrames displayFrames) {
+    void computeFrame(com.android.server.wm.DisplayFrames displayFrames) {
         getLayoutingWindowFrames().setDisplayCutout(displayFrames.mDisplayCutout);
         computeFrameLw();
         // Update the source frame to provide insets to other windows during layout. If the
@@ -1057,9 +1063,9 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         final Task task = getTask();
         final boolean isFullscreenAndFillsDisplay = !inMultiWindowMode() && matchesDisplayBounds();
         final boolean windowsAreFloating = task != null && task.isFloating();
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         final DisplayInfo displayInfo = getDisplayInfo();
-        final WindowFrames windowFrames = getLayoutingWindowFrames();
+        final com.android.server.wm.WindowFrames windowFrames = getLayoutingWindowFrames();
 
         mInsetFrame.set(getBounds());
 
@@ -1238,7 +1244,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
         // Calculate relative frame
         windowFrames.mRelFrame.set(windowFrames.mFrame);
-        WindowContainer parent = getParent();
+        com.android.server.wm.WindowContainer parent = getParent();
         int parentLeft = 0;
         int parentTop = 0;
         if (mIsChildWindow) {
@@ -1379,7 +1385,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * dimensions or insets have changed.
      */
     void updateResizingWindowIfNeeded() {
-        final WindowStateAnimator winAnimator = mWinAnimator;
+        final com.android.server.wm.WindowStateAnimator winAnimator = mWinAnimator;
         if (!mHasSurface || getDisplayContent().mLayoutSeq != mLayoutSeq || isGoneForLayoutLw()) {
             return;
         }
@@ -1488,12 +1494,12 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     @Override
-    DisplayContent getDisplayContent() {
+    com.android.server.wm.DisplayContent getDisplayContent() {
         return mToken.getDisplayContent();
     }
 
     @Override
-    void onDisplayChanged(DisplayContent dc) {
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
         if (dc != null && mDisplayContent != null && dc != mDisplayContent
                 && mDisplayContent.mInputMethodInputTarget == this) {
             dc.setInputMethodInputTarget(mDisplayContent.mInputMethodInputTarget);
@@ -1508,8 +1514,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     /** @return The display frames in use by this window. */
-    DisplayFrames getDisplayFrames(DisplayFrames originalFrames) {
-        final DisplayFrames diplayFrames = mToken.getFixedRotationTransformDisplayFrames();
+    com.android.server.wm.DisplayFrames getDisplayFrames(com.android.server.wm.DisplayFrames originalFrames) {
+        final com.android.server.wm.DisplayFrames diplayFrames = mToken.getFixedRotationTransformDisplayFrames();
         if (diplayFrames != null) {
             return diplayFrames;
         }
@@ -1534,7 +1540,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     @Override
     public int getDisplayId() {
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         if (displayContent == null) {
             return Display.INVALID_DISPLAY;
         }
@@ -1545,14 +1551,15 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         return mActivityRecord != null ? mActivityRecord.getTask() : null;
     }
 
-    @Nullable ActivityStack getRootTask() {
+    @Nullable
+    com.android.server.wm.ActivityStack getRootTask() {
         final Task task = getTask();
         if (task != null) {
-            return (ActivityStack) task.getRootTask();
+            return (com.android.server.wm.ActivityStack) task.getRootTask();
         }
         // Some system windows (e.g. "Power off" dialog) don't have a task, but we would still
         // associate them with some stack to enable dimming.
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         return mAttrs.type >= FIRST_SYSTEM_WINDOW
                 && dc != null ? dc.getDefaultTaskDisplayArea().getRootHomeTask() : null;
     }
@@ -1590,7 +1597,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         bounds.setEmpty();
         mTmpRect.setEmpty();
         if (intersectWithStackBounds) {
-            final ActivityStack stack = task.getStack();
+            final com.android.server.wm.ActivityStack stack = task.getStack();
             if (stack != null) {
                 stack.getDimBounds(mTmpRect);
             } else {
@@ -1601,10 +1608,10 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
                 // the secondary split, it means this is "minimized" and thus must prevent
                 // overlapping with home.
                 // TODO(b/158242495): get rid of this when drag/drop can use surface bounds.
-                final ActivityStack rootSecondary =
+                final com.android.server.wm.ActivityStack rootSecondary =
                         task.getDisplayArea().getRootSplitScreenSecondaryTask();
                 if (rootSecondary.isActivityTypeHome() || rootSecondary.isActivityTypeRecents()) {
-                    final WindowContainer topTask = rootSecondary.getTopChild();
+                    final com.android.server.wm.WindowContainer topTask = rootSecondary.getTopChild();
                     if (topTask.isVisible()) {
                         cutRect(mTmpRect, topTask.getBounds());
                     }
@@ -1629,7 +1636,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     public long getInputDispatchingTimeoutNanos() {
         return mActivityRecord != null
                 ? mActivityRecord.mInputDispatchingTimeoutNanos
-                : WindowManagerService.DEFAULT_INPUT_DISPATCHING_TIMEOUT_NANOS;
+                : com.android.server.wm.WindowManagerService.DEFAULT_INPUT_DISPATCHING_TIMEOUT_NANOS;
     }
 
     @Override
@@ -1744,7 +1751,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * call to IWindowSession.add() and the first relayout().
      */
     boolean isVisibleOrAdding() {
-        final ActivityRecord atoken = mActivityRecord;
+        final com.android.server.wm.ActivityRecord atoken = mActivityRecord;
         return (mHasSurface || (!mRelayoutCalled && mViewVisibility == View.VISIBLE))
                 && isVisibleByPolicy() && !isParentWindowHidden()
                 && (atoken == null || atoken.mVisibleRequested)
@@ -1760,7 +1767,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         if (!mHasSurface || mDestroying || !isVisibleByPolicy()) {
             return false;
         }
-        final ActivityRecord atoken = mActivityRecord;
+        final com.android.server.wm.ActivityRecord atoken = mActivityRecord;
         if (atoken != null) {
             return ((!isParentWindowHidden() && atoken.mVisibleRequested)
                     || isAnimating(TRANSITION | PARENTS));
@@ -1846,7 +1853,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      */
     @Override
     public boolean isDisplayedLw() {
-        final ActivityRecord atoken = mActivityRecord;
+        final com.android.server.wm.ActivityRecord atoken = mActivityRecord;
         return isDrawnLw() && isVisibleByPolicy()
                 && ((!isParentWindowHidden() && (atoken == null || atoken.mVisibleRequested))
                         || isAnimating(TRANSITION | PARENTS));
@@ -1862,7 +1869,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     @Override
     public boolean isGoneForLayoutLw() {
-        final ActivityRecord atoken = mActivityRecord;
+        final com.android.server.wm.ActivityRecord atoken = mActivityRecord;
         return mViewVisibility == View.GONE
                 || !mRelayoutCalled
                 // We can't check isVisible here because it will also check the client visibility
@@ -1971,7 +1978,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             // 2. App is not running an animation
             // 3. WS is currently visible
             if (!runningAppAnimation && isVisibleNow) {
-                final AccessibilityController accessibilityController =
+                final com.android.server.wm.AccessibilityController accessibilityController =
                         mWmService.mAccessibilityController;
                 final int winTransit = TRANSIT_EXIT;
                 mWinAnimator.applyAnimationLocked(winTransit, false /* isEntrance */);
@@ -1984,7 +1991,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     boolean onSetAppExiting() {
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         boolean changed = false;
 
         if (isVisibleNow()) {
@@ -2166,7 +2173,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             mReplacementWindow.mSkipEnterAnimationForSeamlessReplacement = false;
         }
 
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         if (isInputMethodTarget()) {
             dc.computeImeTarget(true /* updateImeTarget */);
         }
@@ -2175,7 +2182,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         }
 
         final int type = mAttrs.type;
-        if (WindowManagerService.excludeWindowTypeFromTapOutTask(type)) {
+        if (com.android.server.wm.WindowManagerService.excludeWindowTypeFromTapOutTask(type)) {
             dc.mTapExcludedWindows.remove(this);
         }
 
@@ -2319,7 +2326,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             // Removing a visible window will effect the computed orientation
             // So just update orientation if needed.
             if (wasVisible) {
-                final DisplayContent displayContent = getDisplayContent();
+                final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
                 if (displayContent.updateOrientation()) {
                     displayContent.sendNewConfiguration();
                 }
@@ -2356,7 +2363,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     private boolean canWindowInEmbeddedDisplayBeImeTarget() {
         final int embeddedDisplayContentsSize = mEmbeddedDisplayContents.size();
         for (int i = embeddedDisplayContentsSize - 1; i >= 0; i--) {
-            final DisplayContent edc = mEmbeddedDisplayContents.valueAt(i);
+            final com.android.server.wm.DisplayContent edc = mEmbeddedDisplayContents.valueAt(i);
             if (edc.forAllWindows(WindowState::canBeImeTarget, true)) {
                 return true;
             }
@@ -2394,7 +2401,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             return false;
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack != null && !stack.isFocusable()) {
             // Ignore when the stack shouldn't receive input event.
             // (i.e. the minimized stack in split screen mode.)
@@ -2548,7 +2555,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     void setDisplayLayoutNeeded() {
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         if (dc != null) {
             dc.setLayoutNeeded();
         }
@@ -2619,7 +2626,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         // For freeform windows, we need the touch region to include the whole
         // surface for the shadows.
         final DisplayMetrics displayMetrics = getDisplayContent().getDisplayMetrics();
-        final int delta = WindowManagerService.dipToPixel(
+        final int delta = com.android.server.wm.WindowManagerService.dipToPixel(
                 RESIZE_HANDLE_WIDTH_IN_DP, displayMetrics);
         inOutRect.inset(-delta, -delta);
     }
@@ -2809,7 +2816,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
                             .windowForClientLocked(mSession, mClient, false);
                     Slog.i(TAG, "WIN DEATH: " + win);
                     if (win != null) {
-                        final DisplayContent dc = getDisplayContent();
+                        final com.android.server.wm.DisplayContent dc = getDisplayContent();
                         if (win.mActivityRecord != null && win.mActivityRecord.findMainWindow() == win) {
                             mWmService.mTaskSnapshotController.onAppDied(win.mActivityRecord);
                         }
@@ -2905,7 +2912,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * it is consuming input from the app.
      */
     private boolean isRecentsAnimationConsumingAppInput() {
-        final RecentsAnimationController recentsAnimationController =
+        final com.android.server.wm.RecentsAnimationController recentsAnimationController =
                 mWmService.getRecentsAnimationController();
         return recentsAnimationController != null
                 && recentsAnimationController.shouldApplyInputConsumer(mActivityRecord);
@@ -2913,7 +2920,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     @Override
     public boolean hasDrawnLw() {
-        return mWinAnimator.mDrawState == WindowStateAnimator.HAS_DRAWN;
+        return mWinAnimator.mDrawState == com.android.server.wm.WindowStateAnimator.HAS_DRAWN;
     }
 
     @Override
@@ -3155,7 +3162,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         return mAnimatingExit || (mActivityRecord != null && mActivityRecord.isClosingOrEnteringPip());
     }
 
-    void addWinAnimatorToList(ArrayList<WindowStateAnimator> animators) {
+    void addWinAnimatorToList(ArrayList<com.android.server.wm.WindowStateAnimator> animators) {
         animators.add(mWinAnimator);
 
         for (int i = mChildren.size() - 1; i >= 0; --i) {
@@ -3329,7 +3336,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     @Override
     public boolean isDefaultDisplay() {
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         if (displayContent == null) {
             // Only a window that was on a non-default display can be detached from it.
             return false;
@@ -3446,7 +3453,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      */
     void getEffectiveTouchableRegion(Region outRegion) {
         final boolean modal = (mAttrs.flags & (FLAG_NOT_TOUCH_MODAL | FLAG_NOT_FOCUSABLE)) == 0;
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
 
         if (modal && dc != null) {
             outRegion.set(dc.getBounds());
@@ -3464,7 +3471,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             return;
         }
 
-        final ActivityStack stack = task.getStack();
+        final com.android.server.wm.ActivityStack stack = task.getStack();
         if (stack == null || inFreeformWindowingMode()) {
             handle.setTouchableRegionCrop(null);
             return;
@@ -3479,7 +3486,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             return;
         }
 
-        final ActivityStack stack = task.getStack();
+        final com.android.server.wm.ActivityStack stack = task.getStack();
         if (stack == null || stack.mCreatedByOrganizer) {
             return;
         }
@@ -3549,7 +3556,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     /** @return {@code true} if the process registered to a display as a config listener. */
     private boolean registeredForDisplayConfigChanges() {
         final WindowState parentWindow = getParentWindow();
-        final WindowProcessController wpc = parentWindow != null
+        final com.android.server.wm.WindowProcessController wpc = parentWindow != null
                 ? parentWindow.mWpcForDisplayConfigChanges
                 : mWpcForDisplayConfigChanges;
         return wpc != null && wpc.registeredForDisplayConfigChanges();
@@ -3621,13 +3628,13 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         // notify all windows in the embedded display about the location change.
         if (embeddedDisplayContentsSize != 0) {
             for (int i = embeddedDisplayContentsSize - 1; i >= 0; i--) {
-                final DisplayContent edc = mEmbeddedDisplayContents.valueAt(i);
+                final com.android.server.wm.DisplayContent edc = mEmbeddedDisplayContents.valueAt(i);
                 edc.notifyLocationInParentDisplayChanged();
             }
         }
         // If this window is in a embedded display which is re-parented to another window,
         // we may need to update its correct on-screen location.
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         if (dc.getParentWindow() == null) {
             return;
         }
@@ -3663,7 +3670,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         if (mAppDied || mRemoved) {
             return;
         }
-        final InsetsStateController stateController =
+        final com.android.server.wm.InsetsStateController stateController =
                 getDisplayContent().getInsetsStateController();
         try {
             mClient.insetsControlChanged(getInsetsState(),
@@ -3723,7 +3730,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     private int getRootTaskId() {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return INVALID_TASK_ID;
         }
@@ -3901,9 +3908,9 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     @CallSuper
     @Override
     public void dumpDebug(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         boolean isVisible = isVisible();
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible) {
             return;
         }
 
@@ -4149,8 +4156,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         }
     }
 
-    private void applyGravityAndUpdateFrame(WindowFrames windowFrames, Rect containingFrame,
-            Rect displayFrame) {
+    private void applyGravityAndUpdateFrame(com.android.server.wm.WindowFrames windowFrames, Rect containingFrame,
+                                            Rect displayFrame) {
         final int pw = containingFrame.width();
         final int ph = containingFrame.height();
         final Task task = getTask();
@@ -4333,7 +4340,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     void requestUpdateWallpaperIfNeeded() {
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         if (dc != null && (mAttrs.flags & FLAG_SHOW_WALLPAPER) != 0) {
             dc.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
             dc.setLayoutNeeded();
@@ -4450,7 +4457,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
         if (mHidden) {
             mHidden = false;
-            final DisplayContent displayContent = getDisplayContent();
+            final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
 
             for (int i = mChildren.size() - 1; i >= 0; --i) {
                 final WindowState c = mChildren.get(i);
@@ -4822,7 +4829,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             mWinAnimator.hide(reason);
             getDisplayContent().mWallpaperController.mDeferredHideWallpaper = null;
             dispatchWallpaperVisibility(false);
-            final DisplayContent displayContent = getDisplayContent();
+            final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
             if (displayContent != null) {
                 displayContent.pendingLayoutChanges |= FINISH_LAYOUT_REDO_WALLPAPER;
                 if (DEBUG_LAYOUT_REPEATS) {
@@ -4928,7 +4935,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * special cases. This rectangle is in screen space.
      */
     void calculatePolicyCrop(Rect policyCrop) {
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
 
         if (!displayContent.isDefaultDisplay && !displayContent.supportsSystemDecorations()) {
             // On a different display there is no system decor. Crop the window
@@ -5112,7 +5119,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * @param dc DisplayContent of the re-parented embedded display.
      * @return {@code true} if the giving DisplayContent is added, {@code false} otherwise.
      */
-    boolean addEmbeddedDisplayContent(DisplayContent dc) {
+    boolean addEmbeddedDisplayContent(com.android.server.wm.DisplayContent dc) {
         return mEmbeddedDisplayContents.add(dc);
     }
 
@@ -5123,7 +5130,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * @param dc DisplayContent of the re-parented embedded display.
      * @return {@code true} if the giving DisplayContent is removed, {@code false} otherwise.
      */
-    boolean removeEmbeddedDisplayContent(DisplayContent dc) {
+    boolean removeEmbeddedDisplayContent(com.android.server.wm.DisplayContent dc) {
         return mEmbeddedDisplayContents.remove(dc);
     }
 
@@ -5160,8 +5167,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
                 displayInfo.appWidth, displayInfo.appHeight);
         anim.restrictDuration(MAX_ANIMATION_DURATION);
         anim.scaleCurrentDuration(mWmService.getWindowAnimationScaleLocked());
-        final AnimationAdapter adapter = new LocalAnimationAdapter(
-                new WindowAnimationSpec(anim, mSurfacePosition, false /* canSkipFirstFrame */,
+        final com.android.server.wm.AnimationAdapter adapter = new com.android.server.wm.LocalAnimationAdapter(
+                new com.android.server.wm.WindowAnimationSpec(anim, mSurfacePosition, false /* canSkipFirstFrame */,
                         0 /* windowCornerRadius */),
                 mWmService.mSurfaceAnimationRunner);
         startAnimation(getPendingTransaction(), adapter);
@@ -5181,18 +5188,18 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         transformFrameToSurfacePosition(mWindowFrames.mLastFrame.left, mWindowFrames.mLastFrame.top,
                 oldPosition);
         transformFrameToSurfacePosition(left, top, newPosition);
-        final AnimationAdapter adapter = new LocalAnimationAdapter(
+        final com.android.server.wm.AnimationAdapter adapter = new com.android.server.wm.LocalAnimationAdapter(
                 new MoveAnimationSpec(oldPosition.x, oldPosition.y, newPosition.x, newPosition.y),
                 mWmService.mSurfaceAnimationRunner);
         startAnimation(getPendingTransaction(), adapter);
     }
 
-    private void startAnimation(Transaction t, AnimationAdapter adapter) {
+    private void startAnimation(Transaction t, com.android.server.wm.AnimationAdapter adapter) {
         startAnimation(t, adapter, mWinAnimator.mLastHidden, ANIMATION_TYPE_WINDOW_ANIMATION);
     }
 
     @Override
-    protected void onAnimationFinished(@AnimationType int type, AnimationAdapter anim) {
+    protected void onAnimationFinished(@AnimationType int type, com.android.server.wm.AnimationAdapter anim) {
         super.onAnimationFinished(type, anim);
         mWinAnimator.onAnimationFinished();
     }
@@ -5214,7 +5221,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
         // We might be on a display which has been re-parented to a view in another window, so here
         // computes the global location of our display.
-        DisplayContent dc = getDisplayContent();
+        com.android.server.wm.DisplayContent dc = getDisplayContent();
         while (dc != null && dc.getParentWindow() != null) {
             final WindowState displayParent = dc.getParentWindow();
             x += displayParent.mWindowFrames.mFrame.left
@@ -5225,7 +5232,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         }
 
         // If changed, also adjust transformFrameToSurfacePosition
-        final WindowContainer parent = getParent();
+        final com.android.server.wm.WindowContainer parent = getParent();
         if (isChildWindow()) {
             final WindowState parentWindow = getParentWindow();
             x += parentWindow.mWindowFrames.mFrame.left - parentWindow.mAttrs.surfaceInsets.left;
@@ -5327,7 +5334,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     boolean needsZBoost() {
         final WindowState inputMethodTarget = getDisplayContent().mInputMethodTarget;
         if (mIsImWindow && inputMethodTarget != null) {
-            final ActivityRecord activity = inputMethodTarget.mActivityRecord;
+            final com.android.server.wm.ActivityRecord activity = inputMethodTarget.mActivityRecord;
             if (activity != null) {
                 return activity.needsZBoost();
             }
@@ -5410,7 +5417,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         outPoint.set(left, top);
 
         // If changed, also adjust getTransformationMatrix
-        final WindowContainer parentWindowContainer = getParent();
+        final com.android.server.wm.WindowContainer parentWindowContainer = getParent();
         if (isChildWindow()) {
             // TODO: This probably falls apart at some point and we should
             // actually compute relative coordinates.
@@ -5426,7 +5433,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             outPoint.offset(-parentBounds.left, -parentBounds.top);
         }
 
-        ActivityStack stack = getRootTask();
+        com.android.server.wm.ActivityStack stack = getRootTask();
 
         // If we have stack outsets, that means the top-left
         // will be outset, and we need to inset ourselves
@@ -5493,8 +5500,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * @return {@link InsetsControlTarget} of host that controls the IME.
      *         When window is doesn't have a parent, it is returned as-is.
      */
-    InsetsControlTarget getImeControlTarget() {
-        final DisplayContent dc = getDisplayContent();
+    com.android.server.wm.InsetsControlTarget getImeControlTarget() {
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         final WindowState parentWindow = dc.getParentWindow();
 
         // If target's display has a parent, IME is displayed in the parent display.
@@ -5555,7 +5562,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * the window bounds.
      */
     void updateTapExcludeRegion(Region region) {
-        final DisplayContent currentDisplay = getDisplayContent();
+        final com.android.server.wm.DisplayContent currentDisplay = getDisplayContent();
         if (currentDisplay == null) {
             throw new IllegalStateException("Trying to update window not attached to any display.");
         }
@@ -5672,7 +5679,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     @Override
-    public WindowFrames getWindowFrames() {
+    public com.android.server.wm.WindowFrames getWindowFrames() {
         return mWindowFrames;
     }
 
@@ -5680,7 +5687,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * If the simulated frame is set, the computed result won't be used in real layout. So this
      * frames must be cleared when the simulated computation is done.
      */
-    void setSimulatedWindowFrames(WindowFrames windowFrames) {
+    void setSimulatedWindowFrames(com.android.server.wm.WindowFrames windowFrames) {
         mSimulatedWindowFrames = windowFrames;
     }
 
@@ -5688,7 +5695,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * Use this method only when the simulated frames may be set, so it is clearer that the calling
      * path may be used to simulate layout.
      */
-    WindowFrames getLayoutingWindowFrames() {
+    com.android.server.wm.WindowFrames getLayoutingWindowFrames() {
         return mSimulatedWindowFrames != null ? mSimulatedWindowFrames : mWindowFrames;
     }
 
@@ -5706,11 +5713,11 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
      * @param insetProvider the provider which should not be visible to the client.
      * @see InsetsStateController#getInsetsForDispatch(WindowState)
      */
-    void setControllableInsetProvider(InsetsSourceProvider insetProvider) {
+    void setControllableInsetProvider(com.android.server.wm.InsetsSourceProvider insetProvider) {
         mControllableInsetProvider = insetProvider;
     }
 
-    InsetsSourceProvider getControllableInsetProvider() {
+    com.android.server.wm.InsetsSourceProvider getControllableInsetProvider() {
         return mControllableInsetProvider;
     }
 
@@ -5835,8 +5842,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     }
 
     @Override
-    boolean prepareForSync(BLASTSyncEngine.TransactionReadyListener waitingListener,
-            int waitingId) {
+    boolean prepareForSync(com.android.server.wm.BLASTSyncEngine.TransactionReadyListener waitingListener,
+                           int waitingId) {
         boolean willSync = setPendingListener(waitingListener, waitingId);
         if (!willSync) {
             return false;

@@ -69,7 +69,7 @@ import java.util.List;
  */
 public final class WindowManagerImpl implements WindowManager {
     @UnsupportedAppUsage
-    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+    private final android.view.WindowManagerGlobal mGlobal = android.view.WindowManagerGlobal.getInstance();
     @VisibleForTesting
     public final Context mContext;
     private final Window mParentWindow;
@@ -105,6 +105,7 @@ public final class WindowManagerImpl implements WindowManager {
 
     @Override
     public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
+        // 应用 token
         applyDefaultToken(params);
         mGlobal.addView(view, params, mContext.getDisplayNoVerify(), mParentWindow,
                 mContext.getUserId());
@@ -153,7 +154,7 @@ public final class WindowManagerImpl implements WindowManager {
             }
         };
         try {
-            WindowManagerGlobal.getWindowManagerService()
+            android.view.WindowManagerGlobal.getWindowManagerService()
                 .requestAppKeyboardShortcuts(resultReceiver, deviceId);
         } catch (RemoteException e) {
         }
@@ -167,7 +168,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public Region getCurrentImeTouchRegion() {
         try {
-            return WindowManagerGlobal.getWindowManagerService().getCurrentImeTouchRegion();
+            return android.view.WindowManagerGlobal.getWindowManagerService().getCurrentImeTouchRegion();
         } catch (RemoteException e) {
         }
         return null;
@@ -176,7 +177,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public void setShouldShowWithInsecureKeyguard(int displayId, boolean shouldShow) {
         try {
-            WindowManagerGlobal.getWindowManagerService()
+            android.view.WindowManagerGlobal.getWindowManagerService()
                     .setShouldShowWithInsecureKeyguard(displayId, shouldShow);
         } catch (RemoteException e) {
         }
@@ -185,7 +186,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public void setShouldShowSystemDecors(int displayId, boolean shouldShow) {
         try {
-            WindowManagerGlobal.getWindowManagerService()
+            android.view.WindowManagerGlobal.getWindowManagerService()
                     .setShouldShowSystemDecors(displayId, shouldShow);
         } catch (RemoteException e) {
         }
@@ -194,7 +195,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public boolean shouldShowSystemDecors(int displayId) {
         try {
-            return WindowManagerGlobal.getWindowManagerService().shouldShowSystemDecors(displayId);
+            return android.view.WindowManagerGlobal.getWindowManagerService().shouldShowSystemDecors(displayId);
         } catch (RemoteException e) {
         }
         return false;
@@ -203,7 +204,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public void setShouldShowIme(int displayId, boolean shouldShow) {
         try {
-            WindowManagerGlobal.getWindowManagerService().setShouldShowIme(displayId, shouldShow);
+            android.view.WindowManagerGlobal.getWindowManagerService().setShouldShowIme(displayId, shouldShow);
         } catch (RemoteException e) {
         }
     }
@@ -211,7 +212,7 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public boolean shouldShowIme(int displayId) {
         try {
-            return WindowManagerGlobal.getWindowManagerService().shouldShowIme(displayId);
+            return android.view.WindowManagerGlobal.getWindowManagerService().shouldShowIme(displayId);
         } catch (RemoteException e) {
         }
         return false;
@@ -267,13 +268,13 @@ public final class WindowManagerImpl implements WindowManager {
             final Rect stableInsets = new Rect();
             final DisplayCutout.ParcelableWrapper displayCutout =
                     new DisplayCutout.ParcelableWrapper();
-            final InsetsState insetsState = new InsetsState();
-            final boolean alwaysConsumeSystemBars = WindowManagerGlobal.getWindowManagerService()
+            final android.view.InsetsState insetsState = new android.view.InsetsState();
+            final boolean alwaysConsumeSystemBars = android.view.WindowManagerGlobal.getWindowManagerService()
                     .getWindowInsets(attrs, mContext.getDisplayId(), systemWindowInsets,
                     stableInsets, displayCutout, insetsState);
             final boolean isScreenRound =
                     mContext.getResources().getConfiguration().isScreenRound();
-            if (ViewRootImpl.sNewInsetsMode == NEW_INSETS_MODE_FULL) {
+            if (android.view.ViewRootImpl.sNewInsetsMode == NEW_INSETS_MODE_FULL) {
                 return insetsState.calculateInsets(bounds, null /* ignoringVisibilityState*/,
                         isScreenRound, alwaysConsumeSystemBars, displayCutout.get(),
                         SOFT_INPUT_ADJUST_NOTHING, attrs.flags,

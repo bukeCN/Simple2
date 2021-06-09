@@ -271,6 +271,7 @@ import android.service.voice.IVoiceInteractionSession;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.EventLog;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.util.MergedConfiguration;
 import android.util.Slog;
@@ -338,7 +339,7 @@ import java.util.function.Predicate;
 /**
  * An entry in the history stack, representing an activity.
  */
-final class ActivityRecord extends WindowToken implements WindowManagerService.AppFreezeListener {
+final class ActivityRecord extends com.android.server.wm.WindowToken implements com.android.server.wm.WindowManagerService.AppFreezeListener {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityRecord" : TAG_ATM;
     private static final String TAG_ADD_REMOVE = TAG + POSTFIX_ADD_REMOVE;
     private static final String TAG_APP = TAG + POSTFIX_APP;
@@ -399,7 +400,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     // finished destroying itself.
     private static final int DESTROY_TIMEOUT = 10 * 1000;
 
-    final ActivityTaskManagerService mAtmService;
+    final com.android.server.wm.ActivityTaskManagerService mAtmService;
     final ActivityInfo info; // activity info provided by developer in AndroidManifest
     // Non-null only for application tokens.
     // TODO: rename to mActivityToken
@@ -431,7 +432,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     @VisibleForTesting
     int mHandoverLaunchDisplayId = INVALID_DISPLAY; // Handover launch display id to next activity.
     @VisibleForTesting
-    TaskDisplayArea mHandoverTaskDisplayArea; // Handover launch task display area.
+    com.android.server.wm.TaskDisplayArea mHandoverTaskDisplayArea; // Handover launch task display area.
     private final boolean componentSpecified;  // did caller specify an explicit component?
     final boolean rootVoiceInteraction;  // was this the root activity of a voice interaction?
 
@@ -464,9 +465,9 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     ActivityOptions pendingOptions; // most recently given options
     ActivityOptions returningOptions; // options that are coming back via convertToTranslucent
     AppTimeTracker appTimeTracker; // set if we are tracking the time in this app/task/activity
-    ActivityServiceConnectionsHolder mServiceConnectionsHolder; // Service connections.
+    com.android.server.wm.ActivityServiceConnectionsHolder mServiceConnectionsHolder; // Service connections.
     UriPermissionOwner uriPermissions; // current special URI access perms.
-    WindowProcessController app;      // if non-null, hosting application
+    com.android.server.wm.WindowProcessController app;      // if non-null, hosting application
     private ActivityState mState;    // current state we are in
     private Bundle mIcicle;         // last saved activity state
     private PersistableBundle mPersistentState; // last persistently saved activity state
@@ -516,8 +517,8 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     ComponentName requestedVrComponent; // the requested component for handling VR mode.
 
     boolean inHistory;  // are we in the history stack?
-    final ActivityStackSupervisor mStackSupervisor;
-    final RootWindowContainer mRootWindowContainer;
+    final com.android.server.wm.ActivityStackSupervisor mStackSupervisor;
+    final com.android.server.wm.RootWindowContainer mRootWindowContainer;
 
     static final int STARTING_WINDOW_NOT_SHOWN = 0;
     static final int STARTING_WINDOW_SHOWN = 1;
@@ -557,7 +558,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     private RemoteAnimationDefinition mRemoteAnimationDefinition;
 
-    AnimatingActivityRegistry mAnimatingActivityRegistry;
+    com.android.server.wm.AnimatingActivityRegistry mAnimatingActivityRegistry;
 
     private Task mLastParent;
 
@@ -567,8 +568,8 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     boolean firstWindowDrawn;
     // Last drawn state we reported to the app token.
     private boolean reportedDrawn;
-    private final WindowState.UpdateReportedVisibilityResults mReportedVisibilityResults =
-            new WindowState.UpdateReportedVisibilityResults();
+    private final com.android.server.wm.WindowState.UpdateReportedVisibilityResults mReportedVisibilityResults =
+            new com.android.server.wm.WindowState.UpdateReportedVisibilityResults();
 
     private boolean mUseTransferredAnimation;
 
@@ -580,7 +581,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     /** Whether our surface was set to be showing in the last call to {@link #prepareSurfaces} */
     private boolean mLastSurfaceShowing = true;
 
-    private Letterbox mLetterbox;
+    private com.android.server.wm.Letterbox mLetterbox;
 
     /**
      * The activity is opaque and fills the entire space of this task.
@@ -651,7 +652,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     // Information about an application starting window if displayed.
     // Note: these are de-referenced before the starting window animates away.
-    StartingData mStartingData;
+    com.android.server.wm.StartingData mStartingData;
     WindowState startingWindow;
     WindowManagerPolicy.StartingSurface startingSurface;
     boolean startingDisplayed;
@@ -1217,12 +1218,12 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         this.task = task;
     }
 
-    ActivityStack getStack() {
+    com.android.server.wm.ActivityStack getStack() {
         return task != null ? task.getStack() : null;
     }
 
     @Override
-    void onParentChanged(ConfigurationContainer newParent, ConfigurationContainer oldParent) {
+    void onParentChanged(com.android.server.wm.ConfigurationContainer newParent, com.android.server.wm.ConfigurationContainer oldParent) {
         final Task oldTask = oldParent != null ? (Task) oldParent : null;
         final Task newTask = newParent != null ? (Task) newParent : null;
         this.task = newTask;
@@ -1268,7 +1269,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         } else if (mLastParent != null && mLastParent.getStack() != null) {
             task.getStack().mExitingActivities.remove(this);
         }
-        final ActivityStack stack = getStack();
+        final com.android.server.wm.ActivityStack stack = getStack();
 
         // If we reparent, make sure to remove ourselves from the old animation registry.
         if (mAnimatingActivityRegistry != null) {
@@ -1306,8 +1307,8 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     @Override
-    void onDisplayChanged(DisplayContent dc) {
-        DisplayContent prevDc = mDisplayContent;
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
+        com.android.server.wm.DisplayContent prevDc = mDisplayContent;
         super.onDisplayChanged(dc);
         if (prevDc == null || prevDc == mDisplayContent) {
             return;
@@ -1345,7 +1346,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         final boolean needsLetterbox = surfaceReady && w.isLetterboxedAppWindow() && fillsParent();
         if (needsLetterbox) {
             if (mLetterbox == null) {
-                mLetterbox = new Letterbox(() -> makeChildSurface(null),
+                mLetterbox = new com.android.server.wm.Letterbox(() -> makeChildSurface(null),
                         mWmService.mTransactionFactory);
                 mLetterbox.attachInput(w);
             }
@@ -1486,13 +1487,13 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
     }
 
-    ActivityRecord(ActivityTaskManagerService _service, WindowProcessController _caller,
-            int _launchedFromPid, int _launchedFromUid, String _launchedFromPackage,
-            @Nullable String _launchedFromFeature, Intent _intent, String _resolvedType,
-            ActivityInfo aInfo, Configuration _configuration, ActivityRecord _resultTo,
-            String _resultWho, int _reqCode, boolean _componentSpecified,
-            boolean _rootVoiceInteraction, ActivityStackSupervisor supervisor,
-            ActivityOptions options, ActivityRecord sourceRecord) {
+    ActivityRecord(com.android.server.wm.ActivityTaskManagerService _service, com.android.server.wm.WindowProcessController _caller,
+                   int _launchedFromPid, int _launchedFromUid, String _launchedFromPackage,
+                   @Nullable String _launchedFromFeature, Intent _intent, String _resolvedType,
+                   ActivityInfo aInfo, Configuration _configuration, ActivityRecord _resultTo,
+                   String _resultWho, int _reqCode, boolean _componentSpecified,
+                   boolean _rootVoiceInteraction, com.android.server.wm.ActivityStackSupervisor supervisor,
+                   ActivityOptions options, ActivityRecord sourceRecord) {
         super(_service.mWindowManager, new Token(_intent).asBinder(), TYPE_APPLICATION, true,
                 null /* displayContent */, false /* ownerCanManageAppTokens */);
 
@@ -1648,7 +1649,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             // null/INVALID_DISPLAY if not set.
             final WindowContainerToken daToken = options.getLaunchTaskDisplayArea();
             mHandoverTaskDisplayArea = daToken != null
-                    ? (TaskDisplayArea) WindowContainer.fromBinder(daToken.asBinder()) : null;
+                    ? (com.android.server.wm.TaskDisplayArea) com.android.server.wm.WindowContainer.fromBinder(daToken.asBinder()) : null;
             mHandoverLaunchDisplayId = options.getLaunchDisplayId();
         }
     }
@@ -1697,7 +1698,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         return true;
     }
 
-    void setProcess(WindowProcessController proc) {
+    void setProcess(com.android.server.wm.WindowProcessController proc) {
         app = proc;
         final ActivityRecord root = task != null ? task.getRootActivity() : null;
         if (root == this) {
@@ -1809,7 +1810,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
 
         ProtoLog.v(WM_DEBUG_STARTING_WINDOW, "Creating SplashScreenStartingData");
-        mStartingData = new SplashScreenStartingData(mWmService, pkg,
+        mStartingData = new com.android.server.wm.SplashScreenStartingData(mWmService, pkg,
                 theme, compatInfo, nonLocalizedLabel, labelRes, icon, logo, windowFlags,
                 getMergedOverrideConfiguration());
         scheduleAddStartingWindow();
@@ -1822,7 +1823,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
 
         ProtoLog.v(WM_DEBUG_STARTING_WINDOW, "Creating SnapshotStartingData");
-        mStartingData = new SnapshotStartingData(mWmService, snapshot);
+        mStartingData = new com.android.server.wm.SnapshotStartingData(mWmService, snapshot);
         scheduleAddStartingWindow();
         return true;
     }
@@ -1842,7 +1843,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         @Override
         public void run() {
             // Can be accessed without holding the global lock
-            final StartingData startingData;
+            final com.android.server.wm.StartingData startingData;
             synchronized (mWmService.mGlobalLock) {
                 // There can only be one adding request, silly caller!
                 mWmService.mAnimationHandler.removeCallbacks(this);
@@ -1987,7 +1988,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     private void removeAppTokenFromDisplay() {
         if (mWmService.mRoot == null) return;
 
-        final DisplayContent dc = mWmService.mRoot.getDisplayContent(getDisplayId());
+        final com.android.server.wm.DisplayContent dc = mWmService.mRoot.getDisplayContent(getDisplayId());
         if (dc == null) {
             Slog.w(TAG, "removeAppTokenFromDisplay: Attempted to remove token: "
                     + appToken + " from non-existing displayId=" + getDisplayId());
@@ -2042,7 +2043,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return true;
         }
         // Allow the recents component to launch the home activity.
-        final RecentTasks recentTasks = mStackSupervisor.mService.getRecentTasks();
+        final com.android.server.wm.RecentTasks recentTasks = mStackSupervisor.mService.getRecentTasks();
         if (recentTasks != null && recentTasks.isCallerRecents(uid)) {
             return true;
         }
@@ -2067,7 +2068,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return false;
         }
 
-        if (!LocalServices.getService(ActivityTaskManagerInternal.class).isDreaming()) {
+        if (!LocalServices.getService(com.android.server.wm.ActivityTaskManagerInternal.class).isDreaming()) {
             return false;
         }
 
@@ -2121,23 +2122,23 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     /** @return Root task of this activity, null if there is no task. */
-    ActivityStack getRootTask() {
-        return task != null ? (ActivityStack) task.getRootTask() : null;
+    com.android.server.wm.ActivityStack getRootTask() {
+        return task != null ? (com.android.server.wm.ActivityStack) task.getRootTask() : null;
     }
 
     int getRootTaskId() {
         return task != null ? task.getRootTaskId() : INVALID_TASK_ID;
     }
 
-    DisplayContent getDisplay() {
-        final ActivityStack stack = getRootTask();
+    com.android.server.wm.DisplayContent getDisplay() {
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         return stack != null ? stack.getDisplay() : null;
     }
 
     @Override
     @Nullable
-    TaskDisplayArea getDisplayArea() {
-        return (TaskDisplayArea) super.getDisplayArea();
+    com.android.server.wm.TaskDisplayArea getDisplayArea() {
+        return (com.android.server.wm.TaskDisplayArea) super.getDisplayArea();
     }
 
     @Override
@@ -2200,7 +2201,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     boolean isInStackLocked() {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         return stack != null && stack.isInTask(this) != null;
     }
 
@@ -2309,7 +2310,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         boolean isKeyguardLocked = mAtmService.isKeyguardLocked();
         boolean isCurrentAppLocked =
                 mAtmService.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         boolean hasPinnedStack = taskDisplayArea != null && taskDisplayArea.hasPinnedTask();
         // Don't return early if !isNotLocked, since we want to throw an exception if the activity
         // is in an incorrect state
@@ -2409,7 +2410,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return false;
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             Slog.w(TAG, "moveActivityStackToFront: invalid task or stack: activity="
                     + this + " task=" + task);
@@ -2541,7 +2542,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return FINISH_RESULT_CANCELLED;
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         final boolean mayAdjustTop = (isState(RESUMED) || stack.mResumedActivity == null)
                 && stack.isFocusedStackOnDisplay();
         final boolean shouldAdjustGlobalFocus = mayAdjustTop
@@ -2571,7 +2572,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
             // We are finishing the top focused activity and its task has nothing to be focused so
             // the next focusable task should be focused.
-            if (mayAdjustTop && ((ActivityStack) task).topRunningActivity(true /* focusableOnly */)
+            if (mayAdjustTop && ((com.android.server.wm.ActivityStack) task).topRunningActivity(true /* focusableOnly */)
                     == null) {
                 task.adjustFocusToNextFocusableTask("finish-top", false /* allowFocusSelf */,
                             shouldAdjustGlobalFocus);
@@ -2672,7 +2673,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     private void prepareActivityHideTransitionAnimation(int transit) {
-        final DisplayContent dc = getDisplay().mDisplayContent;
+        final com.android.server.wm.DisplayContent dc = getDisplay().mDisplayContent;
         dc.prepareAppTransition(transit, false);
         setVisibility(false);
         dc.executeAppTransition();
@@ -2700,7 +2701,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
         final boolean isCurrentVisible = mVisibleRequested || isState(PAUSED);
         if (isCurrentVisible) {
-            final ActivityStack stack = getStack();
+            final com.android.server.wm.ActivityStack stack = getStack();
             final ActivityRecord activity = stack.mResumedActivity;
             boolean ensureVisibility = false;
             if (activity != null && !activity.occludesParent()) {
@@ -2770,8 +2771,8 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         // Make sure the record is cleaned out of other places.
         mStackSupervisor.mStoppingActivities.remove(this);
 
-        final ActivityStack stack = getRootTask();
-        final TaskDisplayArea taskDisplayArea = getDisplayArea();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
+        final com.android.server.wm.TaskDisplayArea taskDisplayArea = getDisplayArea();
         // TODO(b/137329632): Exclude current activity when looking for the next one with
         // DisplayContent#topRunningActivity().
         final ActivityRecord next = taskDisplayArea.topRunningActivity();
@@ -2930,7 +2931,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     boolean safelyDestroy(String reason) {
         if (isDestroyable()) {
             if (DEBUG_SWITCH) {
-                final ActivityStack stack = getRootTask();
+                final com.android.server.wm.ActivityStack stack = getRootTask();
                 Slog.v(TAG_SWITCH, "Safely destroying " + this + " in state " + getState()
                         + " resumed=" + stack.mResumedActivity
                         + " pausing=" + stack.mPausingActivity
@@ -2946,7 +2947,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         finishActivityResults(Activity.RESULT_CANCELED,
                 null /* resultData */, null /* resultGrants */);
         makeFinishingLocked();
-        if (ActivityTaskManagerDebugConfig.DEBUG_ADD_REMOVE) {
+        if (com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_ADD_REMOVE) {
             Slog.i(TAG_ADD_REMOVE, "Removing activity " + this + " from stack callers="
                     + Debug.getCallers(5));
         }
@@ -3220,7 +3221,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             getDisplayContent().mNoAnimationNotifyOnTransitionFinished.add(token);
         }
 
-        final ActivityStack stack = getStack();
+        final com.android.server.wm.ActivityStack stack = getStack();
         if (delayed && !isEmpty()) {
             // set the token aside because it has an active animation to be finished
             ProtoLog.v(WM_DEBUG_ADD_REMOVE,
@@ -3241,7 +3242,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
         stopFreezingScreen(true, true);
 
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         if (dc.mFocusedApp == this) {
             ProtoLog.v(WM_DEBUG_FOCUS_LIGHT,
                     "Removing focused app token:%s displayId=%d", this,
@@ -3269,8 +3270,8 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      * the existing child window in this token in terms of z-order.
      */
     @Override
-    protected boolean isFirstChildWindowGreaterThanSecond(WindowState newWindow,
-            WindowState existingWindow) {
+    protected boolean isFirstChildWindowGreaterThanSecond(com.android.server.wm.WindowState newWindow,
+                                                          com.android.server.wm.WindowState existingWindow) {
         final int type1 = newWindow.mAttrs.type;
         final int type2 = existingWindow.mAttrs.type;
 
@@ -3312,7 +3313,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     @Override
-    void addWindow(WindowState w) {
+    void addWindow(com.android.server.wm.WindowState w) {
         super.addWindow(w);
 
         boolean gotReplacementWindow = false;
@@ -3347,7 +3348,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     void setAppLayoutChanges(int changes, String reason) {
         if (!mChildren.isEmpty()) {
-            final DisplayContent dc = getDisplayContent();
+            final com.android.server.wm.DisplayContent dc = getDisplayContent();
             dc.pendingLayoutChanges |= changes;
             if (DEBUG_LAYOUT_REPEATS) {
                 mWmService.mWindowPlacerLocked.debugLayoutRepeats(reason, dc.pendingLayoutChanges);
@@ -3733,7 +3734,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     final boolean isSleeping() {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         return stack != null ? stack.shouldSleepActivities() : mAtmService.isSleepingLocked();
     }
 
@@ -3807,7 +3808,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      */
     void applyOptionsLocked(ActivityOptions pendingOptions, Intent intent) {
         final int animationType = pendingOptions.getAnimationType();
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         switch (animationType) {
             case ANIM_CUSTOM:
                 displayContent.mAppTransition.overridePendingAppTransition(
@@ -4065,14 +4066,14 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
         setVisibility(visible, mDeferHidingClient);
         mAtmService.addWindowLayoutReasons(
-                ActivityTaskManagerService.LAYOUT_REASON_VISIBILITY_CHANGED);
+                com.android.server.wm.ActivityTaskManagerService.LAYOUT_REASON_VISIBILITY_CHANGED);
         mStackSupervisor.getActivityMetricsLogger().notifyVisibilityChanged(this);
         mStackSupervisor.mAppVisibilitiesChangedSinceLastPause = true;
     }
 
     @VisibleForTesting
     void setVisibility(boolean visible, boolean deferHidingClient) {
-        final AppTransition appTransition = getDisplayContent().mAppTransition;
+        final com.android.server.wm.AppTransition appTransition = getDisplayContent().mAppTransition;
 
         // Don't set visibility to false if we were already not visible. This prevents WM from
         // adding the app to the closing app list which doesn't make sense for something that is
@@ -4099,7 +4100,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
         onChildVisibilityRequested(visible);
 
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         displayContent.mOpeningApps.remove(this);
         displayContent.mClosingApps.remove(this);
         waitingToShow = false;
@@ -4197,7 +4198,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     @Override
     boolean applyAnimation(LayoutParams lp, int transit, boolean enter,
-            boolean isVoiceInteraction, @Nullable ArrayList<WindowContainer> sources) {
+            boolean isVoiceInteraction, @Nullable ArrayList<com.android.server.wm.WindowContainer> sources) {
         if (mUseTransferredAnimation) {
             return false;
         }
@@ -4246,7 +4247,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         ProtoLog.v(WM_DEBUG_APP_TRANSITIONS,
                 "commitVisibility: %s: visible=%b mVisibleRequested=%b", this,
                 isVisible(), mVisibleRequested);
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         displayContent.getInputMonitor().setUpdateInputWindowsNeededLw();
         if (performLayout) {
             mWmService.updateFocusedWindowLocked(UPDATE_FOCUS_WILL_PLACE_SURFACES,
@@ -4293,7 +4294,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             setClientVisible(visible);
         }
 
-        final DisplayContent displayContent = getDisplayContent();
+        final com.android.server.wm.DisplayContent displayContent = getDisplayContent();
         if (!displayContent.mClosingApps.contains(this)
                 && !displayContent.mOpeningApps.contains(this)) {
             // Take the screenshot before possibly hiding the WSA, otherwise the screenshot
@@ -4503,7 +4504,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             destroyedSomething |= win.destroySurface(cleanupOnResume, mAppStopped);
         }
         if (destroyedSomething) {
-            final DisplayContent dc = getDisplayContent();
+            final com.android.server.wm.DisplayContent dc = getDisplayContent();
             dc.assignWindowLayers(true /*setLayoutNeeded*/);
             updateLetterboxSurface(null);
         }
@@ -4564,7 +4565,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return visibleIgnoringKeyguard;
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return false;
         }
@@ -4601,7 +4602,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     boolean shouldBeVisible() {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return false;
         }
@@ -4622,7 +4623,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         // If this activity is paused, tell it to now show its window.
         if (DEBUG_VISIBILITY) Slog.v(TAG_VISIBILITY,
                 "Making visible and scheduling visibility: " + this);
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         try {
             if (stack.mTranslucentActivityWaiting != null) {
                 updateOptionsLocked(returningOptions);
@@ -4857,7 +4858,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
         r.setSavedState(null /* savedState */);
 
-        final DisplayContent display = r.getDisplay();
+        final com.android.server.wm.DisplayContent display = r.getDisplay();
         if (display != null) {
             display.handleActivitySizeCompatModeIfNeeded(r);
         }
@@ -4899,7 +4900,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         mStackSupervisor.reportResumedActivityLocked(this);
 
         resumeKeyDispatchingLocked();
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         mStackSupervisor.mNoAnimActivities.clear();
 
         // Mark the point when the activity is resuming
@@ -4927,7 +4928,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         if (DEBUG_PAUSE) Slog.v(TAG_PAUSE,
                 "Activity paused: token=" + appToken + ", timeout=" + timeout);
 
-        final ActivityStack stack = getStack();
+        final com.android.server.wm.ActivityStack stack = getStack();
 
         if (stack != null) {
             removePauseTimeout();
@@ -4992,7 +4993,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     void stopIfPossible() {
         if (DEBUG_SWITCH) Slog.d(TAG_SWITCH, "Stopping: " + this);
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (isNoHistory()) {
             if (!finishing) {
                 if (!stack.shouldSleepActivities()) {
@@ -5049,7 +5050,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     void activityStopped(Bundle newIcicle, PersistableBundle newPersistentState,
             CharSequence description) {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         final boolean isStopping = mState == STOPPING;
         if (!isStopping && mState != RESTARTING_PROCESS) {
             Slog.i(TAG, "Activity reported stop, but no longer stopping: " + this);
@@ -5099,7 +5100,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             mStackSupervisor.mStoppingActivities.add(this);
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         // If we already have a few activities waiting to stop, then give up on things going idle
         // and start clearing them out. Or if r is the last of activity of the last task the stack
         // will be empty and must be cleared immediately.
@@ -5135,7 +5136,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return false;
         }
 
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return false;
         }
@@ -5151,7 +5152,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     void finishLaunchTickingLocked() {
         launchTickTime = 0;
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return;
         }
@@ -5162,7 +5163,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         return mayFreezeScreenLocked(app);
     }
 
-    private boolean mayFreezeScreenLocked(WindowProcessController app) {
+    private boolean mayFreezeScreenLocked(com.android.server.wm.WindowProcessController app) {
         // Only freeze the screen if this activity is currently attached to
         // an application, and that application is not blocked or unresponding.
         // In any other case, we can't count on getting the screen unfrozen,
@@ -5174,7 +5175,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         startFreezingScreenLocked(app, configChanges);
     }
 
-    void startFreezingScreenLocked(WindowProcessController app, int configChanges) {
+    void startFreezingScreenLocked(com.android.server.wm.WindowProcessController app, int configChanges) {
         if (mayFreezeScreenLocked(app)) {
             if (getParent() == null) {
                 Slog.w(TAG_WM,
@@ -5298,7 +5299,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
     }
 
-    void onFirstWindowDrawn(WindowState win, WindowStateAnimator winAnimator) {
+    void onFirstWindowDrawn(WindowState win, com.android.server.wm.WindowStateAnimator winAnimator) {
         firstWindowDrawn = true;
 
         // We now have a good window to show, remove dead placeholders
@@ -5499,7 +5500,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             mNumInterestingWindows = findMainWindow(false /* includeStartingApp */) != null ? 1 : 0;
         }
 
-        final WindowStateAnimator winAnimator = w.mWinAnimator;
+        final com.android.server.wm.WindowStateAnimator winAnimator = w.mWinAnimator;
 
         boolean isInterestingAndDrawn = false;
 
@@ -5555,7 +5556,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      */
     public boolean keyDispatchingTimedOut(String reason, int windowPid) {
         ActivityRecord anrActivity;
-        WindowProcessController anrApp;
+        com.android.server.wm.WindowProcessController anrApp;
         boolean windowFromSameProcessAsActivity;
         synchronized (mAtmService.mGlobalLock) {
             anrActivity = getWaitingHistoryRecordLocked();
@@ -5580,7 +5581,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         // First find the real culprit...  if this activity has stopped, then the key dispatching
         // timeout should not be caused by this.
         if (stopped) {
-            final ActivityStack stack = mRootWindowContainer.getTopDisplayFocusedStack();
+            final com.android.server.wm.ActivityStack stack = mRootWindowContainer.getTopDisplayFocusedStack();
             if (stack == null) {
                 return this;
             }
@@ -5644,7 +5645,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         return (r != null) ? r.getRootTask().isInTask(r) : null;
     }
 
-    static ActivityStack getStackLocked(IBinder token) {
+    static com.android.server.wm.ActivityStack getStackLocked(IBinder token) {
         final ActivityRecord r = ActivityRecord.isInStackLocked(token);
         if (r != null) {
             return r.getRootTask();
@@ -5657,7 +5658,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      *         {@link android.view.Display#INVALID_DISPLAY} if not attached.
      */
     int getDisplayId() {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack == null) {
             return INVALID_DISPLAY;
         }
@@ -5669,7 +5670,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             // This would be redundant.
             return false;
         }
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (isState(RESUMED) || stack == null || this == stack.mPausingActivity || !mHaveState
                 || !stopped) {
             // We're not ready for this kind of thing.
@@ -5692,7 +5693,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         if (_taskDescription.getIconFilename() == null &&
                 (icon = _taskDescription.getIcon()) != null) {
             final String iconFilename = createImageFilename(createTime, task.mTaskId);
-            final File iconFile = new File(TaskPersister.getUserImagesDir(task.mUserId),
+            final File iconFile = new File(com.android.server.wm.TaskPersister.getUserImagesDir(task.mUserId),
                     iconFilename);
             final String iconFilePath = iconFile.getAbsolutePath();
             mAtmService.getRecentTasks().saveImage(icon, iconFilePath);
@@ -5910,7 +5911,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         // stack, i.e. the hierarchy of the surfaces is unchanged.
         if (inPinnedWindowingMode()) {
             return getStack().getSurfaceControl();
-        } else if (WindowManagerService.sHierarchicalAnimations) {
+        } else if (com.android.server.wm.WindowManagerService.sHierarchicalAnimations) {
             return super.getAnimationLeashParent();
         } else {
             return getAppAnimationLayer();
@@ -5945,7 +5946,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     @Override
     boolean isWaitingForTransitionStart() {
-        final DisplayContent dc = getDisplayContent();
+        final com.android.server.wm.DisplayContent dc = getDisplayContent();
         return dc != null && dc.mAppTransition.isTransitionSet()
                 && (dc.mOpeningApps.contains(this)
                 || dc.mClosingApps.contains(this)
@@ -5991,7 +5992,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
                     getTransit(), task)) {
                 task.getBounds(mTmpRect);
             } else {
-                final ActivityStack stack = getStack();
+                final com.android.server.wm.ActivityStack stack = getStack();
                 if (stack == null) {
                     return;
                 }
@@ -6001,7 +6002,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             mAnimationBoundsLayer = createAnimationBoundsLayer(t);
 
             // Crop to stack bounds.
-            if (!WindowManagerService.sHierarchicalAnimations) {
+            if (!com.android.server.wm.WindowManagerService.sHierarchicalAnimations) {
                 // For Hierarchical animation, we don't need to set window crop since the leash
                 // surface size has already same as the animating container.
                 t.setWindowCrop(mAnimationBoundsLayer, mTmpRect);
@@ -6052,7 +6053,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
         clearThumbnail();
         final Transaction transaction = getAnimatingContainer().getPendingTransaction();
-        mThumbnail = new WindowContainerThumbnail(mWmService.mSurfaceFactory,
+        mThumbnail = new com.android.server.wm.WindowContainerThumbnail(mWmService.mSurfaceFactory,
                 transaction, getAnimatingContainer(), thumbnailHeader);
         mThumbnail.startAnimation(transaction, loadThumbnailAnimation(thumbnailHeader));
     }
@@ -6082,7 +6083,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             return;
         }
         final Transaction transaction = getPendingTransaction();
-        mThumbnail = new WindowContainerThumbnail(mWmService.mSurfaceFactory,
+        mThumbnail = new com.android.server.wm.WindowContainerThumbnail(mWmService.mSurfaceFactory,
                 transaction, getTask(), thumbnail);
         final Animation animation =
                 getDisplayContent().mAppTransition.createCrossProfileAppsThumbnailAnimationLocked(
@@ -6120,7 +6121,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     @Override
-    protected void onAnimationFinished(@AnimationType int type, AnimationAdapter anim) {
+    protected void onAnimationFinished(@AnimationType int type, com.android.server.wm.AnimationAdapter anim) {
         super.onAnimationFinished(type, anim);
 
         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "AR#onAnimationFinished");
@@ -6193,7 +6194,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     @VisibleForTesting
-    WindowContainerThumbnail getThumbnail() {
+    com.android.server.wm.WindowContainerThumbnail getThumbnail() {
         return mThumbnail;
     }
 
@@ -6230,7 +6231,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     @Override
-    void applyFixedRotationTransform(DisplayInfo info, DisplayFrames displayFrames,
+    void applyFixedRotationTransform(DisplayInfo info, com.android.server.wm.DisplayFrames displayFrames,
             Configuration config) {
         super.applyFixedRotationTransform(info, displayFrames, config);
         ensureActivityConfiguration(0 /* globalChanges */, false /* preserveWindow */);
@@ -6483,7 +6484,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         // An activity in size compatibility mode may have override bounds which equals to its
         // parent bounds, so the exact bounds should also be checked to allow IME window to attach
         // to the activity. See {@link DisplayContent#isImeAttachedToApp}.
-        final WindowContainer parent = getParent();
+        final com.android.server.wm.WindowContainer parent = getParent();
         return parent == null || parent.getBounds().equals(overrideBounds);
     }
 
@@ -6619,7 +6620,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         task.computeConfigResourceOverrides(resolvedConfig, newParentConfiguration,
                 mCompatDisplayInsets);
         // Use current screen layout as source because the size of app is independent to parent.
-        resolvedConfig.screenLayout = Task.computeScreenLayoutOverride(
+        resolvedConfig.screenLayout = com.android.server.wm.Task.computeScreenLayoutOverride(
                 getConfiguration().screenLayout, resolvedConfig.screenWidthDp,
                 resolvedConfig.screenHeightDp);
 
@@ -6768,7 +6769,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             onMergedOverrideConfigurationChanged();
         }
 
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
         if (display == null) {
             return;
         }
@@ -6815,7 +6816,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     private void applyAspectRatio(Rect outBounds, Rect containingAppBounds,
             Rect containingBounds) {
         final float maxAspectRatio = info.maxAspectRatio;
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         final float minAspectRatio = info.minAspectRatio;
 
         if (task == null || stack == null || (inMultiWindowMode() && !shouldUseSizeCompatMode())
@@ -6921,7 +6922,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      */
     boolean ensureActivityConfiguration(int globalChanges, boolean preserveWindow,
             boolean ignoreVisibility) {
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         if (stack.mConfigWillChange) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG_CONFIGURATION,
                     "Skipping config check (will change): " + this);
@@ -7258,7 +7259,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             // The activity state will be update to {@link #DESTROYED} in
             // {@link ActivityStack#cleanUp} when handling process died.
             mAtmService.mH.post(() -> {
-                final WindowProcessController wpc;
+                final com.android.server.wm.WindowProcessController wpc;
                 synchronized (mAtmService.mGlobalLock) {
                     if (!hasProcess()
                             || app.getReportedProcState() <= PROCESS_STATE_IMPORTANT_FOREGROUND) {
@@ -7286,7 +7287,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     boolean isProcessRunning() {
-        WindowProcessController proc = app;
+        com.android.server.wm.WindowProcessController proc = app;
         if (proc == null) {
             proc = mAtmService.mProcessNames.get(processName, info.applicationInfo.uid);
         }
@@ -7360,7 +7361,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
     }
 
     static ActivityRecord restoreFromXml(XmlPullParser in,
-            ActivityStackSupervisor stackSupervisor) throws IOException, XmlPullParserException {
+            com.android.server.wm.ActivityStackSupervisor stackSupervisor) throws IOException, XmlPullParserException {
         Intent intent = null;
         PersistableBundle persistentState = null;
         int launchedFromUid = 0;
@@ -7376,7 +7377,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         for (int attrNdx = in.getAttributeCount() - 1; attrNdx >= 0; --attrNdx) {
             final String attrName = in.getAttributeName(attrNdx);
             final String attrValue = in.getAttributeValue(attrNdx);
-            if (DEBUG) Slog.d(TaskPersister.TAG,
+            if (DEBUG) Slog.d(com.android.server.wm.TaskPersister.TAG,
                         "ActivityRecord: attribute name=" + attrName + " value=" + attrValue);
             if (ATTR_ID.equals(attrName)) {
                 createTime = Long.parseLong(attrValue);
@@ -7404,14 +7405,14 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             if (event == START_TAG) {
                 final String name = in.getName();
                 if (DEBUG)
-                        Slog.d(TaskPersister.TAG, "ActivityRecord: START_TAG name=" + name);
+                        Slog.d(com.android.server.wm.TaskPersister.TAG, "ActivityRecord: START_TAG name=" + name);
                 if (TAG_INTENT.equals(name)) {
                     intent = Intent.restoreFromXml(in);
                     if (DEBUG)
-                            Slog.d(TaskPersister.TAG, "ActivityRecord: intent=" + intent);
+                            Slog.d(com.android.server.wm.TaskPersister.TAG, "ActivityRecord: intent=" + intent);
                 } else if (TAG_PERSISTABLEBUNDLE.equals(name)) {
                     persistentState = PersistableBundle.restoreFromXml(in);
-                    if (DEBUG) Slog.d(TaskPersister.TAG,
+                    if (DEBUG) Slog.d(com.android.server.wm.TaskPersister.TAG,
                             "ActivityRecord: persistentState=" + persistentState);
                 } else {
                     Slog.w(TAG, "restoreActivity: unexpected name=" + name);
@@ -7424,7 +7425,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             throw new XmlPullParserException("restoreActivity error intent=" + intent);
         }
 
-        final ActivityTaskManagerService service = stackSupervisor.mService;
+        final com.android.server.wm.ActivityTaskManagerService service = stackSupervisor.mService;
         final ActivityInfo aInfo = stackSupervisor.resolveActivity(intent, resolvedType, 0, null,
                 userId, Binder.getCallingUid());
         if (aInfo == null) {
@@ -7472,7 +7473,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         if (!getTurnScreenOnFlag()) {
             return false;
         }
-        final ActivityStack stack = getRootTask();
+        final com.android.server.wm.ActivityStack stack = getRootTask();
         return stack != null &&
                 stack.checkKeyguardVisibility(this, true /* shouldBeVisible */,
                         stack.topRunningActivity() == this /* isTop */);
@@ -7520,12 +7521,12 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      * otherwise.
      */
     boolean isResumedActivityOnDisplay() {
-        final DisplayContent display = getDisplay();
+        final com.android.server.wm.DisplayContent display = getDisplay();
         if (display == null) {
             return false;
         }
         for (int tdaNdx = display.getTaskDisplayAreaCount() - 1; tdaNdx >= 0; --tdaNdx) {
-            final TaskDisplayArea taskDisplayArea = display.getTaskDisplayAreaAt(tdaNdx);
+            final com.android.server.wm.TaskDisplayArea taskDisplayArea = display.getTaskDisplayAreaAt(tdaNdx);
             final ActivityRecord resumedActivity = taskDisplayArea.getFocusedActivity();
             if (resumedActivity != null) {
                 return resumedActivity == this;
@@ -7585,7 +7586,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
      * Write all fields to an {@code ActivityRecordProto}. This assumes the
      * {@code ActivityRecordProto} is the outer-most proto data.
      */
-    void dumpDebug(ProtoOutputStream proto, @WindowTraceLogLevel int logLevel) {
+    void dumpDebug(ProtoOutputStream proto, @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         writeNameToProto(proto, NAME);
         super.dumpDebug(proto, WINDOW_TOKEN, logLevel);
         proto.write(LAST_SURFACE_SHOWING, mLastSurfaceShowing);
@@ -7633,9 +7634,9 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     @Override
     public void dumpDebug(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
         // Critical log level logs only visible elements to mitigate performance overheard
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 
@@ -7682,7 +7683,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         final Rect[] mStableInsets = new Rect[4];
 
         /** Constructs the environment to simulate the bounds behavior of the given container. */
-        CompatDisplayInsets(DisplayContent display, WindowContainer container) {
+        CompatDisplayInsets(com.android.server.wm.DisplayContent display, com.android.server.wm.WindowContainer container) {
             mIsFloating = container.getWindowConfiguration().tasksAreFloating();
             if (mIsFloating) {
                 final Rect containerBounds = container.getWindowConfiguration().getBounds();
@@ -7701,7 +7702,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
             // If the activity is not floating, assume it fills the display.
             mWidth = display.mBaseDisplayWidth;
             mHeight = display.mBaseDisplayHeight;
-            final DisplayPolicy policy = display.getDisplayPolicy();
+            final com.android.server.wm.DisplayPolicy policy = display.getDisplayPolicy();
             for (int rotation = 0; rotation < 4; rotation++) {
                 mNonDecorInsets[rotation] = new Rect();
                 mStableInsets[rotation] = new Rect();
@@ -7771,7 +7772,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
             if (rotation != ROTATION_UNDEFINED) {
                 // Ensure the app bounds won't overlap with insets.
-                Task.intersectWithInsetsIfFits(outAppBounds, outBounds, mNonDecorInsets[rotation]);
+                com.android.server.wm.Task.intersectWithInsetsIfFits(outAppBounds, outBounds, mNonDecorInsets[rotation]);
             }
         }
     }
@@ -7788,7 +7789,7 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
 
     @Override
     RemoteAnimationTarget createRemoteAnimationTarget(
-            RemoteAnimationController.RemoteAnimationRecord record) {
+            com.android.server.wm.RemoteAnimationController.RemoteAnimationRecord record) {
         final WindowState mainWindow = findMainWindow();
         if (task == null || mainWindow == null) {
             return null;

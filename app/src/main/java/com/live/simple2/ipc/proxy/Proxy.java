@@ -59,6 +59,28 @@ public class Proxy implements BookManager {
     }
 
     @Override
+    public void bindIClient(IBinder binder) throws RemoteException {
+
+        // 数据准备
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        String result = null;
+
+        try {
+            // 远程调用
+            Log.e("sun", "表示是真的远程调用queryBook()!");
+            data.writeInterfaceToken(DESCRIPTOR);
+            data.writeStrongBinder(binder);
+            remote.transact(BookManager.TRANSACTION_bindIClient, data, reply, 0);
+            // 处理结果
+//            reply.readException();
+        } finally {
+            data.recycle();
+            reply.recycle();
+        }
+    }
+
+    @Override
     public IBinder asBinder() {
         return remote;
     }

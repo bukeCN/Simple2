@@ -1382,6 +1382,7 @@ public class WindowManagerService extends IWindowManager.Stub
         int[] appOp = new int[1];
         final boolean isRoundedCornerOverlay = (attrs.privateFlags
                 & PRIVATE_FLAG_IS_ROUNDED_CORNERS_OVERLAY) != 0;
+        // 权限检查
         int res = mPolicy.checkAddPermission(attrs.type, isRoundedCornerOverlay, attrs.packageName,
                 appOp);
         if (res != WindowManagerGlobal.ADD_OKAY) {
@@ -1398,7 +1399,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (!mDisplayReady) {
                 throw new IllegalStateException("Display has not been initialialized");
             }
-
+            // 获取 or 创建 DisplayContent
             final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, attrs.token);
 
             if (displayContent == null) {
@@ -1418,6 +1419,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return WindowManagerGlobal.ADD_DUPLICATE_ADD;
             }
 
+            // 如果 window 是子窗口，那么必须有父窗口
             if (type >= FIRST_SUB_WINDOW && type <= LAST_SUB_WINDOW) {
                 parentWindow = windowForClientLocked(null, attrs.token, false);
                 if (parentWindow == null) {
@@ -1479,10 +1481,12 @@ public class WindowManagerService extends IWindowManager.Stub
                     return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
                 }
                 final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
+                // 创建 WindowToken，binder 为 ViewRootImpl 中的 Window, 这里会添加到 DisplayContent 中.
                 token = new com.android.server.wm.WindowToken(this, binder, type, false, displayContent,
                         session.mCanAddInternalSystemWindow, isRoundedCornerOverlay);
             } else if (rootType >= FIRST_APPLICATION_WINDOW
                     && rootType <= LAST_APPLICATION_WINDOW) {
+                // 子窗口
                 activity = token.asActivityRecord();
                 if (activity == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to add window with non-application token "
@@ -1547,7 +1551,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 token = new com.android.server.wm.WindowToken(this, client.asBinder(), type, false, displayContent,
                         session.mCanAddInternalSystemWindow);
             }
-
+            // 创建 WindowState
             final WindowState win = new WindowState(this, session, client, token, parentWindow,
                     appOp[0], seq, attrs, viewVisibility, session.mUid, userId,
                     session.mCanAddInternalSystemWindow);
@@ -1564,6 +1568,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return WindowManagerGlobal.ADD_INVALID_DISPLAY;
             }
 
+            // 解析 Parames 属性
             final com.android.server.wm.DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
             displayPolicy.adjustWindowParamsLw(win, win.mAttrs, callingPid, callingUid);
 
@@ -1572,6 +1577,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return res;
             }
 
+            // IO 输入事件连接通道，以便正在增加的窗口可以接受到系统所发生的键盘和触摸事件。
             final boolean openInputChannels = (outInputChannel != null
                     && (attrs.inputFeatures & INPUT_FEATURE_NO_INPUT_CHANNEL) == 0);
             if  (openInputChannels) {
@@ -1628,7 +1634,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             win.attach();
-            mWindowMap.put(client.asBinder(), win);
+            mWindowMap.put(client.asBinder(), win);// 添加到 map 中
             win.initAppOpsState();
 
             final boolean suspended = mPmInternal.isPackageSuspended(win.getOwningPackage(),
@@ -1646,7 +1652,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             boolean imMayMove = true;
-
+            // 添加一波？可能有子窗口
             win.mToken.addWindow(win);
             displayPolicy.addWindowLw(win, attrs);
             if (type == TYPE_INPUT_METHOD) {
@@ -2106,6 +2112,31 @@ public class WindowManagerService extends IWindowManager.Stub
                         == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * 布局 window
+     * @param session
+     * @param client
+     * @param seq
+     * @param attrs
+     * @param requestedWidth
+     * @param requestedHeight
+     * @param viewVisibility
+     * @param flags
+     * @param frameNumber
+     * @param outFrame
+     * @param outContentInsets
+     * @param outVisibleInsets
+     * @param outStableInsets
+     * @param outBackdropFrame
+     * @param outCutout
+     * @param mergedConfiguration
+     * @param outSurfaceControl
+     * @param outInsetsState
+     * @param outActiveControls
+     * @param outSurfaceSize
+     * @param outBLASTSurfaceControl
+     * @return
+     */
     public int relayoutWindow(Session session, IWindow client, int seq, LayoutParams attrs,
             int requestedWidth, int requestedHeight, int viewVisibility, int flags,
             long frameNumber, Rect outFrame, Rect outContentInsets,
@@ -2121,13 +2152,15 @@ public class WindowManagerService extends IWindowManager.Stub
         final int uid = Binder.getCallingUid();
         long origId = Binder.clearCallingIdentity();
         synchronized (mGlobalLock) {
+            // 利用 Binder 获取对应的 WindowState
             final WindowState win = windowForClientLocked(session, client, false);
             if (win == null) {
                 return 0;
             }
+            // 获取对应的 dc
             final com.android.server.wm.DisplayContent displayContent = win.getDisplayContent();
             final com.android.server.wm.DisplayPolicy displayPolicy = displayContent.getDisplayPolicy();
-
+            // 窗口动画
             com.android.server.wm.WindowStateAnimator winAnimator = win.mWinAnimator;
             if (viewVisibility != View.GONE) {
                 win.setRequestedSize(requestedWidth, requestedHeight);
@@ -2148,6 +2181,7 @@ public class WindowManagerService extends IWindowManager.Stub
             int flagChanges = 0;
             int privateFlagChanges = 0;
             if (attrs != null) {
+                // 解析 params
                 displayPolicy.adjustWindowParamsLw(win, attrs, pid, uid);
                 win.mToken.adjustWindowParams(win, attrs);
                 // if they don't have the permission, mask out the status bar bits
@@ -2162,6 +2196,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     win.mSystemUiVisibility = systemUiVisibility;
                 }
                 if (win.mAttrs.type != attrs.type) {
+                    // window 添加后不能改变类型
                     throw new IllegalArgumentException(
                             "Window type can not be changed after the window is added.");
                 }
@@ -2558,12 +2593,12 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void finishDrawingWindow(Session session, IWindow client,
-            @Nullable SurfaceControl.Transaction postDrawTransaction) {
+    void finishDrawingWindow(com.android.server.wm.Session session, IWindow client,
+                             @Nullable SurfaceControl.Transaction postDrawTransaction) {
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
-                WindowState win = windowForClientLocked(session, client, false);
+                com.android.server.wm.WindowState win = windowForClientLocked(session, client, false);
                 ProtoLog.d(WM_DEBUG_ADD_REMOVE, "finishDrawingWindow: %s mDrawState=%s",
                         win, (win != null ? win.mWinAnimator.drawStateToString() : "null"));
                 if (win != null && win.finishDrawing(postDrawTransaction)) {
@@ -5428,6 +5463,7 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     final WindowState windowForClientLocked(Session session, IBinder client, boolean throwOnError) {
+        // 利用 client 获取 binder, client > ViewRootImpl.W
         WindowState win = mWindowMap.get(client);
         if (DEBUG) Slog.v(TAG_WM, "Looking up client " + client + ": " + win);
         if (win == null) {

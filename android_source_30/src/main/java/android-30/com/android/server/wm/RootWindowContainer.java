@@ -2944,7 +2944,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
             }
         }
 
-        // 获取默认的屏幕显示，创建堆栈
+        // 获取默认的屏幕显示，创建堆栈, 这里是在获取应用程序显示窗口的默认位置，在不支持分屏、小窗口等情况下。
         if (container == null
                 || !canLaunchOnDisplay(r, container.mDisplayContent.mDisplayId)) {
             // 获取默认的屏幕显示区域控制

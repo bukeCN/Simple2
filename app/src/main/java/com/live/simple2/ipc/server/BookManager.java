@@ -1,5 +1,6 @@
 package com.live.simple2.ipc.server;
 
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.RemoteException;
@@ -11,6 +12,9 @@ public interface BookManager extends IInterface {
     String DESCRIPTOR = "com.shmple2.bookmanager";// 唯一描述
 
     int TRANSACTION_queryBook = IBinder.FIRST_CALL_TRANSACTION;
+    int TRANSACTION_bindIClient = IBinder.FIRST_CALL_TRANSACTION + 1;
 
     String queryBook() throws RemoteException;
+
+    void bindIClient(IBinder binder) throws RemoteException;
 }

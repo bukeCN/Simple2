@@ -1904,6 +1904,7 @@ public class Activity extends ContextThemeWrapper
     @CallSuper
     protected void onResume() {
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onResume " + this);
+        // 回调生命周期监听
         dispatchActivityResumed();
         mActivityTransitionState.onResume(this);
         enableAutofillCompatibilityIfNeeded();
@@ -7940,7 +7941,7 @@ public class Activity extends ContextThemeWrapper
                         Looper.myLooper());
             }
         }
-        // 设置 wms
+        // 设置 wms, 此时 WindowManagerImpl 的 parentWidnow == mWindow
         mWindow.setWindowManager(
                 (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),
                 mToken, mComponent.flattenToString(),

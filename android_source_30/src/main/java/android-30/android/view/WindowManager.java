@@ -628,13 +628,14 @@ public interface WindowManager extends ViewManager {
     }
 
     public static class LayoutParams extends ViewGroup.LayoutParams implements Parcelable {
+        // Window 窗口的参数
         /**
          * X position for this window.  With the default gravity it is ignored.
          * When using {@link Gravity#LEFT} or {@link Gravity#START} or {@link Gravity#RIGHT} or
          * {@link Gravity#END} it provides an offset from the given edge.
          */
         @ViewDebug.ExportedProperty
-        public int x;
+        public int x;// window 左上角 x 坐标
 
         /**
          * Y position for this window.  With the default gravity it is ignored.
@@ -642,7 +643,7 @@ public interface WindowManager extends ViewManager {
          * an offset from the given edge.
          */
         @ViewDebug.ExportedProperty
-        public int y;
+        public int y;// window 左上角 y 坐标
 
         /**
          * Indicates how much of the extra space will be allocated horizontally
@@ -795,18 +796,19 @@ public interface WindowManager extends ViewManager {
                         to = "APPLICATION_OVERLAY")
         })
         @WindowType
-        public int type;
+        public int type;// window 的类型
 
         /**
          * Start of window types that represent normal application windows.
          */
-        public static final int FIRST_APPLICATION_WINDOW = 1;
+        public static final int FIRST_APPLICATION_WINDOW = 1;// 应用程序 window 的开始值。
 
         /**
          * Window type: an application window that serves as the "base" window
          * of the overall application; all other application windows will
          * appear on top of it.
          * In multiuser systems shows only on the owning user's window.
+         *
          */
         public static final int TYPE_BASE_APPLICATION   = 1;
 
@@ -831,12 +833,13 @@ public interface WindowManager extends ViewManager {
          * manager will wait for this window to be drawn before the app is shown.
          * In multiuser systems shows only on the owning user's window.
          */
-        public static final int TYPE_DRAWN_APPLICATION = 4;
+        public static final int TYPE_DRAWN_APPLICATION = 4;// TYPE_APPLICATION 的变体，在应用程序显示之前，WindowManager 会等待这个 Window 绘制完毕
+
 
         /**
          * End of types of application windows.
          */
-        public static final int LAST_APPLICATION_WINDOW = 99;
+        public static final int LAST_APPLICATION_WINDOW = 99;// 应用程序 window 的结束值。
 
         /**
          * Start of types of sub-windows.  The {@link #token} of these windows
@@ -844,18 +847,20 @@ public interface WindowManager extends ViewManager {
          * windows are kept next to their attached window in Z-order, and their
          * coordinate space is relative to their attached window.
          */
-        public static final int FIRST_SUB_WINDOW = 1000;
+        public static final int FIRST_SUB_WINDOW = 1000;// 子 window 类型的开始值
 
         /**
          * Window type: a panel on top of an application window.  These windows
          * appear on top of their attached window.
          */
+        // 应用程序 Window 顶部的面板。这些 Window 出现在其附加 Window 的顶部。
         public static final int TYPE_APPLICATION_PANEL = FIRST_SUB_WINDOW;
 
         /**
          * Window type: window for showing media (such as video).  These windows
          * are displayed behind their attached window.
          */
+        // 用于显示媒体(如视频)的 Window。这些 Window 出现在其附加 Window 的后面。
         public static final int TYPE_APPLICATION_MEDIA = FIRST_SUB_WINDOW + 1;
 
         /**
@@ -863,12 +868,14 @@ public interface WindowManager extends ViewManager {
          * windows are displayed on top their attached window and any
          * {@link #TYPE_APPLICATION_PANEL} panels.
          */
+        // 应用程序 Window 顶部的子面板。这些 Window 出现在其附加 Window 和任何Window的顶部
         public static final int TYPE_APPLICATION_SUB_PANEL = FIRST_SUB_WINDOW + 2;
 
         /** Window type: like {@link #TYPE_APPLICATION_PANEL}, but layout
          * of the window happens as that of a top-level window, <em>not</em>
          * as a child of its container.
          */
+        // 当前Window的布局和顶级Window布局相同时，不能作为子代的容器
         public static final int TYPE_APPLICATION_ATTACHED_DIALOG = FIRST_SUB_WINDOW + 3;
 
         /**
@@ -879,6 +886,7 @@ public interface WindowManager extends ViewManager {
          * @hide
          */
         @UnsupportedAppUsage
+        // 用显示媒体 Window 覆盖顶部的 Window， 这是系统隐藏的 API
         public static final int TYPE_APPLICATION_MEDIA_OVERLAY  = FIRST_SUB_WINDOW + 4;
 
         /**
@@ -887,18 +895,19 @@ public interface WindowManager extends ViewManager {
          * and any {@link #TYPE_APPLICATION_SUB_PANEL} panels.
          * @hide
          */
+        // 子面板在应用程序Window的顶部，这些Window显示在其附加Window的顶部， 这是系统隐藏的 API
         public static final int TYPE_APPLICATION_ABOVE_SUB_PANEL = FIRST_SUB_WINDOW + 5;
 
         /**
          * End of types of sub-windows.
          */
-        public static final int LAST_SUB_WINDOW = 1999;
+        public static final int LAST_SUB_WINDOW = 1999;// 子 window 类型的结束值
 
         /**
          * Start of system-specific window types.  These are not normally
          * created by applications.
          */
-        public static final int FIRST_SYSTEM_WINDOW     = 2000;
+        public static final int FIRST_SYSTEM_WINDOW     = 2000;// 系统类型 window 的开始值
 
         /**
          * Window type: the status bar.  There can be only one status bar
@@ -906,6 +915,7 @@ public interface WindowManager extends ViewManager {
          * windows are shifted down so they are below it.
          * In multiuser systems shows on all users' windows.
          */
+        // 系统状态栏，只能有一个状态栏，它被放置在屏幕的顶部，所有其他窗口都向下移动
         public static final int TYPE_STATUS_BAR         = FIRST_SYSTEM_WINDOW;
 
         /**
@@ -913,6 +923,7 @@ public interface WindowManager extends ViewManager {
          * window; it is placed at the top of the screen.
          * In multiuser systems shows on all users' windows.
          */
+        // 系统搜索窗口，只能有一个搜索栏，它被放置在屏幕的顶部
         public static final int TYPE_SEARCH_BAR         = FIRST_SYSTEM_WINDOW+1;
 
         /**
@@ -924,6 +935,7 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_PHONE              = FIRST_SYSTEM_WINDOW+2;
 
         /**
@@ -933,6 +945,7 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_SYSTEM_ALERT       = FIRST_SYSTEM_WINDOW+3;
 
         /**
@@ -940,6 +953,7 @@ public interface WindowManager extends ViewManager {
          * In multiuser systems shows on all users' windows.
          * @removed
          */
+        // 已经从系统中被移除，可以使用 TYPE_KEYGUARD_DIALOG 代替
         public static final int TYPE_KEYGUARD           = FIRST_SYSTEM_WINDOW+4;
 
         /**
@@ -948,6 +962,7 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_TOAST              = FIRST_SYSTEM_WINDOW+5;
 
         /**
@@ -958,6 +973,7 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_SYSTEM_OVERLAY     = FIRST_SYSTEM_WINDOW+6;
 
         /**
@@ -968,19 +984,22 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_PRIORITY_PHONE     = FIRST_SYSTEM_WINDOW+7;
 
         /**
          * Window type: panel that slides out from the status bar
          * In multiuser systems shows on all users' windows.
          */
-        public static final int TYPE_SYSTEM_DIALOG      = FIRST_SYSTEM_WINDOW+8;
+        public static final int TYPE_SYSTEM_DIALOG      = FIRST_SYSTEM_WINDOW+8;// 系统对话框窗口
+
 
         /**
          * Window type: dialogs that the keyguard shows
          * In multiuser systems shows on all users' windows.
          */
-        public static final int TYPE_KEYGUARD_DIALOG    = FIRST_SYSTEM_WINDOW+9;
+        public static final int TYPE_KEYGUARD_DIALOG    = FIRST_SYSTEM_WINDOW+9;// 锁屏时显示的对话框
+
 
         /**
          * Window type: internal system error windows, appear on top of
@@ -989,6 +1008,7 @@ public interface WindowManager extends ViewManager {
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
         @Deprecated
+        // API 已经过时，用 TYPE_APPLICATION_OVERLAY 代替
         public static final int TYPE_SYSTEM_ERROR       = FIRST_SYSTEM_WINDOW+10;
 
         /**
@@ -1004,6 +1024,7 @@ public interface WindowManager extends ViewManager {
          * the current input method window.
          * In multiuser systems shows only on the owning user's window.
          */
+        // 输入法窗口，位于普通 UI 之上，应用程序可重新布局以免被此窗口覆盖
         public static final int TYPE_INPUT_METHOD_DIALOG= FIRST_SYSTEM_WINDOW+12;
 
         /**
@@ -1011,6 +1032,7 @@ public interface WindowManager extends ViewManager {
          * to sit on top of the wallpaper.
          * In multiuser systems shows only on the owning user's window.
          */
+        // 墙纸
         public static final int TYPE_WALLPAPER          = FIRST_SYSTEM_WINDOW+13;
 
         /**
@@ -1021,6 +1043,7 @@ public interface WindowManager extends ViewManager {
          * applications.
          */
         @Deprecated
+        // 状态栏的滑动面板
         public static final int TYPE_STATUS_BAR_PANEL   = FIRST_SYSTEM_WINDOW+14;
 
         /**
@@ -1053,6 +1076,7 @@ public interface WindowManager extends ViewManager {
          * windows.
          * @hide
          */
+        // 状态栏的滑动面板
         public static final int TYPE_STATUS_BAR_SUB_PANEL = FIRST_SYSTEM_WINDOW+17;
 
         /**
@@ -1190,6 +1214,7 @@ public interface WindowManager extends ViewManager {
          * <p>
          * In multi-user systems shows only on the owning user's screen.
          */
+        // 应用程序叠加窗口显示在所有窗口之上
         public static final int TYPE_APPLICATION_OVERLAY = FIRST_SYSTEM_WINDOW + 38;
 
         /**
@@ -1227,7 +1252,7 @@ public interface WindowManager extends ViewManager {
         /**
          * End of types of system windows.
          */
-        public static final int LAST_SYSTEM_WINDOW      = 2999;
+        public static final int LAST_SYSTEM_WINDOW      = 2999;// 系统类型 window 的结束值
 
         /**
          * @hide
@@ -1819,7 +1844,7 @@ public interface WindowManager extends ViewManager {
             @ViewDebug.FlagToString(mask = FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS, equals = FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS,
                     name = "DRAWS_SYSTEM_BAR_BACKGROUNDS")
         }, formatToHexString = true)
-        public int flags;
+        public int flags;// window 的 flag 用来控制
 
         /**
          * If the window has requested hardware acceleration, but this is not
@@ -2314,7 +2339,7 @@ public interface WindowManager extends ViewManager {
          * {@link android.R.attr#windowSoftInputMode} attribute.</p>
          */
         @SoftInputModeFlags
-        public int softInputMode;
+        public int softInputMode;// window 软键盘输入区域的显示模式
 
         /**
          * Placement of window within the screen as per {@link Gravity}.  Both
@@ -2331,7 +2356,7 @@ public interface WindowManager extends ViewManager {
          *
          * @see Gravity
          */
-        public int gravity;
+        public int gravity;// window 在屏幕中的位置
 
         /**
          * The horizontal margin, as a percentage of the container's width,
@@ -2383,7 +2408,7 @@ public interface WindowManager extends ViewManager {
          * {@link android.graphics.PixelFormat}. The choice of format
          * might be overridden by {@link #setColorMode(int)}. Default is OPAQUE.
          */
-        public int format;
+        public int format;// window 的像素点格式，值定义在 PixelFormat 中
 
         /**
          * A style resource defining the animations to use for this window.
@@ -2396,7 +2421,7 @@ public interface WindowManager extends ViewManager {
          * An alpha value to apply to this entire window.
          * An alpha of 1.0 means fully opaque and 0.0 means fully transparent
          */
-        public float alpha = 1.0f;
+        public float alpha = 1.0f;// window 的透明度 0 - 1
 
         /**
          * When {@link #FLAG_DIM_BEHIND} is set, this is the amount of dimming
@@ -2836,7 +2861,7 @@ public interface WindowManager extends ViewManager {
          *
          * @hide
          */
-        public final InsetsFlags insetsFlags = new InsetsFlags();
+        public final android.view.InsetsFlags insetsFlags = new android.view.InsetsFlags();
 
         @ViewDebug.ExportedProperty(flagMapping = {
                 @ViewDebug.FlagToString(
@@ -2906,7 +2931,7 @@ public interface WindowManager extends ViewManager {
          * {@link InsetsState.InternalInsetsType#ITYPE_NAVIGATION_BAR})</p>
          * @hide
          */
-        public @InsetsState.InternalInsetsType int[] providesInsetsTypes;
+        public @android.view.InsetsState.InternalInsetsType int[] providesInsetsTypes;
 
         /**
          * Specifies types of insets that this window should avoid overlapping during layout.
@@ -3617,12 +3642,12 @@ public interface WindowManager extends ViewManager {
             if (insetsFlags.appearance != 0) {
                 sb.append(System.lineSeparator());
                 sb.append(prefix).append("  apr=").append(ViewDebug.flagsToString(
-                        InsetsFlags.class, "appearance", insetsFlags.appearance));
+                        android.view.InsetsFlags.class, "appearance", insetsFlags.appearance));
             }
             if (insetsFlags.behavior != 0) {
                 sb.append(System.lineSeparator());
                 sb.append(prefix).append("  bhv=").append(ViewDebug.flagsToString(
-                        InsetsFlags.class, "behavior", insetsFlags.behavior));
+                        android.view.InsetsFlags.class, "behavior", insetsFlags.behavior));
             }
             if (mFitInsetsTypes != 0) {
                 sb.append(System.lineSeparator());
@@ -3643,7 +3668,7 @@ public interface WindowManager extends ViewManager {
                 sb.append(prefix).append("  insetsTypes=");
                 for (int i = 0; i < providesInsetsTypes.length; ++i) {
                     if (i > 0) sb.append(' ');
-                    sb.append(InsetsState.typeToString(providesInsetsTypes[i]));
+                    sb.append(android.view.InsetsState.typeToString(providesInsetsTypes[i]));
                 }
             }
 
@@ -3740,7 +3765,7 @@ public interface WindowManager extends ViewManager {
 
         /** @hide */
         @Override
-        protected void encodeProperties(@NonNull ViewHierarchyEncoder encoder) {
+        protected void encodeProperties(@NonNull android.view.ViewHierarchyEncoder encoder) {
             super.encodeProperties(encoder);
 
             encoder.addProperty("x", x);

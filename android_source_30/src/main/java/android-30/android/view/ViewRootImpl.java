@@ -189,7 +189,7 @@ import java.util.concurrent.CountDownLatch;
  */
 @SuppressWarnings({"EmptyCatchBlock", "PointlessBooleanExpression"})
 public final class ViewRootImpl implements ViewParent,
-        View.AttachInfo.Callbacks, ThreadedRenderer.DrawCallbacks {
+        View.AttachInfo.Callbacks, android.view.ThreadedRenderer.DrawCallbacks {
     private static final String TAG = "ViewRootImpl";
     private static final boolean DBG = false;
     private static final boolean LOCAL_LOGV = false;
@@ -282,7 +282,7 @@ public final class ViewRootImpl implements ViewParent,
     private static final int CONTENT_CAPTURE_ENABLED_FALSE = 2;
 
     @UnsupportedAppUsage
-    static final ThreadLocal<HandlerActionQueue> sRunQueues = new ThreadLocal<HandlerActionQueue>();
+    static final ThreadLocal<android.view.HandlerActionQueue> sRunQueues = new ThreadLocal<android.view.HandlerActionQueue>();
 
     static final ArrayList<Runnable> sFirstDrawHandlers = new ArrayList<>();
     static boolean sFirstDrawComplete = false;
@@ -346,12 +346,12 @@ public final class ViewRootImpl implements ViewParent,
      * the list or when accessing the list from a non-main thread.
      */
     @GuardedBy("mWindowCallbacks")
-    final ArrayList<WindowCallbacks> mWindowCallbacks = new ArrayList<>();
+    final ArrayList<android.view.WindowCallbacks> mWindowCallbacks = new ArrayList<>();
     @UnsupportedAppUsage
     public final Context mContext;
 
     @UnsupportedAppUsage
-    final IWindowSession mWindowSession;
+    final IWindowSession mWindowSession;//这个类表示一个活动的客户端会话。每个进程通常有一个与窗口管理器交互的Session对象。
     @NonNull Display mDisplay;
     final DisplayManager mDisplayManager;
     final String mBasePackageName;
@@ -362,11 +362,11 @@ public final class ViewRootImpl implements ViewParent,
 
     final Thread mThread;
 
-    final WindowLeaked mLocation;
+    final android.view.WindowLeaked mLocation;
 
     public final WindowManager.LayoutParams mWindowAttributes = new WindowManager.LayoutParams();
 
-    final W mWindow;
+    final W mWindow;// Bidner 对象，表示 client 端的 window，来用处理 WMS 端调用进行一些处理，如：窗口大小改变。
 
     final IBinder mLeashToken;
 
@@ -375,7 +375,7 @@ public final class ViewRootImpl implements ViewParent,
     int mSeq;
 
     @UnsupportedAppUsage
-    View mView;
+    View mView;//DecorView
 
     View mAccessibilityFocusedHost;
     AccessibilityNodeInfo mAccessibilityFocusedVirtualView;
@@ -446,14 +446,14 @@ public final class ViewRootImpl implements ViewParent,
     CompatibilityInfo.Translator mTranslator;
 
     @UnsupportedAppUsage
-    final View.AttachInfo mAttachInfo;
+    final View.AttachInfo mAttachInfo;// 当一个视图被附加到它的父窗口时，给它的一组信息。
     final SystemUiVisibilityInfo mCompatibleVisibilityInfo;
     int mDispatchedSystemUiVisibility =
             ViewRootImpl.sNewInsetsMode == NEW_INSETS_MODE_FULL ? 0 : -1;
     InputQueue.Callback mInputQueueCallback;
     InputQueue mInputQueue;
     @UnsupportedAppUsage
-    FallbackEventHandler mFallbackEventHandler;
+    android.view.FallbackEventHandler mFallbackEventHandler;
     final Choreographer mChoreographer;
 
     // used in relayout to get SurfaceControl size
@@ -546,7 +546,7 @@ public final class ViewRootImpl implements ViewParent,
      * not draw into the surface inset region set by the parent window.
      */
     private SurfaceControl mBoundsLayer;
-    private final SurfaceSession mSurfaceSession = new SurfaceSession();
+    private final android.view.SurfaceSession mSurfaceSession = new android.view.SurfaceSession();
     private final Transaction mTransaction = new Transaction();
 
     @UnsupportedAppUsage
@@ -563,8 +563,8 @@ public final class ViewRootImpl implements ViewParent,
     final DisplayCutout.ParcelableWrapper mPendingDisplayCutout =
             new DisplayCutout.ParcelableWrapper(DisplayCutout.NO_CUTOUT);
     boolean mPendingAlwaysConsumeSystemBars;
-    private final InsetsState mTempInsets = new InsetsState();
-    private final InsetsSourceControl[] mTempControls = new InsetsSourceControl[SIZE];
+    private final android.view.InsetsState mTempInsets = new android.view.InsetsState();
+    private final android.view.InsetsSourceControl[] mTempControls = new android.view.InsetsSourceControl[SIZE];
     final ViewTreeObserver.InternalInsetsInfo mLastGivenInsets
             = new ViewTreeObserver.InternalInsetsInfo();
 
@@ -620,7 +620,7 @@ public final class ViewRootImpl implements ViewParent,
 
     final AccessibilityManager mAccessibilityManager;
 
-    AccessibilityInteractionController mAccessibilityInteractionController;
+    android.view.AccessibilityInteractionController mAccessibilityInteractionController;
 
     final AccessibilityInteractionConnectionManager mAccessibilityInteractionConnectionManager =
             new AccessibilityInteractionConnectionManager();
@@ -644,35 +644,35 @@ public final class ViewRootImpl implements ViewParent,
 
     private boolean mNeedsRendererSetup;
 
-    private final InputEventCompatProcessor mInputCompatProcessor;
+    private final android.view.InputEventCompatProcessor mInputCompatProcessor;
 
     /**
      * Consistency verifier for debugging purposes.
      */
-    protected final InputEventConsistencyVerifier mInputEventConsistencyVerifier =
-            InputEventConsistencyVerifier.isInstrumentationEnabled() ?
-                    new InputEventConsistencyVerifier(this, 0) : null;
+    protected final android.view.InputEventConsistencyVerifier mInputEventConsistencyVerifier =
+            android.view.InputEventConsistencyVerifier.isInstrumentationEnabled() ?
+                    new android.view.InputEventConsistencyVerifier(this, 0) : null;
 
-    private final InsetsController mInsetsController;
-    private final ImeFocusController mImeFocusController;
+    private final android.view.InsetsController mInsetsController;
+    private final android.view.ImeFocusController mImeFocusController;
 
-    private ScrollCaptureClient mScrollCaptureClient;
+    private android.view.ScrollCaptureClient mScrollCaptureClient;
 
     /**
      * @return {@link ImeFocusController} for this instance.
      */
     @NonNull
-    public ImeFocusController getImeFocusController() {
+    public android.view.ImeFocusController getImeFocusController() {
         return mImeFocusController;
     }
 
     /** @return The current {@link ScrollCaptureClient} for this instance, if any is active. */
     @Nullable
-    public ScrollCaptureClient getScrollCaptureClient() {
+    public android.view.ScrollCaptureClient getScrollCaptureClient() {
         return mScrollCaptureClient;
     }
 
-    private final GestureExclusionTracker mGestureExclusionTracker = new GestureExclusionTracker();
+    private final android.view.GestureExclusionTracker mGestureExclusionTracker = new android.view.GestureExclusionTracker();
 
     private IAccessibilityEmbeddedConnection mAccessibilityEmbeddedConnection;
 
@@ -709,12 +709,12 @@ public final class ViewRootImpl implements ViewParent,
     // (e.g. SurfaceView)
     private boolean mSendNextFrameToWm = false;
 
-    private HashSet<ScrollCaptureCallback> mRootScrollCaptureCallbacks;
+    private HashSet<android.view.ScrollCaptureCallback> mRootScrollCaptureCallbacks;
 
     private String mTag = TAG;
 
     public ViewRootImpl(Context context, Display display) {
-        this(context, display, WindowManagerGlobal.getWindowSession(),
+        this(context, display, android.view.WindowManagerGlobal.getWindowSession(),
                 false /* useSfChoreographer */);
     }
 
@@ -729,7 +729,7 @@ public final class ViewRootImpl implements ViewParent,
         mDisplay = display;
         mBasePackageName = context.getBasePackageName();
         mThread = Thread.currentThread();
-        mLocation = new WindowLeaked(null);
+        mLocation = new android.view.WindowLeaked(null);
         mLocation.fillInStackTrace();
         mWidth = -1;
         mHeight = -1;
@@ -762,18 +762,18 @@ public final class ViewRootImpl implements ViewParent,
         mChoreographer = useSfChoreographer
                 ? Choreographer.getSfInstance() : Choreographer.getInstance();
         mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);
-        mInsetsController = new InsetsController(new ViewRootInsetsControllerHost(this));
+        mInsetsController = new android.view.InsetsController(new android.view.ViewRootInsetsControllerHost(this));
 
         String processorOverrideName = context.getResources().getString(
                                     R.string.config_inputEventCompatProcessorOverrideClassName);
         if (processorOverrideName.isEmpty()) {
             // No compatibility processor override, using default.
-            mInputCompatProcessor = new InputEventCompatProcessor(context);
+            mInputCompatProcessor = new android.view.InputEventCompatProcessor(context);
         } else {
-            InputEventCompatProcessor compatProcessor = null;
+            android.view.InputEventCompatProcessor compatProcessor = null;
             try {
-                final Class<? extends InputEventCompatProcessor> klass =
-                        (Class<? extends InputEventCompatProcessor>) Class.forName(
+                final Class<? extends android.view.InputEventCompatProcessor> klass =
+                        (Class<? extends android.view.InputEventCompatProcessor>) Class.forName(
                                 processorOverrideName);
                 compatProcessor = klass.getConstructor(Context.class).newInstance(context);
             } catch (Exception e) {
@@ -790,7 +790,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         loadSystemProperties();
-        mImeFocusController = new ImeFocusController(this);
+        mImeFocusController = new android.view.ImeFocusController(this);
     }
 
     public static void addFirstDrawHandler(Runnable callback) {
@@ -824,13 +824,13 @@ public final class ViewRootImpl implements ViewParent,
         }
     }
 
-    public void addWindowCallbacks(WindowCallbacks callback) {
+    public void addWindowCallbacks(android.view.WindowCallbacks callback) {
         synchronized (mWindowCallbacks) {
             mWindowCallbacks.add(callback);
         }
     }
 
-    public void removeWindowCallbacks(WindowCallbacks callback) {
+    public void removeWindowCallbacks(android.view.WindowCallbacks callback) {
         synchronized (mWindowCallbacks) {
             mWindowCallbacks.remove(callback);
         }
@@ -862,7 +862,7 @@ public final class ViewRootImpl implements ViewParent,
      * @hide
      */
     static boolean isInTouchMode() {
-        IWindowSession windowSession = WindowManagerGlobal.peekWindowSession();
+        IWindowSession windowSession = android.view.WindowManagerGlobal.peekWindowSession();
         if (windowSession != null) {
             try {
                 return windowSession.getInTouchMode();
@@ -920,14 +920,14 @@ public final class ViewRootImpl implements ViewParent,
             int userId) {
         synchronized (this) {
             if (mView == null) {
-                mView = view;
+                mView = view;// DecorView
 
                 mAttachInfo.mDisplayState = mDisplay.getState();
                 mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
 
                 mViewLayoutDirectionInitial = mView.getRawLayoutDirection();
                 mFallbackEventHandler.setView(view);
-                mWindowAttributes.copyFrom(attrs);
+                mWindowAttributes.copyFrom(attrs);// 拷贝 attr 属性
                 if (mWindowAttributes.packageName == null) {
                     mWindowAttributes.packageName = mBasePackageName;
                 }
@@ -971,6 +971,7 @@ public final class ViewRootImpl implements ViewParent,
                 if (mSurfaceHolder == null) {
                     // While this is supposed to enable only, it can effectively disable
                     // the acceleration too.
+                    // 启用硬件加速
                     enableHardwareAcceleration(attrs);
                     final boolean useMTRenderer = MT_RENDERER_AVAILABLE
                             && mAttachInfo.mThreadedRenderer != null;
@@ -1012,11 +1013,12 @@ public final class ViewRootImpl implements ViewParent,
                 // Schedule the first layout -before- adding to the window
                 // manager, to make sure we do the relayout before receiving
                 // any other events from the system.
+                // 提前安排一次布局
                 requestLayout();
-                InputChannel inputChannel = null;
+                android.view.InputChannel inputChannel = null;
                 if ((mWindowAttributes.inputFeatures
                         & WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) == 0) {
-                    inputChannel = new InputChannel();
+                    inputChannel = new android.view.InputChannel();
                 }
                 mForceDecorViewVisibility = (mWindowAttributes.privateFlags
                         & PRIVATE_FLAG_FORCE_DECOR_VIEW_VISIBILITY) != 0;
@@ -1025,6 +1027,7 @@ public final class ViewRootImpl implements ViewParent,
                     mAttachInfo.mRecomputeGlobalAttributes = true;
                     collectViewAttributes();
                     adjustLayoutParamsForCompatibility(mWindowAttributes);
+                    // 重点！！添加 view 到屏幕, mTmpFrame 临时显示的 矩形区域
                     res = mWindowSession.addToDisplayAsUser(mWindow, mSeq, mWindowAttributes,
                             getHostVisibility(), mDisplay.getDisplayId(), userId, mTmpFrame,
                             mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
@@ -1051,55 +1054,55 @@ public final class ViewRootImpl implements ViewParent,
                 }
                 mPendingDisplayCutout.set(mAttachInfo.mDisplayCutout);
                 mAttachInfo.mAlwaysConsumeSystemBars =
-                        (res & WindowManagerGlobal.ADD_FLAG_ALWAYS_CONSUME_SYSTEM_BARS) != 0;
+                        (res & android.view.WindowManagerGlobal.ADD_FLAG_ALWAYS_CONSUME_SYSTEM_BARS) != 0;
                 mPendingAlwaysConsumeSystemBars = mAttachInfo.mAlwaysConsumeSystemBars;
                 mInsetsController.onStateChanged(mTempInsets);
                 mInsetsController.onControlsChanged(mTempControls);
                 if (DEBUG_LAYOUT) Log.v(mTag, "Added window " + mWindow);
-                if (res < WindowManagerGlobal.ADD_OKAY) {
+                if (res < android.view.WindowManagerGlobal.ADD_OKAY) {
                     mAttachInfo.mRootView = null;
                     mAdded = false;
                     mFallbackEventHandler.setView(null);
                     unscheduleTraversals();
                     setAccessibilityFocus(null, null);
                     switch (res) {
-                        case WindowManagerGlobal.ADD_BAD_APP_TOKEN:
-                        case WindowManagerGlobal.ADD_BAD_SUBWINDOW_TOKEN:
+                        case android.view.WindowManagerGlobal.ADD_BAD_APP_TOKEN:
+                        case android.view.WindowManagerGlobal.ADD_BAD_SUBWINDOW_TOKEN:
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- token " + attrs.token
                                     + " is not valid; is your activity running?");
-                        case WindowManagerGlobal.ADD_NOT_APP_TOKEN:
+                        case android.view.WindowManagerGlobal.ADD_NOT_APP_TOKEN:
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- token " + attrs.token
                                     + " is not for an application");
-                        case WindowManagerGlobal.ADD_APP_EXITING:
+                        case android.view.WindowManagerGlobal.ADD_APP_EXITING:
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- app for token " + attrs.token
                                     + " is exiting");
-                        case WindowManagerGlobal.ADD_DUPLICATE_ADD:
+                        case android.view.WindowManagerGlobal.ADD_DUPLICATE_ADD:
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- window " + mWindow
                                     + " has already been added");
-                        case WindowManagerGlobal.ADD_STARTING_NOT_NEEDED:
+                        case android.view.WindowManagerGlobal.ADD_STARTING_NOT_NEEDED:
                             // Silently ignore -- we would have just removed it
                             // right away, anyway.
                             return;
-                        case WindowManagerGlobal.ADD_MULTIPLE_SINGLETON:
+                        case android.view.WindowManagerGlobal.ADD_MULTIPLE_SINGLETON:
                             throw new WindowManager.BadTokenException("Unable to add window "
                                     + mWindow + " -- another window of type "
                                     + mWindowAttributes.type + " already exists");
-                        case WindowManagerGlobal.ADD_PERMISSION_DENIED:
+                        case android.view.WindowManagerGlobal.ADD_PERMISSION_DENIED:
                             throw new WindowManager.BadTokenException("Unable to add window "
                                     + mWindow + " -- permission denied for window type "
                                     + mWindowAttributes.type);
-                        case WindowManagerGlobal.ADD_INVALID_DISPLAY:
+                        case android.view.WindowManagerGlobal.ADD_INVALID_DISPLAY:
                             throw new WindowManager.InvalidDisplayException("Unable to add window "
                                     + mWindow + " -- the specified display can not be found");
-                        case WindowManagerGlobal.ADD_INVALID_TYPE:
+                        case android.view.WindowManagerGlobal.ADD_INVALID_TYPE:
                             throw new WindowManager.InvalidDisplayException("Unable to add window "
                                     + mWindow + " -- the specified window type "
                                     + mWindowAttributes.type + " is not valid");
-                        case WindowManagerGlobal.ADD_INVALID_USER:
+                        case android.view.WindowManagerGlobal.ADD_INVALID_USER:
                             throw new WindowManager.BadTokenException("Unable to add Window "
                                     + mWindow + " -- requested userId is not valid");
                     }
@@ -1107,10 +1110,10 @@ public final class ViewRootImpl implements ViewParent,
                             "Unable to add window -- unknown error code " + res);
                 }
 
-                if ((res & WindowManagerGlobal.ADD_FLAG_USE_BLAST) != 0) {
+                if ((res & android.view.WindowManagerGlobal.ADD_FLAG_USE_BLAST) != 0) {
                     mUseBLASTAdapter = true;
                 }
-                if ((res & WindowManagerGlobal.ADD_FLAG_USE_TRIPLE_BUFFERING) != 0) {
+                if ((res & android.view.WindowManagerGlobal.ADD_FLAG_USE_TRIPLE_BUFFERING) != 0) {
                     mEnableTripleBuffering = true;
                 }
 
@@ -1128,8 +1131,8 @@ public final class ViewRootImpl implements ViewParent,
                 }
 
                 view.assignParent(this);
-                mAddedTouchMode = (res & WindowManagerGlobal.ADD_FLAG_IN_TOUCH_MODE) != 0;
-                mAppVisible = (res & WindowManagerGlobal.ADD_FLAG_APP_VISIBLE) != 0;
+                mAddedTouchMode = (res & android.view.WindowManagerGlobal.ADD_FLAG_IN_TOUCH_MODE) != 0;
+                mAppVisible = (res & android.view.WindowManagerGlobal.ADD_FLAG_APP_VISIBLE) != 0;
 
                 if (mAccessibilityManager.isEnabled()) {
                     mAccessibilityInteractionConnectionManager.ensureConnection();
@@ -1157,7 +1160,7 @@ public final class ViewRootImpl implements ViewParent,
                 mPendingInputEventQueueLengthCounterName = "aq:pending:" + counterSuffix;
 
                 if (mView instanceof RootViewSurfaceTaker) {
-                    PendingInsetsController pendingInsetsController =
+                    android.view.PendingInsetsController pendingInsetsController =
                             ((RootViewSurfaceTaker) mView).providePendingInsetsController();
                     if (pendingInsetsController != null) {
                         pendingInsetsController.replayAndAttach(mInsetsController);
@@ -1214,7 +1217,7 @@ public final class ViewRootImpl implements ViewParent,
      */
     @AnyThread
     void destroyHardwareResources() {
-        final ThreadedRenderer renderer = mAttachInfo.mThreadedRenderer;
+        final android.view.ThreadedRenderer renderer = mAttachInfo.mThreadedRenderer;
         if (renderer != null) {
             // This is called by WindowManagerGlobal which may or may not be on the right thread
             if (Looper.myLooper() != mAttachInfo.mHandler.getLooper()) {
@@ -1246,7 +1249,7 @@ public final class ViewRootImpl implements ViewParent,
      */
     @UnsupportedAppUsage
     public static void invokeFunctor(long functor, boolean waitForCompletion) {
-        ThreadedRenderer.invokeFunctor(functor, waitForCompletion);
+        android.view.ThreadedRenderer.invokeFunctor(functor, waitForCompletion);
     }
 
     /**
@@ -1266,7 +1269,7 @@ public final class ViewRootImpl implements ViewParent,
     /**
      * @param animator animator to register with the hardware renderer
      */
-    public void registerVectorDrawableAnimator(NativeVectorDrawableAnimator animator) {
+    public void registerVectorDrawableAnimator(android.view.NativeVectorDrawableAnimator animator) {
         if (mAttachInfo.mThreadedRenderer != null) {
             mAttachInfo.mThreadedRenderer.registerVectorDrawableAnimator(animator);
         }
@@ -1304,7 +1307,7 @@ public final class ViewRootImpl implements ViewParent,
                 (attrs.flags & WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) != 0;
 
         if (hardwareAccelerated) {
-            if (!ThreadedRenderer.isAvailable()) {
+            if (!android.view.ThreadedRenderer.isAvailable()) {
                 return;
             }
 
@@ -1327,8 +1330,8 @@ public final class ViewRootImpl implements ViewParent,
                 // shows for launching applications, so they will look more like
                 // the app being launched.
                 mAttachInfo.mHardwareAccelerationRequested = true;
-            } else if (!ThreadedRenderer.sRendererDisabled
-                    || (ThreadedRenderer.sSystemRendererDisabled && forceHwAccelerated)) {
+            } else if (!android.view.ThreadedRenderer.sRendererDisabled
+                    || (android.view.ThreadedRenderer.sSystemRendererDisabled && forceHwAccelerated)) {
                 if (mAttachInfo.mThreadedRenderer != null) {
                     mAttachInfo.mThreadedRenderer.destroy();
                 }
@@ -1340,8 +1343,8 @@ public final class ViewRootImpl implements ViewParent,
                 final boolean wideGamut =
                         mContext.getResources().getConfiguration().isScreenWideColorGamut()
                         && attrs.getColorMode() == ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT;
-
-                mAttachInfo.mThreadedRenderer = ThreadedRenderer.create(mContext, translucent,
+                // 创建硬件渲染者
+                mAttachInfo.mThreadedRenderer = android.view.ThreadedRenderer.create(mContext, translucent,
                         attrs.getTitle().toString());
                 mAttachInfo.mThreadedRenderer.setWideGamut(wideGamut);
                 updateForceDarkMode();
@@ -1364,7 +1367,7 @@ public final class ViewRootImpl implements ViewParent,
 
         if (useAutoDark) {
             boolean forceDarkAllowedDefault =
-                    SystemProperties.getBoolean(ThreadedRenderer.DEBUG_FORCE_DARK, false);
+                    SystemProperties.getBoolean(android.view.ThreadedRenderer.DEBUG_FORCE_DARK, false);
             TypedArray a = mContext.obtainStyledAttributes(R.styleable.Theme);
             useAutoDark = a.getBoolean(R.styleable.Theme_isLightTheme, true)
                     && a.getBoolean(R.styleable.Theme_forceDarkAllowed, forceDarkAllowedDefault);
@@ -1382,7 +1385,7 @@ public final class ViewRootImpl implements ViewParent,
         return mView;
     }
 
-    final WindowLeaked getLocation() {
+    final android.view.WindowLeaked getLocation() {
         return mLocation;
     }
 
@@ -1471,7 +1474,7 @@ public final class ViewRootImpl implements ViewParent,
             mAppVisibilityChanged = true;
             scheduleTraversals();
             if (!mAppVisible) {
-                WindowManagerGlobal.trimForeground();
+                android.view.WindowManagerGlobal.trimForeground();
             }
         }
     }
@@ -1704,7 +1707,7 @@ public final class ViewRootImpl implements ViewParent,
         checkThread();
         if (mStopped != stopped) {
             mStopped = stopped;
-            final ThreadedRenderer renderer = mAttachInfo.mThreadedRenderer;
+            final android.view.ThreadedRenderer renderer = mAttachInfo.mThreadedRenderer;
             if (renderer != null) {
                 if (DEBUG_DRAW) Log.d(mTag, "WindowStopped on " + getTitle() + " set to " + mStopped);
                 renderer.setStopped(mStopped);
@@ -2314,7 +2317,7 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     @VisibleForTesting
-    public InsetsController getInsetsController() {
+    public android.view.InsetsController getInsetsController() {
         return mInsetsController;
     }
 
@@ -2414,6 +2417,7 @@ public final class ViewRootImpl implements ViewParent,
             if (mViewLayoutDirectionInitial == View.LAYOUT_DIRECTION_INHERIT) {
                 host.setLayoutDirection(config.getLayoutDirection());
             }
+            // 执行添加到窗口函数
             host.dispatchAttachedToWindow(mAttachInfo, 0);
             mAttachInfo.mTreeObserver.dispatchOnWindowAttachedChange(true);
             dispatchApplyInsets(host);
@@ -2483,6 +2487,7 @@ public final class ViewRootImpl implements ViewParent,
             }
 
             // Ask host how big it wants to be
+            // 1. 预测量
             windowSizeMayChange |= measureHierarchy(host, lp, res,
                     desiredWindowWidth, desiredWindowHeight);
         }
@@ -2632,6 +2637,7 @@ public final class ViewRootImpl implements ViewParent,
                     }
                     mChoreographer.mFrameInfo.addFlags(FrameInfo.FLAG_WINDOW_LAYOUT_CHANGED);
                 }
+                // 2. 布局 window ，这一步会创建或者销毁重新创建 Sufeace 。
                 relayoutResult = relayoutWindow(params, viewVisibility, insetsPending);
 
                 if (DEBUG_LAYOUT) Log.v(mTag, "relayout: frame=" + frame.toShortString()
@@ -2653,7 +2659,7 @@ public final class ViewRootImpl implements ViewParent,
 
                 cutoutChanged = !mPendingDisplayCutout.equals(mAttachInfo.mDisplayCutout);
                 surfaceSizeChanged = (relayoutResult
-                        & WindowManagerGlobal.RELAYOUT_RES_SURFACE_RESIZED) != 0;
+                        & android.view.WindowManagerGlobal.RELAYOUT_RES_SURFACE_RESIZED) != 0;
                 final boolean alwaysConsumeSystemBarsChanged =
                         mPendingAlwaysConsumeSystemBars != mAttachInfo.mAlwaysConsumeSystemBars;
                 final boolean colorModeChanged = hasColorModeChanged(lp.getColorMode());
@@ -2759,9 +2765,9 @@ public final class ViewRootImpl implements ViewParent,
                 }
 
                 final boolean freeformResizing = (relayoutResult
-                        & WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_FREEFORM) != 0;
+                        & android.view.WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_FREEFORM) != 0;
                 final boolean dockedResizing = (relayoutResult
-                        & WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_DOCKED) != 0;
+                        & android.view.WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_DOCKED) != 0;
                 final boolean dragResizing = freeformResizing || dockedResizing;
                 if (mDragResizing != dragResizing) {
                     if (dragResizing) {
@@ -2849,7 +2855,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
             }
 
-            final ThreadedRenderer threadedRenderer = mAttachInfo.mThreadedRenderer;
+            final android.view.ThreadedRenderer threadedRenderer = mAttachInfo.mThreadedRenderer;
             if (threadedRenderer != null && threadedRenderer.isEnabled()) {
                 if (hwInitialized
                         || mWidth != threadedRenderer.getWidth()
@@ -2863,7 +2869,7 @@ public final class ViewRootImpl implements ViewParent,
 
             if (!mStopped || mReportNextDraw) {
                 boolean focusChangedDueToTouchMode = ensureTouchModeLocally(
-                        (relayoutResult&WindowManagerGlobal.RELAYOUT_RES_IN_TOUCH_MODE) != 0);
+                        (relayoutResult& android.view.WindowManagerGlobal.RELAYOUT_RES_IN_TOUCH_MODE) != 0);
                 if (focusChangedDueToTouchMode || mWidth != host.getMeasuredWidth()
                         || mHeight != host.getMeasuredHeight() || dispatchApplyInsets ||
                         updatedConfiguration) {
@@ -2877,6 +2883,7 @@ public final class ViewRootImpl implements ViewParent,
                             + " dispatchApplyInsets=" + dispatchApplyInsets);
 
                      // Ask host how big it wants to be
+                    // 3. 执行测量
                     performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
 
                     // Implementation of weights from WindowManager.LayoutParams
@@ -2935,6 +2942,7 @@ public final class ViewRootImpl implements ViewParent,
         boolean triggerGlobalLayoutListener = didLayout
                 || mAttachInfo.mRecomputeGlobalAttributes;
         if (didLayout) {
+            // 4. 执行布局
             performLayout(lp, mWidth, mHeight);
 
             // By this point all views have been sized and positioned
@@ -3077,10 +3085,10 @@ public final class ViewRootImpl implements ViewParent,
         mImeFocusController.onTraversal(hasWindowFocus, mWindowAttributes);
 
         // Remember if we must report the next draw.
-        if ((relayoutResult & WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
+        if ((relayoutResult & android.view.WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
             reportNextDraw();
         }
-        if ((relayoutResult & WindowManagerGlobal.RELAYOUT_RES_BLAST_SYNC) != 0) {
+        if ((relayoutResult & android.view.WindowManagerGlobal.RELAYOUT_RES_BLAST_SYNC) != 0) {
             reportNextDraw();
             setUseBLASTSyncTransaction();
             mSendNextFrameToWm = true;
@@ -3095,7 +3103,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
                 mPendingTransitions.clear();
             }
-
+            // 5. 执行绘制
             performDraw();
         } else {
             if (isViewVisible) {
@@ -5000,7 +5008,7 @@ public final class ViewRootImpl implements ViewParent,
                     }
                     break;
                 case MSG_INSETS_CHANGED:
-                    mInsetsController.onStateChanged((InsetsState) msg.obj);
+                    mInsetsController.onStateChanged((android.view.InsetsState) msg.obj);
                     break;
                 case MSG_INSETS_CONTROL_CHANGED: {
                     SomeArgs args = (SomeArgs) msg.obj;
@@ -5010,8 +5018,8 @@ public final class ViewRootImpl implements ViewParent,
                     // whether it needs to run animation.
                     // b) When loosing control, controller can restore server state by taking last
                     // dispatched state as truth.
-                    mInsetsController.onStateChanged((InsetsState) args.arg1);
-                    mInsetsController.onControlsChanged((InsetsSourceControl[]) args.arg2);
+                    mInsetsController.onStateChanged((android.view.InsetsState) args.arg1);
+                    mInsetsController.onControlsChanged((android.view.InsetsSourceControl[]) args.arg2);
                     break;
                 }
                 case MSG_SHOW_INSETS: {
@@ -7400,13 +7408,13 @@ public final class ViewRootImpl implements ViewParent,
         return afm.isAutofillUiShowing();
     }
 
-    public AccessibilityInteractionController getAccessibilityInteractionController() {
+    public android.view.AccessibilityInteractionController getAccessibilityInteractionController() {
         if (mView == null) {
             throw new IllegalStateException("getAccessibilityInteractionController"
                     + " called when there is no mView");
         }
         if (mAccessibilityInteractionController == null) {
-            mAccessibilityInteractionController = new AccessibilityInteractionController(this);
+            mAccessibilityInteractionController = new android.view.AccessibilityInteractionController(this);
         }
         return mAccessibilityInteractionController;
     }
@@ -7439,11 +7447,11 @@ public final class ViewRootImpl implements ViewParent,
         if (mSurface.isValid()) {
             frameNumber = mSurface.getNextFrameNumber();
         }
-
+        // 重量级操作，布局 window。
         int relayoutResult = mWindowSession.relayout(mWindow, mSeq, params,
                 (int) (mView.getMeasuredWidth() * appScale + 0.5f),
                 (int) (mView.getMeasuredHeight() * appScale + 0.5f), viewVisibility,
-                insetsPending ? WindowManagerGlobal.RELAYOUT_INSETS_PENDING : 0, frameNumber,
+                insetsPending ? android.view.WindowManagerGlobal.RELAYOUT_INSETS_PENDING : 0, frameNumber,
                 mTmpFrame, mTmpRect, mTmpRect, mTmpRect, mPendingBackDropFrame,
                 mPendingDisplayCutout, mPendingMergedConfiguration, mSurfaceControl, mTempInsets,
                 mTempControls, mSurfaceSize, mBlastSurfaceControl);
@@ -7465,7 +7473,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         mPendingAlwaysConsumeSystemBars =
-                (relayoutResult & WindowManagerGlobal.RELAYOUT_RES_CONSUME_ALWAYS_SYSTEM_BARS) != 0;
+                (relayoutResult & android.view.WindowManagerGlobal.RELAYOUT_RES_CONSUME_ALWAYS_SYSTEM_BARS) != 0;
 
         if (restore) {
             params.restore();
@@ -7703,7 +7711,7 @@ public final class ViewRootImpl implements ViewParent,
                         // animation info.
                         try {
                             if ((relayoutWindow(mWindowAttributes, viewVisibility, false)
-                                    & WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
+                                    & android.view.WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
                                 mWindowSession.finishDrawing(
                                         mWindow, null /* postDrawTransaction */);
                             }
@@ -7717,7 +7725,7 @@ public final class ViewRootImpl implements ViewParent,
 
             mAdded = false;
         }
-        WindowManagerGlobal.getInstance().doRemoveView(this);
+        android.view.WindowManagerGlobal.getInstance().doRemoveView(this);
     }
 
     public void requestUpdateConfiguration(Configuration config) {
@@ -7753,7 +7761,7 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     private void destroyHardwareRenderer() {
-        ThreadedRenderer hardwareRenderer = mAttachInfo.mThreadedRenderer;
+        android.view.ThreadedRenderer hardwareRenderer = mAttachInfo.mThreadedRenderer;
 
         if (hardwareRenderer != null) {
             if (mView != null) {
@@ -7814,20 +7822,20 @@ public final class ViewRootImpl implements ViewParent,
         mHandler.sendMessage(msg);
     }
 
-    private void dispatchInsetsChanged(InsetsState insetsState) {
+    private void dispatchInsetsChanged(android.view.InsetsState insetsState) {
         if (Binder.getCallingPid() == android.os.Process.myPid()) {
-            insetsState = new InsetsState(insetsState, true /* copySource */);
+            insetsState = new android.view.InsetsState(insetsState, true /* copySource */);
         }
         mHandler.obtainMessage(MSG_INSETS_CHANGED, insetsState).sendToTarget();
     }
 
-    private void dispatchInsetsControlChanged(InsetsState insetsState,
-            InsetsSourceControl[] activeControls) {
+    private void dispatchInsetsControlChanged(android.view.InsetsState insetsState,
+                                              android.view.InsetsSourceControl[] activeControls) {
         if (Binder.getCallingPid() == android.os.Process.myPid()) {
-            insetsState = new InsetsState(insetsState, true /* copySource */);
+            insetsState = new android.view.InsetsState(insetsState, true /* copySource */);
             if (activeControls != null) {
                 for (int i = activeControls.length - 1; i >= 0; i--) {
-                    activeControls[i] = new InsetsSourceControl(activeControls[i]);
+                    activeControls[i] = new android.view.InsetsSourceControl(activeControls[i]);
                 }
             }
         }
@@ -8174,7 +8182,7 @@ public final class ViewRootImpl implements ViewParent,
     final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
 
     final class WindowInputEventReceiver extends InputEventReceiver {
-        public WindowInputEventReceiver(InputChannel inputChannel, Looper looper) {
+        public WindowInputEventReceiver(android.view.InputChannel inputChannel, Looper looper) {
             super(inputChannel, looper);
         }
 
@@ -8871,7 +8879,7 @@ public final class ViewRootImpl implements ViewParent,
      *
      * @param callback the callback to add
      */
-    public void addScrollCaptureCallback(ScrollCaptureCallback callback) {
+    public void addScrollCaptureCallback(android.view.ScrollCaptureCallback callback) {
         if (mRootScrollCaptureCallbacks == null) {
             mRootScrollCaptureCallbacks = new HashSet<>();
         }
@@ -8883,7 +8891,7 @@ public final class ViewRootImpl implements ViewParent,
      *
      * @param callback the callback to remove
      */
-    public void removeScrollCaptureCallback(ScrollCaptureCallback callback) {
+    public void removeScrollCaptureCallback(android.view.ScrollCaptureCallback callback) {
         if (mRootScrollCaptureCallbacks != null) {
             mRootScrollCaptureCallbacks.remove(callback);
             if (mRootScrollCaptureCallbacks.isEmpty()) {
@@ -8907,12 +8915,12 @@ public final class ViewRootImpl implements ViewParent,
      * @see #addScrollCaptureCallback(ScrollCaptureCallback)
      * @param targets the search queue for targets
      */
-    private void collectRootScrollCaptureTargets(Queue<ScrollCaptureTarget> targets) {
-        for (ScrollCaptureCallback cb : mRootScrollCaptureCallbacks) {
+    private void collectRootScrollCaptureTargets(Queue<android.view.ScrollCaptureTarget> targets) {
+        for (android.view.ScrollCaptureCallback cb : mRootScrollCaptureCallbacks) {
             // Add to the list for consideration
             Point offset = new Point(mView.getLeft(), mView.getTop());
             Rect rect = new Rect(0, 0, mView.getWidth(), mView.getHeight());
-            targets.add(new ScrollCaptureTarget(mView, rect, offset, cb));
+            targets.add(new android.view.ScrollCaptureTarget(mView, rect, offset, cb));
         }
     }
 
@@ -8928,7 +8936,7 @@ public final class ViewRootImpl implements ViewParent,
      * @see ScrollCaptureTargetResolver
      */
     private void handleScrollCaptureRequest(@NonNull IScrollCaptureController controller) {
-        LinkedList<ScrollCaptureTarget> targetList = new LinkedList<>();
+        LinkedList<android.view.ScrollCaptureTarget> targetList = new LinkedList<>();
 
         // Window (root) level callbacks
         collectRootScrollCaptureTargets(targetList);
@@ -8948,7 +8956,7 @@ public final class ViewRootImpl implements ViewParent,
 
         // Request scrollBounds from each of the targets.
         // Continues with the consumer once all responses are consumed, or the timeout expires.
-        ScrollCaptureTargetResolver resolver = new ScrollCaptureTargetResolver(targetList);
+        android.view.ScrollCaptureTargetResolver resolver = new android.view.ScrollCaptureTargetResolver(targetList);
         resolver.start(mHandler, 1000,
                 (selected) -> dispatchScrollCaptureSearchResult(controller, selected));
     }
@@ -8956,7 +8964,7 @@ public final class ViewRootImpl implements ViewParent,
     /** Called by {@link #handleScrollCaptureRequest} when a result is returned */
     private void dispatchScrollCaptureSearchResult(
             @NonNull IScrollCaptureController controller,
-            @Nullable ScrollCaptureTarget selectedTarget) {
+            @Nullable android.view.ScrollCaptureTarget selectedTarget) {
 
         // If timeout or no eligible targets found.
         if (selectedTarget == null) {
@@ -8974,7 +8982,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         // Create a client instance and return it to the caller
-        mScrollCaptureClient = new ScrollCaptureClient(selectedTarget, controller);
+        mScrollCaptureClient = new android.view.ScrollCaptureClient(selectedTarget, controller);
         try {
             if (DEBUG_SCROLL_CAPTURE) {
                 Log.d(TAG, "scrollCaptureSearch returning client: " + getScrollCaptureClient());
@@ -9107,7 +9115,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         @Override
-        public void insetsChanged(InsetsState insetsState) {
+        public void insetsChanged(android.view.InsetsState insetsState) {
             final ViewRootImpl viewAncestor = mViewAncestor.get();
             if (viewAncestor != null) {
                 viewAncestor.dispatchInsetsChanged(insetsState);
@@ -9115,8 +9123,8 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         @Override
-        public void insetsControlChanged(InsetsState insetsState,
-                InsetsSourceControl[] activeControls) {
+        public void insetsControlChanged(android.view.InsetsState insetsState,
+                                         android.view.InsetsSourceControl[] activeControls) {
             final ViewRootImpl viewAncestor = mViewAncestor.get();
             if (viewAncestor != null) {
                 viewAncestor.dispatchInsetsControlChanged(insetsState, activeControls);
@@ -9309,12 +9317,12 @@ public final class ViewRootImpl implements ViewParent,
         }
     }
 
-    static HandlerActionQueue getRunQueue() {
-        HandlerActionQueue rq = sRunQueues.get();
+    static android.view.HandlerActionQueue getRunQueue() {
+        android.view.HandlerActionQueue rq = sRunQueues.get();
         if (rq != null) {
             return rq;
         }
-        rq = new HandlerActionQueue();
+        rq = new android.view.HandlerActionQueue();
         sRunQueues.set(rq);
         return rq;
     }
@@ -9452,11 +9460,11 @@ public final class ViewRootImpl implements ViewParent,
 
     final class HighContrastTextManager implements HighTextContrastChangeListener {
         HighContrastTextManager() {
-            ThreadedRenderer.setHighContrastText(mAccessibilityManager.isHighTextContrastEnabled());
+            android.view.ThreadedRenderer.setHighContrastText(mAccessibilityManager.isHighTextContrastEnabled());
         }
         @Override
         public void onHighTextContrastStateChanged(boolean enabled) {
-            ThreadedRenderer.setHighContrastText(enabled);
+            android.view.ThreadedRenderer.setHighContrastText(enabled);
 
             // Destroy Displaylists so they can be recreated with high contrast recordings
             destroyHardwareResources();
@@ -9481,9 +9489,9 @@ public final class ViewRootImpl implements ViewParent,
 
         @Override
         public void findAccessibilityNodeInfoByAccessibilityId(long accessibilityNodeId,
-                Region interactiveRegion, int interactionId,
-                IAccessibilityInteractionConnectionCallback callback, int flags,
-                int interrogatingPid, long interrogatingTid, MagnificationSpec spec, Bundle args) {
+                                                               Region interactiveRegion, int interactionId,
+                                                               IAccessibilityInteractionConnectionCallback callback, int flags,
+                                                               int interrogatingPid, long interrogatingTid, android.view.MagnificationSpec spec, Bundle args) {
             ViewRootImpl viewRootImpl = mViewRootImpl.get();
             if (viewRootImpl != null && viewRootImpl.mView != null) {
                 viewRootImpl.getAccessibilityInteractionController()
@@ -9524,7 +9532,7 @@ public final class ViewRootImpl implements ViewParent,
         public void findAccessibilityNodeInfosByViewId(long accessibilityNodeId,
                 String viewId, Region interactiveRegion, int interactionId,
                 IAccessibilityInteractionConnectionCallback callback, int flags,
-                int interrogatingPid, long interrogatingTid, MagnificationSpec spec) {
+                int interrogatingPid, long interrogatingTid, android.view.MagnificationSpec spec) {
             ViewRootImpl viewRootImpl = mViewRootImpl.get();
             if (viewRootImpl != null && viewRootImpl.mView != null) {
                 viewRootImpl.getAccessibilityInteractionController()
@@ -9545,7 +9553,7 @@ public final class ViewRootImpl implements ViewParent,
         public void findAccessibilityNodeInfosByText(long accessibilityNodeId, String text,
                 Region interactiveRegion, int interactionId,
                 IAccessibilityInteractionConnectionCallback callback, int flags,
-                int interrogatingPid, long interrogatingTid, MagnificationSpec spec) {
+                int interrogatingPid, long interrogatingTid, android.view.MagnificationSpec spec) {
             ViewRootImpl viewRootImpl = mViewRootImpl.get();
             if (viewRootImpl != null && viewRootImpl.mView != null) {
                 viewRootImpl.getAccessibilityInteractionController()
@@ -9565,7 +9573,7 @@ public final class ViewRootImpl implements ViewParent,
         @Override
         public void findFocus(long accessibilityNodeId, int focusType, Region interactiveRegion,
                 int interactionId, IAccessibilityInteractionConnectionCallback callback, int flags,
-                int interrogatingPid, long interrogatingTid, MagnificationSpec spec) {
+                int interrogatingPid, long interrogatingTid, android.view.MagnificationSpec spec) {
             ViewRootImpl viewRootImpl = mViewRootImpl.get();
             if (viewRootImpl != null && viewRootImpl.mView != null) {
                 viewRootImpl.getAccessibilityInteractionController()
@@ -9585,7 +9593,7 @@ public final class ViewRootImpl implements ViewParent,
         @Override
         public void focusSearch(long accessibilityNodeId, int direction, Region interactiveRegion,
                 int interactionId, IAccessibilityInteractionConnectionCallback callback, int flags,
-                int interrogatingPid, long interrogatingTid, MagnificationSpec spec) {
+                int interrogatingPid, long interrogatingTid, android.view.MagnificationSpec spec) {
             ViewRootImpl viewRootImpl = mViewRootImpl.get();
             if (viewRootImpl != null && viewRootImpl.mView != null) {
                 viewRootImpl.getAccessibilityInteractionController()
@@ -9627,7 +9635,7 @@ public final class ViewRootImpl implements ViewParent,
      */
     public IAccessibilityEmbeddedConnection getAccessibilityEmbeddedConnection() {
         if (mAccessibilityEmbeddedConnection == null) {
-            mAccessibilityEmbeddedConnection = new AccessibilityEmbeddedConnection(
+            mAccessibilityEmbeddedConnection = new android.view.AccessibilityEmbeddedConnection(
                     ViewRootImpl.this);
         }
         return mAccessibilityEmbeddedConnection;

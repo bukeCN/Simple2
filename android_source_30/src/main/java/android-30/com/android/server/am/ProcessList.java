@@ -2332,6 +2332,7 @@ public final class ProcessList {
         long startTime = SystemClock.uptimeMillis();
         com.android.server.am.ProcessRecord app;
         if (!isolated) {
+            // 能不能重用现在的进程？
             app = getProcessRecordLocked(processName, info.uid, keepIfLarge);
             checkSlow(startTime, "startProcess: after getProcessRecord");
 
@@ -2363,6 +2364,7 @@ public final class ProcessList {
             }
         } else {
             // If this is an isolated process, it can't re-use an existing process.
+            // 独立的进程，需要重新创建
             app = null;
         }
 

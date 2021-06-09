@@ -1717,6 +1717,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
 
         @Override
         public void scheduleTransaction(ClientTransaction transaction) throws RemoteException {
+            // ATMS 跨进程调用，transaction 持有 ApplicationThread 以及可能有 activityToken（启动 Activity 时必有）。
             ActivityThread.this.scheduleTransaction(transaction);
         }
 
@@ -3368,7 +3369,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         }
 
         try {
-            // 这里是获取 Application 之前已经创建了
+            // 这里是获取 Application ,之前已经创建了
             Application app = r.packageInfo.makeApplication(false, mInstrumentation);
 
             if (localLOGV) Slog.v(TAG, "Performing launch of " + r);
@@ -4478,7 +4479,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         mSomeActivitiesChanged = true;
 
         // TODO Push resumeArgs into the activity for consideration
-        // 通过 ActivityToken 获取 ACR
+        // 通过 ActivityToken 获取 ACR, 执行 onResume() 函数
         final ActivityClientRecord r = performResumeActivity(token, finalStateRequest, reason);
         if (r == null) {
             // We didn't actually resume the activity, so skipping any follow-up actions.

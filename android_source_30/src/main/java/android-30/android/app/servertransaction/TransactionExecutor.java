@@ -138,7 +138,7 @@ public class TransactionExecutor {
                 cycleToPath(r, closestPreExecutionState, transaction);
             }
             // 1. 重点，LaunchActivityItem 这里会创建 ActivityClientRecord。
-            //    这里会调用 mTransactionHandler.handleLaunchActivity() 函数启动 activity。
+            //    这里会调用 mTransactionHandler.handleLaunchActivity() 函数启动 activity, 将创建的
             // 2. 不同的 ClientTransaction 有不同的动作
             item.execute(mTransactionHandler, token, mPendingActions);
             item.postExecute(mTransactionHandler, token, mPendingActions);

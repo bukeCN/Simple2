@@ -73,7 +73,7 @@ class WindowToken extends WindowContainer<WindowState> {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowToken" : TAG_WM;
 
     // The actual token.
-    final IBinder token;
+    final IBinder token;// ActivityRecord 的 token 在创建的时候传递进入。
 
     // The type of window this token is for, as per WindowManager.LayoutParams.
     final int windowType;
@@ -124,27 +124,27 @@ class WindowToken extends WindowContainer<WindowState> {
      */
     private static class FixedRotationTransformState {
         final DisplayInfo mDisplayInfo;
-        final DisplayFrames mDisplayFrames;
+        final com.android.server.wm.DisplayFrames mDisplayFrames;
         final InsetsState mInsetsState = new InsetsState();
         final Configuration mRotatedOverrideConfiguration;
-        final SeamlessRotator mRotator;
+        final com.android.server.wm.SeamlessRotator mRotator;
         /**
          * The tokens that share the same transform. Their end time of transform are the same. The
          * list should at least contain the token who creates this state.
          */
         final ArrayList<WindowToken> mAssociatedTokens = new ArrayList<>(3);
-        final ArrayList<WindowContainer<?>> mRotatedContainers = new ArrayList<>(3);
+        final ArrayList<com.android.server.wm.WindowContainer<?>> mRotatedContainers = new ArrayList<>(3);
         final SparseArray<Rect> mBarContentFrames = new SparseArray<>();
         boolean mIsTransforming = true;
 
         FixedRotationTransformState(DisplayInfo rotatedDisplayInfo,
-                DisplayFrames rotatedDisplayFrames, Configuration rotatedConfig,
-                int currentRotation) {
+                                    com.android.server.wm.DisplayFrames rotatedDisplayFrames, Configuration rotatedConfig,
+                                    int currentRotation) {
             mDisplayInfo = rotatedDisplayInfo;
             mDisplayFrames = rotatedDisplayFrames;
             mRotatedOverrideConfiguration = rotatedConfig;
             // This will use unrotate as rotate, so the new and old rotation are inverted.
-            mRotator = new SeamlessRotator(rotatedDisplayInfo.rotation, currentRotation,
+            mRotator = new com.android.server.wm.SeamlessRotator(rotatedDisplayInfo.rotation, currentRotation,
                     rotatedDisplayInfo, true /* applyFixedTransformationHint */);
         }
 
@@ -152,7 +152,7 @@ class WindowToken extends WindowContainer<WindowState> {
          * Transforms the window container from the next rotation to the current rotation for
          * showing the window in a display with different rotation.
          */
-        void transform(WindowContainer<?> container) {
+        void transform(com.android.server.wm.WindowContainer<?> container) {
             mRotator.unrotate(container.getPendingTransaction(), container);
             if (!mRotatedContainers.contains(container)) {
                 mRotatedContainers.add(container);
@@ -165,7 +165,7 @@ class WindowToken extends WindowContainer<WindowState> {
          */
         void resetTransform() {
             for (int i = mRotatedContainers.size() - 1; i >= 0; i--) {
-                final WindowContainer<?> c = mRotatedContainers.get(i);
+                final com.android.server.wm.WindowContainer<?> c = mRotatedContainers.get(i);
                 // If the window is detached (no parent), its surface may have been released.
                 if (c.getParent() != null) {
                     mRotator.finish(c.getPendingTransaction(), c);
@@ -218,21 +218,21 @@ class WindowToken extends WindowContainer<WindowState> {
         return isFirstChildWindowGreaterThanSecond(newWindow, existingWindow) ? 1 : -1;
     };
 
-    WindowToken(WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
-            DisplayContent dc, boolean ownerCanManageAppTokens) {
+    WindowToken(com.android.server.wm.WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
+                com.android.server.wm.DisplayContent dc, boolean ownerCanManageAppTokens) {
         this(service, _token, type, persistOnEmpty, dc, ownerCanManageAppTokens,
                 false /* roundedCornerOverlay */);
     }
 
-    WindowToken(WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
-            DisplayContent dc, boolean ownerCanManageAppTokens, boolean roundedCornerOverlay) {
+    WindowToken(com.android.server.wm.WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
+                com.android.server.wm.DisplayContent dc, boolean ownerCanManageAppTokens, boolean roundedCornerOverlay) {
         this(service, _token, type, persistOnEmpty, dc, ownerCanManageAppTokens, INVALID_UID,
                 roundedCornerOverlay, false /* fromClientToken */);
     }
 
-    WindowToken(WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
-            DisplayContent dc, boolean ownerCanManageAppTokens, int ownerUid,
-            boolean roundedCornerOverlay, boolean fromClientToken) {
+    WindowToken(com.android.server.wm.WindowManagerService service, IBinder _token, int type, boolean persistOnEmpty,
+                com.android.server.wm.DisplayContent dc, boolean ownerCanManageAppTokens, int ownerUid,
+                boolean roundedCornerOverlay, boolean fromClientToken) {
         super(service);
         token = _token;
         windowType = type;
@@ -288,7 +288,7 @@ class WindowToken extends WindowContainer<WindowState> {
             changed |= win.onSetAppExiting();
         }
 
-        final ActivityRecord app = asActivityRecord();
+        final com.android.server.wm.ActivityRecord app = asActivityRecord();
         if (app != null) {
             app.setVisible(false);
         }
@@ -403,7 +403,7 @@ class WindowToken extends WindowContainer<WindowState> {
     }
 
     @Override
-    void onDisplayChanged(DisplayContent dc) {
+    void onDisplayChanged(com.android.server.wm.DisplayContent dc) {
         dc.reParentWindowToken(this);
 
         // TODO(b/36740756): One day this should perhaps be hooked
@@ -506,7 +506,7 @@ class WindowToken extends WindowContainer<WindowState> {
         return isFixedRotationTransforming() ? mFixedRotationTransformState.mDisplayInfo : null;
     }
 
-    DisplayFrames getFixedRotationTransformDisplayFrames() {
+    com.android.server.wm.DisplayFrames getFixedRotationTransformDisplayFrames() {
         return isFixedRotationTransforming() ? mFixedRotationTransformState.mDisplayFrames : null;
     }
 
@@ -528,7 +528,7 @@ class WindowToken extends WindowContainer<WindowState> {
     }
 
     /** Applies the rotated layout environment to this token in the simulated rotated display. */
-    void applyFixedRotationTransform(DisplayInfo info, DisplayFrames displayFrames,
+    void applyFixedRotationTransform(DisplayInfo info, com.android.server.wm.DisplayFrames displayFrames,
             Configuration config) {
         if (mFixedRotationTransformState != null) {
             return;
@@ -571,7 +571,7 @@ class WindowToken extends WindowContainer<WindowState> {
         }
 
         for (int i = mFixedRotationTransformState.mAssociatedTokens.size() - 1; i >= 0; i--) {
-            final ActivityRecord r =
+            final com.android.server.wm.ActivityRecord r =
                     mFixedRotationTransformState.mAssociatedTokens.get(i).asActivityRecord();
             if (r != null && r.isAnimating(TRANSITION | PARENTS)) {
                 return true;
@@ -623,13 +623,13 @@ class WindowToken extends WindowContainer<WindowState> {
         FixedRotationAdjustments adjustments = null;
         // A token may contain windows of the same processes or different processes. The list is
         // used to avoid sending the same adjustments to a process multiple times.
-        ArrayList<WindowProcessController> notifiedProcesses = null;
+        ArrayList<com.android.server.wm.WindowProcessController> notifiedProcesses = null;
         for (int i = mChildren.size() - 1; i >= 0; i--) {
             final WindowState w = mChildren.get(i);
-            final WindowProcessController app;
+            final com.android.server.wm.WindowProcessController app;
             if (w.mAttrs.type == TYPE_APPLICATION_STARTING) {
                 // Use the host activity because starting window is controlled by window manager.
-                final ActivityRecord r = asActivityRecord();
+                final com.android.server.wm.ActivityRecord r = asActivityRecord();
                 if (r == null) {
                     continue;
                 }
@@ -658,7 +658,7 @@ class WindowToken extends WindowContainer<WindowState> {
 
     /** Restores the changes that applies to this container. */
     private void cancelFixedRotationTransform() {
-        final WindowContainer<?> parent = getParent();
+        final com.android.server.wm.WindowContainer<?> parent = getParent();
         if (parent == null) {
             // The window may be detached or detaching.
             return;
@@ -726,8 +726,8 @@ class WindowToken extends WindowContainer<WindowState> {
     @CallSuper
     @Override
     public void dumpDebug(ProtoOutputStream proto, long fieldId,
-            @WindowTraceLogLevel int logLevel) {
-        if (logLevel == WindowTraceLogLevel.CRITICAL && !isVisible()) {
+            @com.android.server.wm.WindowTraceLogLevel int logLevel) {
+        if (logLevel == com.android.server.wm.WindowTraceLogLevel.CRITICAL && !isVisible()) {
             return;
         }
 
