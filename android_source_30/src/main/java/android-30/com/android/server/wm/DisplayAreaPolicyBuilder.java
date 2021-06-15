@@ -188,7 +188,7 @@ class DisplayAreaPolicyBuilder {
         }
     }
 
-    static class Result extends DisplayAreaPolicy {
+    static class Result extends com.android.server.wm.DisplayAreaPolicy {
         private static final int LEAF_TYPE_TASK_CONTAINERS = 1;
         private static final int LEAF_TYPE_IME_CONTAINERS = 2;
         private static final int LEAF_TYPE_TOKENS = 0;
@@ -196,12 +196,12 @@ class DisplayAreaPolicyBuilder {
         private final int mMaxWindowLayer = mWmService.mPolicy.getMaxWindowLayer();
 
         private final ArrayList<Feature> mFeatures;
-        private final Map<Feature, List<DisplayArea<? extends WindowContainer>>> mAreas;
-        private final DisplayArea.Tokens[] mAreaForLayer = new DisplayArea.Tokens[mMaxWindowLayer];
+        private final Map<Feature, List<com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer>>> mAreas;
+        private final com.android.server.wm.DisplayArea.Tokens[] mAreaForLayer = new com.android.server.wm.DisplayArea.Tokens[mMaxWindowLayer];
 
-        Result(WindowManagerService wmService, DisplayContent content, DisplayArea.Root root,
-                DisplayArea<? extends WindowContainer> imeContainer,
-                List<TaskDisplayArea> taskDisplayAreas, ArrayList<Feature> features) {
+        Result(com.android.server.wm.WindowManagerService wmService, com.android.server.wm.DisplayContent content, com.android.server.wm.DisplayArea.Root root,
+               com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> imeContainer,
+               List<com.android.server.wm.TaskDisplayArea> taskDisplayAreas, ArrayList<Feature> features) {
             super(wmService, content, root, imeContainer, taskDisplayAreas);
             mFeatures = features;
             mAreas = new HashMap<>(features.size());
@@ -290,24 +290,28 @@ class DisplayAreaPolicyBuilder {
         }
 
         @Override
-        public void addWindow(WindowToken token) {
-            DisplayArea.Tokens area = findAreaForToken(token);
+        public void addWindow(com.android.server.wm.WindowToken token) {
+            // 根据 token 寻找对应的显示区域, token 是 WMS.addView() 中创建的 WindowToken
+            com.android.server.wm.DisplayArea.Tokens area = findAreaForToken(token);
             area.addChild(token);
         }
 
         @VisibleForTesting
-        DisplayArea.Tokens findAreaForToken(WindowToken token) {
+        com.android.server.wm.DisplayArea.Tokens findAreaForToken(com.android.server.wm.WindowToken token) {
+            // 获取窗口层级
             int windowLayerFromType = token.getWindowLayerFromType();
             if (windowLayerFromType == APPLICATION_LAYER) {
                 // TODO(display-area): Better handle AboveAppWindows in APPLICATION_LAYER
+                // 是应用程序就加一层
                 windowLayerFromType += 1;
             } else if (token.mRoundedCornerOverlay) {
                 windowLayerFromType = mMaxWindowLayer - 1;
             }
+            // 添加到层级管理中, 最多 35 层。
             return mAreaForLayer[windowLayerFromType];
         }
 
-        public List<DisplayArea<? extends WindowContainer>> getDisplayAreas(Feature feature) {
+        public List<com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer>> getDisplayAreas(Feature feature) {
             return mAreas.get(feature);
         }
 
@@ -332,10 +336,10 @@ class DisplayAreaPolicyBuilder {
         return mFeatures;
     }
 
-    Result build(WindowManagerService wmService,
-            DisplayContent content, DisplayArea.Root root,
-            DisplayArea<? extends WindowContainer> imeContainer,
-            List<TaskDisplayArea> taskDisplayAreas) {
+    Result build(com.android.server.wm.WindowManagerService wmService,
+                 com.android.server.wm.DisplayContent content, com.android.server.wm.DisplayArea.Root root,
+                 com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> imeContainer,
+                 List<com.android.server.wm.TaskDisplayArea> taskDisplayAreas) {
 
         return new Result(wmService, content, root, imeContainer, taskDisplayAreas, new ArrayList<>(
                 mFeatures));
@@ -347,7 +351,7 @@ class DisplayAreaPolicyBuilder {
         final Feature mFeature;
         final PendingArea mParent;
         int mMaxLayer;
-        DisplayArea mExisting;
+        com.android.server.wm.DisplayArea mExisting;
 
         PendingArea(Feature feature,
                 int minLayer,
@@ -364,14 +368,14 @@ class DisplayAreaPolicyBuilder {
             return mMaxLayer;
         }
 
-        void instantiateChildren(DisplayArea<DisplayArea> parent,
-                DisplayArea.Tokens[] areaForLayer, int level, Map<Feature, List<DisplayArea<?
-                extends WindowContainer>>> areas) {
+        void instantiateChildren(com.android.server.wm.DisplayArea<com.android.server.wm.DisplayArea> parent,
+                                 com.android.server.wm.DisplayArea.Tokens[] areaForLayer, int level, Map<Feature, List<com.android.server.wm.DisplayArea<?
+                                                 extends com.android.server.wm.WindowContainer>>> areas) {
             mChildren.sort(Comparator.comparingInt(pendingArea -> pendingArea.mMinLayer));
             for (int i = 0; i < mChildren.size(); i++) {
                 final PendingArea child = mChildren.get(i);
-                final DisplayArea area = child.createArea(parent, areaForLayer);
-                parent.addChild(area, WindowContainer.POSITION_TOP);
+                final com.android.server.wm.DisplayArea area = child.createArea(parent, areaForLayer);
+                parent.addChild(area, com.android.server.wm.WindowContainer.POSITION_TOP);
                 if (mFeature != null) {
                     areas.get(mFeature).add(area);
                 }
@@ -379,28 +383,28 @@ class DisplayAreaPolicyBuilder {
             }
         }
 
-        private DisplayArea createArea(DisplayArea<DisplayArea> parent,
-                DisplayArea.Tokens[] areaForLayer) {
+        private com.android.server.wm.DisplayArea createArea(com.android.server.wm.DisplayArea<com.android.server.wm.DisplayArea> parent,
+                                                             com.android.server.wm.DisplayArea.Tokens[] areaForLayer) {
             if (mExisting != null) {
                 return mExisting;
             }
-            DisplayArea.Type type;
+            com.android.server.wm.DisplayArea.Type type;
             if (mMinLayer > APPLICATION_LAYER) {
-                type = DisplayArea.Type.ABOVE_TASKS;
+                type = com.android.server.wm.DisplayArea.Type.ABOVE_TASKS;
             } else if (mMaxLayer < APPLICATION_LAYER) {
-                type = DisplayArea.Type.BELOW_TASKS;
+                type = com.android.server.wm.DisplayArea.Type.BELOW_TASKS;
             } else {
-                type = DisplayArea.Type.ANY;
+                type = com.android.server.wm.DisplayArea.Type.ANY;
             }
             if (mFeature == null) {
-                final DisplayArea.Tokens leaf = new DisplayArea.Tokens(parent.mWmService, type,
+                final com.android.server.wm.DisplayArea.Tokens leaf = new com.android.server.wm.DisplayArea.Tokens(parent.mWmService, type,
                         "Leaf:" + mMinLayer + ":" + mMaxLayer);
                 for (int i = mMinLayer; i <= mMaxLayer; i++) {
                     areaForLayer[i] = leaf;
                 }
                 return leaf;
             } else {
-                return new DisplayArea(parent.mWmService, type, mFeature.mName + ":"
+                return new com.android.server.wm.DisplayArea(parent.mWmService, type, mFeature.mName + ":"
                         + mMinLayer + ":" + mMaxLayer, mFeature.mId);
             }
         }

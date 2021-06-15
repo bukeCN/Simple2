@@ -241,10 +241,10 @@ public class DisplayPolicy {
                     | View.STATUS_BAR_TRANSPARENT
                     | View.NAVIGATION_BAR_TRANSPARENT;
 
-    private final WindowManagerService mService;
+    private final com.android.server.wm.WindowManagerService mService;
     private final Context mContext;
     private final Context mUiContext;
-    private final DisplayContent mDisplayContent;
+    private final com.android.server.wm.DisplayContent mDisplayContent;
     private final Object mLock;
     private final Handler mHandler;
 
@@ -253,7 +253,7 @@ public class DisplayPolicy {
     private final boolean mCarDockEnablesAccelerometer;
     private final boolean mDeskDockEnablesAccelerometer;
     private final AccessibilityManager mAccessibilityManager;
-    private final ImmersiveModeConfirmation mImmersiveModeConfirmation;
+    private final com.android.server.wm.ImmersiveModeConfirmation mImmersiveModeConfirmation;
     private final ScreenshotHelper mScreenshotHelper;
 
     private final Object mServiceAcquireLock = new Object();
@@ -278,7 +278,7 @@ public class DisplayPolicy {
         }
     }
 
-    private final SystemGesturesPointerEventListener mSystemGestures;
+    private final com.android.server.wm.SystemGesturesPointerEventListener mSystemGestures;
 
     private volatile int mLidState = LID_ABSENT;
     private volatile int mDockMode = Intent.EXTRA_DOCK_STATE_UNDOCKED;
@@ -321,12 +321,12 @@ public class DisplayPolicy {
 
     private boolean mLastImmersiveMode;
 
-    private final StatusBarController mStatusBarController;
+    private final com.android.server.wm.StatusBarController mStatusBarController;
 
-    private final BarController mNavigationBarController;
+    private final com.android.server.wm.BarController mNavigationBarController;
 
-    private final BarController.OnBarVisibilityChangedListener mNavBarVisibilityListener =
-            new BarController.OnBarVisibilityChangedListener() {
+    private final com.android.server.wm.BarController.OnBarVisibilityChangedListener mNavBarVisibilityListener =
+            new com.android.server.wm.BarController.OnBarVisibilityChangedListener() {
                 @Override
                 public void onBarVisibilityChanged(boolean visible) {
                     if (mAccessibilityManager == null) {
@@ -411,7 +411,7 @@ public class DisplayPolicy {
      */
     @NonNull private Insets mForwardedInsets = Insets.NONE;
 
-    private RefreshRatePolicy mRefreshRatePolicy;
+    private com.android.server.wm.RefreshRatePolicy mRefreshRatePolicy;
 
     // -------- PolicyHandler --------
     private static final int MSG_REQUEST_TRANSIENT_BARS = 2;
@@ -455,7 +455,7 @@ public class DisplayPolicy {
         }
     }
 
-    DisplayPolicy(WindowManagerService service, DisplayContent displayContent) {
+    DisplayPolicy(com.android.server.wm.WindowManagerService service, com.android.server.wm.DisplayContent displayContent) {
         mService = service;
         mContext = displayContent.isDefaultDisplay ? service.mContext
                 : service.mContext.createDisplayContext(displayContent.getDisplay());
@@ -466,8 +466,8 @@ public class DisplayPolicy {
         mLock = service.getWindowManagerLock();
 
         final int displayId = displayContent.getDisplayId();
-        mStatusBarController = new StatusBarController(displayId);
-        mNavigationBarController = new BarController("NavigationBar",
+        mStatusBarController = new com.android.server.wm.StatusBarController(displayId);
+        mNavigationBarController = new com.android.server.wm.BarController("NavigationBar",
                 displayId,
                 View.NAVIGATION_BAR_TRANSIENT,
                 View.NAVIGATION_BAR_UNHIDE,
@@ -492,8 +492,8 @@ public class DisplayPolicy {
 
         final Looper looper = UiThread.getHandler().getLooper();
         mHandler = new PolicyHandler(looper);
-        mSystemGestures = new SystemGesturesPointerEventListener(mContext, mHandler,
-                new SystemGesturesPointerEventListener.Callbacks() {
+        mSystemGestures = new com.android.server.wm.SystemGesturesPointerEventListener(mContext, mHandler,
+                new com.android.server.wm.SystemGesturesPointerEventListener.Callbacks() {
                     @Override
                     public void onSwipeFromTop() {
                         synchronized (mLock) {
@@ -561,7 +561,7 @@ public class DisplayPolicy {
                     }
 
                     private WindowOrientationListener getOrientationListener() {
-                        final DisplayRotation rotation = mDisplayContent.getDisplayRotation();
+                        final com.android.server.wm.DisplayRotation rotation = mDisplayContent.getDisplayRotation();
                         return rotation != null ? rotation.getOrientationListener() : null;
                     }
 
@@ -605,7 +605,7 @@ public class DisplayPolicy {
         displayContent.registerPointerEventListener(mSystemGestures);
         displayContent.mAppTransition.registerListenerLocked(
                 mStatusBarController.getAppTransitionListener());
-        mImmersiveModeConfirmation = new ImmersiveModeConfirmation(mContext, looper,
+        mImmersiveModeConfirmation = new com.android.server.wm.ImmersiveModeConfirmation(mContext, looper,
                 mService.mVrModeEnabled);
 
         // TODO: Make it can take screenshot on external display
@@ -629,7 +629,7 @@ public class DisplayPolicy {
             mHasNavigationBar = mDisplayContent.supportsSystemDecorations();
         }
 
-        mRefreshRatePolicy = new RefreshRatePolicy(mService,
+        mRefreshRatePolicy = new com.android.server.wm.RefreshRatePolicy(mService,
                 mDisplayContent.getDisplayInfo(),
                 mService.mHighRefreshRateBlacklist);
 
@@ -1019,6 +1019,7 @@ public class DisplayPolicy {
      *
      * @param win The window being added.
      * @param attrs Information about the window to be added.
+     * 添加系统类型的窗口
      */
     void addWindowLw(WindowState win, WindowManager.LayoutParams attrs) {
         if ((attrs.privateFlags & PRIVATE_FLAG_IS_SCREEN_DECOR) != 0) {
@@ -1035,7 +1036,7 @@ public class DisplayPolicy {
             case TYPE_STATUS_BAR:
                 mStatusBar = win;
                 mStatusBarController.setWindow(win);
-                final TriConsumer<DisplayFrames, WindowState, Rect> frameProvider =
+                final TriConsumer<com.android.server.wm.DisplayFrames, WindowState, Rect> frameProvider =
                         (displayFrames, windowState, rect) -> {
                             rect.top = 0;
                             rect.bottom = getStatusBarHeight(displayFrames);
@@ -1109,7 +1110,7 @@ public class DisplayPolicy {
         }
     }
 
-    TriConsumer<DisplayFrames, WindowState, Rect> getImeSourceFrameProvider() {
+    TriConsumer<com.android.server.wm.DisplayFrames, WindowState, Rect> getImeSourceFrameProvider() {
         return (displayFrames, windowState, inOutFrame) -> {
             if (mNavigationBar != null && navigationBarPosition(displayFrames.mDisplayWidth,
                     displayFrames.mDisplayHeight,
@@ -1169,13 +1170,13 @@ public class DisplayPolicy {
         mScreenDecorWindows.remove(win);
     }
 
-    private int getStatusBarHeight(DisplayFrames displayFrames) {
+    private int getStatusBarHeight(com.android.server.wm.DisplayFrames displayFrames) {
         return Math.max(mStatusBarHeightForRotation[displayFrames.mRotation],
                 displayFrames.mDisplayCutoutSafe.top);
     }
 
     @VisibleForTesting
-    StatusBarController getStatusBarController() {
+    com.android.server.wm.StatusBarController getStatusBarController() {
         return mStatusBarController;
     }
 
@@ -1308,12 +1309,12 @@ public class DisplayPolicy {
      * @return Whether to always consume the system bars.
      *         See {@link #areSystemBarsForcedShownLw(WindowState)}.
      */
-    boolean getLayoutHint(LayoutParams attrs, WindowToken windowToken, Rect outFrame,
-            Rect outContentInsets, Rect outStableInsets,
-            DisplayCutout.ParcelableWrapper outDisplayCutout) {
-        final int fl = PolicyControl.getWindowFlags(null, attrs);
+    boolean getLayoutHint(LayoutParams attrs, com.android.server.wm.WindowToken windowToken, Rect outFrame,
+                          Rect outContentInsets, Rect outStableInsets,
+                          DisplayCutout.ParcelableWrapper outDisplayCutout) {
+        final int fl = com.android.server.wm.PolicyControl.getWindowFlags(null, attrs);
         final int pfl = attrs.privateFlags;
-        final int requestedSysUiVis = PolicyControl.getSystemUiVisibility(null, attrs);
+        final int requestedSysUiVis = com.android.server.wm.PolicyControl.getSystemUiVisibility(null, attrs);
         final int sysUiVis = requestedSysUiVis | getImpliedSysUiFlagsForLayout(attrs);
 
         final boolean layoutInScreen = (fl & FLAG_LAYOUT_IN_SCREEN) != 0;
@@ -1323,13 +1324,13 @@ public class DisplayPolicy {
 
         final boolean isFixedRotationTransforming =
                 windowToken != null && windowToken.isFixedRotationTransforming();
-        final ActivityRecord activity = windowToken != null ? windowToken.asActivityRecord() : null;
+        final com.android.server.wm.ActivityRecord activity = windowToken != null ? windowToken.asActivityRecord() : null;
         final Task task = activity != null ? activity.getTask() : null;
         final Rect taskBounds = isFixedRotationTransforming
                 // Use token (activity) bounds if it is rotated because its task is not rotated.
                 ? windowToken.getBounds()
                 : (task != null ? task.getBounds() : null);
-        final DisplayFrames displayFrames = isFixedRotationTransforming
+        final com.android.server.wm.DisplayFrames displayFrames = isFixedRotationTransforming
                 ? windowToken.getFixedRotationTransformDisplayFrames()
                 : mDisplayContent.mDisplayFrames;
 
@@ -1466,9 +1467,9 @@ public class DisplayPolicy {
         }
 
         private void showNavigationBar() {
-            final InsetsSourceProvider provider = mDisplayContent.getInsetsStateController()
+            final com.android.server.wm.InsetsSourceProvider provider = mDisplayContent.getInsetsStateController()
                     .peekSourceProvider(ITYPE_NAVIGATION_BAR);
-            final InsetsControlTarget target =
+            final com.android.server.wm.InsetsControlTarget target =
                     provider != null ? provider.getControlTarget() : null;
             if (target != null) {
                 target.showInsets(Type.navigationBars(), false /* fromIme */);
@@ -1476,8 +1477,8 @@ public class DisplayPolicy {
         }
     }
 
-    private void simulateLayoutDecorWindow(WindowState win, DisplayFrames displayFrames,
-            InsetsState insetsState, WindowFrames simulatedWindowFrames,
+    private void simulateLayoutDecorWindow(WindowState win, com.android.server.wm.DisplayFrames displayFrames,
+            InsetsState insetsState, com.android.server.wm.WindowFrames simulatedWindowFrames,
             SparseArray<Rect> contentFrames, Consumer<Rect> layout) {
         win.setSimulatedWindowFrames(simulatedWindowFrames);
         final Rect contentFrame = new Rect();
@@ -1498,12 +1499,12 @@ public class DisplayPolicy {
      * state and some temporal states. In other words, it doesn't change the window frames used to
      * show on screen.
      */
-    void simulateLayoutDisplay(DisplayFrames displayFrames, InsetsState insetsState,
-            SparseArray<Rect> barContentFrames) {
+    void simulateLayoutDisplay(com.android.server.wm.DisplayFrames displayFrames, InsetsState insetsState,
+                               SparseArray<Rect> barContentFrames) {
         displayFrames.onBeginLayout();
         updateInsetsStateForDisplayCutout(displayFrames, insetsState);
         insetsState.setDisplayFrame(displayFrames.mUnrestricted);
-        final WindowFrames simulatedWindowFrames = new WindowFrames();
+        final com.android.server.wm.WindowFrames simulatedWindowFrames = new com.android.server.wm.WindowFrames();
         if (mNavigationBar != null) {
             simulateLayoutDecorWindow(mNavigationBar, displayFrames, insetsState,
                     simulatedWindowFrames, barContentFrames,
@@ -1528,7 +1529,7 @@ public class DisplayPolicy {
      * @param displayFrames frames of the display we are doing layout on.
      * @param uiMode The current uiMode in configuration.
      */
-    public void beginLayoutLw(DisplayFrames displayFrames, int uiMode) {
+    public void beginLayoutLw(com.android.server.wm.DisplayFrames displayFrames, int uiMode) {
         displayFrames.onBeginLayout();
         updateInsetsStateForDisplayCutout(displayFrames,
                 mDisplayContent.getInsetsStateController().getRawInsetsState());
@@ -1539,7 +1540,7 @@ public class DisplayPolicy {
         // drive nav being hidden only by whether it is requested.
         final int sysui = mLastSystemUiFlags;
         final int behavior = mLastBehavior;
-        final InsetsSourceProvider provider =
+        final com.android.server.wm.InsetsSourceProvider provider =
                 mDisplayContent.getInsetsStateController().peekSourceProvider(ITYPE_NAVIGATION_BAR);
         boolean navVisible = ViewRootImpl.sNewInsetsMode != ViewRootImpl.NEW_INSETS_MODE_FULL
                 ? (sysui & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0
@@ -1584,9 +1585,9 @@ public class DisplayPolicy {
     }
 
     void updateHideNavInputEventReceiver() {
-        final InsetsSourceProvider provider = mDisplayContent.getInsetsStateController()
+        final com.android.server.wm.InsetsSourceProvider provider = mDisplayContent.getInsetsStateController()
                 .peekSourceProvider(ITYPE_NAVIGATION_BAR);
-        final InsetsControlTarget navControlTarget =
+        final com.android.server.wm.InsetsControlTarget navControlTarget =
                 provider != null ? provider.getControlTarget() : null;
         final WindowState navControllingWin =
                 navControlTarget instanceof WindowState ? (WindowState) navControlTarget : null;
@@ -1620,8 +1621,8 @@ public class DisplayPolicy {
         }
     }
 
-    private static void updateInsetsStateForDisplayCutout(DisplayFrames displayFrames,
-            InsetsState state) {
+    private static void updateInsetsStateForDisplayCutout(com.android.server.wm.DisplayFrames displayFrames,
+                                                          InsetsState state) {
         if (displayFrames.mDisplayCutout.getDisplayCutout().isEmpty()) {
             state.removeSource(ITYPE_LEFT_DISPLAY_CUTOUT);
             state.removeSource(ITYPE_TOP_DISPLAY_CUTOUT);
@@ -1638,7 +1639,7 @@ public class DisplayPolicy {
     }
 
     /** Enforces the last layout policy for display frames. */
-    private void postAdjustDisplayFrames(DisplayFrames displayFrames) {
+    private void postAdjustDisplayFrames(com.android.server.wm.DisplayFrames displayFrames) {
         if (displayFrames.mDisplayCutoutSafe.top > displayFrames.mUnrestricted.top) {
             // Make sure that the zone we're avoiding for the cutout is at least as tall as the
             // status bar; otherwise fullscreen apps will end up cutting halfway into the status
@@ -1664,8 +1665,8 @@ public class DisplayPolicy {
      * @param simulatedFrames Non-null if the caller only needs the result of display frames (see
      *                        {@link WindowState#mSimulatedWindowFrames}).
      */
-    private void layoutScreenDecorWindows(DisplayFrames displayFrames,
-            WindowFrames simulatedFrames) {
+    private void layoutScreenDecorWindows(com.android.server.wm.DisplayFrames displayFrames,
+                                          com.android.server.wm.WindowFrames simulatedFrames) {
         if (mScreenDecorWindows.isEmpty()) {
             return;
         }
@@ -1687,7 +1688,7 @@ public class DisplayPolicy {
             if (isSimulatedLayout) {
                 w.setSimulatedWindowFrames(simulatedFrames);
             }
-            final WindowFrames windowFrames = w.getLayoutingWindowFrames();
+            final com.android.server.wm.WindowFrames windowFrames = w.getLayoutingWindowFrames();
             windowFrames.setFrames(displayFrames.mUnrestricted /* parentFrame */,
                     displayFrames.mUnrestricted /* displayFrame */,
                     displayFrames.mUnrestricted /* contentFrame */,
@@ -1743,15 +1744,15 @@ public class DisplayPolicy {
         displayFrames.mContent.set(dockFrame);
     }
 
-    private boolean layoutStatusBar(DisplayFrames displayFrames, int sysui,
-            Rect simulatedContentFrame) {
+    private boolean layoutStatusBar(com.android.server.wm.DisplayFrames displayFrames, int sysui,
+                                    Rect simulatedContentFrame) {
         // decide where the status bar goes ahead of time
         if (mStatusBar == null) {
             return false;
         }
         // apply any navigation bar insets
         sTmpRect.setEmpty();
-        final WindowFrames windowFrames = mStatusBar.getLayoutingWindowFrames();
+        final com.android.server.wm.WindowFrames windowFrames = mStatusBar.getLayoutingWindowFrames();
         windowFrames.setFrames(displayFrames.mUnrestricted /* parentFrame */,
                 displayFrames.mUnrestricted /* displayFrame */,
                 displayFrames.mStable /* contentFrame */,
@@ -1809,9 +1810,9 @@ public class DisplayPolicy {
         return mStatusBarController.checkHiddenLw();
     }
 
-    private boolean layoutNavigationBar(DisplayFrames displayFrames, int uiMode, boolean navVisible,
-            boolean navTranslucent, boolean navAllowedHidden,
-            boolean statusBarForcesShowingNavigation, Rect simulatedContentFrame) {
+    private boolean layoutNavigationBar(com.android.server.wm.DisplayFrames displayFrames, int uiMode, boolean navVisible,
+                                        boolean navTranslucent, boolean navAllowedHidden,
+                                        boolean statusBarForcesShowingNavigation, Rect simulatedContentFrame) {
         if (mNavigationBar == null) {
             return false;
         }
@@ -1909,7 +1910,7 @@ public class DisplayPolicy {
         displayFrames.mContent.set(dockFrame);
         // And compute the final frame.
         sTmpRect.setEmpty();
-        final WindowFrames windowFrames = mNavigationBar.getLayoutingWindowFrames();
+        final com.android.server.wm.WindowFrames windowFrames = mNavigationBar.getLayoutingWindowFrames();
         windowFrames.setFrames(navigationFrame /* parentFrame */,
                 navigationFrame /* displayFrame */,
                 displayFrames.mDisplayCutoutSafe /* contentFrame */,
@@ -1929,7 +1930,7 @@ public class DisplayPolicy {
 
     private void setAttachedWindowFrames(WindowState win, int fl, int adjust, WindowState attached,
             boolean insetDecors, Rect pf, Rect df, Rect cf, Rect vf,
-            DisplayFrames displayFrames) {
+            com.android.server.wm.DisplayFrames displayFrames) {
         if (!win.isInputMethodTarget() && attached.isInputMethodTarget()) {
             // Here's a special case: if the child window is not the 'dock window'
             // or input method target, and the window it is attached to is below
@@ -1988,7 +1989,7 @@ public class DisplayPolicy {
         pf.set((fl & FLAG_LAYOUT_IN_SCREEN) == 0 ? attached.getFrameLw() : df);
     }
 
-    private void applyStableConstraints(int sysui, int fl, Rect r, DisplayFrames displayFrames) {
+    private void applyStableConstraints(int sysui, int fl, Rect r, com.android.server.wm.DisplayFrames displayFrames) {
         if ((sysui & View.SYSTEM_UI_FLAG_LAYOUT_STABLE) == 0) {
             return;
         }
@@ -2021,7 +2022,7 @@ public class DisplayPolicy {
      *                 so you can use its Rect.  Otherwise null.
      * @param displayFrames The display frames.
      */
-    public void layoutWindowLw(WindowState win, WindowState attached, DisplayFrames displayFrames) {
+    public void layoutWindowLw(WindowState win, WindowState attached, com.android.server.wm.DisplayFrames displayFrames) {
         // We've already done the navigation bar, status bar, and all screen decor windows. If the
         // status bar can receive input, we need to layout it again to accommodate for the IME
         // window.
@@ -2032,14 +2033,14 @@ public class DisplayPolicy {
         final WindowManager.LayoutParams attrs = win.getAttrs();
 
         final int type = attrs.type;
-        final int fl = PolicyControl.getWindowFlags(win, attrs);
+        final int fl = com.android.server.wm.PolicyControl.getWindowFlags(win, attrs);
         final int pfl = attrs.privateFlags;
         final int sim = attrs.softInputMode;
-        final int requestedSysUiFl = PolicyControl.getSystemUiVisibility(null, attrs);
+        final int requestedSysUiFl = com.android.server.wm.PolicyControl.getSystemUiVisibility(null, attrs);
         final int sysUiFl = requestedSysUiFl | getImpliedSysUiFlagsForLayout(attrs);
 
         displayFrames = win.getDisplayFrames(displayFrames);
-        final WindowFrames windowFrames = win.getWindowFrames();
+        final com.android.server.wm.WindowFrames windowFrames = win.getWindowFrames();
 
         sTmpLastParentFrame.set(windowFrames.mParentFrame);
         final Rect pf = windowFrames.mParentFrame;
@@ -2502,14 +2503,14 @@ public class DisplayPolicy {
         }
     }
 
-    private void layoutWallpaper(DisplayFrames displayFrames, Rect pf, Rect df, Rect cf) {
+    private void layoutWallpaper(com.android.server.wm.DisplayFrames displayFrames, Rect pf, Rect df, Rect cf) {
         // The wallpaper has Real Ultimate Power
         df.set(displayFrames.mUnrestricted);
         pf.set(displayFrames.mUnrestricted);
         cf.set(displayFrames.mUnrestricted);
     }
 
-    private void offsetInputMethodWindowLw(WindowState win, DisplayFrames displayFrames) {
+    private void offsetInputMethodWindowLw(WindowState win, com.android.server.wm.DisplayFrames displayFrames) {
         final int rotation = displayFrames.mRotation;
         final int navBarPosition = navigationBarPosition(displayFrames.mDisplayWidth,
                 displayFrames.mDisplayHeight, rotation);
@@ -2535,7 +2536,7 @@ public class DisplayPolicy {
                 + displayFrames.mContent.bottom + " mCurBottom=" + displayFrames.mCurrent.bottom);
     }
 
-    private void offsetVoiceInputWindowLw(WindowState win, DisplayFrames displayFrames) {
+    private void offsetVoiceInputWindowLw(WindowState win, com.android.server.wm.DisplayFrames displayFrames) {
         int top = Math.max(win.getDisplayFrameLw().top, win.getContentFrameLw().top);
         top += win.getGivenContentInsetsLw().top;
         displayFrames.mVoiceContent.bottom = Math.min(displayFrames.mVoiceContent.bottom, top);
@@ -2578,7 +2579,7 @@ public class DisplayPolicy {
         final boolean affectsSystemUi = win.canAffectSystemUiFlags();
         if (DEBUG_LAYOUT) Slog.i(TAG, "Win " + win + ": affectsSystemUi=" + affectsSystemUi);
         mService.mPolicy.applyKeyguardPolicyLw(win, imeTarget);
-        final int fl = PolicyControl.getWindowFlags(win, attrs);
+        final int fl = com.android.server.wm.PolicyControl.getWindowFlags(win, attrs);
         if (mTopFullscreenOpaqueWindowState == null && affectsSystemUi
                 && attrs.type == TYPE_INPUT_METHOD) {
             mForcingShowNavBar = true;
@@ -2780,11 +2781,11 @@ public class DisplayPolicy {
             return false;
         }
         final LayoutParams attrs = mTopFullscreenOpaqueWindowState.getAttrs();
-        final int fl = PolicyControl.getWindowFlags(null, attrs);
-        final int sysui = PolicyControl.getSystemUiVisibility(null, attrs);
+        final int fl = com.android.server.wm.PolicyControl.getWindowFlags(null, attrs);
+        final int sysui = com.android.server.wm.PolicyControl.getSystemUiVisibility(null, attrs);
         final InsetsSource request = mTopFullscreenOpaqueWindowState.getRequestedInsetsState()
                 .peekSource(ITYPE_STATUS_BAR);
-        if (WindowManagerDebugConfig.DEBUG) {
+        if (com.android.server.wm.WindowManagerDebugConfig.DEBUG) {
             Slog.d(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw());
             Slog.d(TAG, "attr: " + attrs + " request: " + request);
         }
@@ -2813,7 +2814,7 @@ public class DisplayPolicy {
      * Called when the configuration has changed, and it's safe to load new values from resources.
      */
     public void onConfigurationChanged() {
-        final DisplayRotation displayRotation = mDisplayContent.getDisplayRotation();
+        final com.android.server.wm.DisplayRotation displayRotation = mDisplayContent.getDisplayRotation();
 
         final Resources res = getCurrentUserResources();
         final int portraitRotation = displayRotation.getPortraitRotation();
@@ -3206,8 +3207,8 @@ public class DisplayPolicy {
             return;
         }
         if (ViewRootImpl.sNewInsetsMode == NEW_INSETS_MODE_FULL) {
-            final InsetsSourceProvider provider = swipeTarget.getControllableInsetProvider();
-            final InsetsControlTarget controlTarget = provider != null
+            final com.android.server.wm.InsetsSourceProvider provider = swipeTarget.getControllableInsetProvider();
+            final com.android.server.wm.InsetsControlTarget controlTarget = provider != null
                     ? provider.getControlTarget() : null;
 
             if (controlTarget == null || controlTarget == getNotificationShade()) {
@@ -3265,7 +3266,7 @@ public class DisplayPolicy {
         return mService.mPolicy.isKeyguardOccluded();
     }
 
-    InsetsPolicy getInsetsPolicy() {
+    com.android.server.wm.InsetsPolicy getInsetsPolicy() {
         return mDisplayContent.getInsetsPolicy();
     }
 
@@ -3303,12 +3304,12 @@ public class DisplayPolicy {
 
         mDisplayContent.getInsetsPolicy().updateBarControlTarget(win);
 
-        int tmpVisibility = PolicyControl.getSystemUiVisibility(win, null)
+        int tmpVisibility = com.android.server.wm.PolicyControl.getSystemUiVisibility(win, null)
                 & ~mResettingSystemUiFlags
                 & ~mForceClearedSystemUiFlags;
         if (mForcingShowNavBar && win.getSurfaceLayer() < mForcingShowNavBarLayer) {
             tmpVisibility
-                    &= ~PolicyControl.adjustClearableFlags(win, View.SYSTEM_UI_CLEARABLE_FLAGS);
+                    &= ~com.android.server.wm.PolicyControl.adjustClearableFlags(win, View.SYSTEM_UI_CLEARABLE_FLAGS);
         }
 
         final int fullscreenAppearance = updateLightStatusBarAppearanceLw(0 /* vis */,
@@ -3340,10 +3341,10 @@ public class DisplayPolicy {
                         mDisplayContent.mInputMethodWindow, navColorWin) | opaqueAppearance
                 : InsetsFlags.getAppearance(visibility);
         final int diff = visibility ^ mLastSystemUiFlags;
-        final InsetsPolicy insetsPolicy = getInsetsPolicy();
+        final com.android.server.wm.InsetsPolicy insetsPolicy = getInsetsPolicy();
         final boolean isFullscreen = (visibility & (View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)) != 0
-                || (PolicyControl.getWindowFlags(win, win.mAttrs) & FLAG_FULLSCREEN) != 0
+                || (com.android.server.wm.PolicyControl.getWindowFlags(win, win.mAttrs) & FLAG_FULLSCREEN) != 0
                 || (mStatusBar != null && insetsPolicy.isHidden(ITYPE_STATUS_BAR))
                 || (mNavigationBar != null && insetsPolicy.isHidden(
                         ITYPE_NAVIGATION_BAR));
@@ -3443,7 +3444,7 @@ public class DisplayPolicy {
                 // its light flag.
                 appearance &= ~APPEARANCE_LIGHT_STATUS_BARS;
                 final int legacyAppearance = InsetsFlags.getAppearance(
-                        PolicyControl.getSystemUiVisibility(statusColorWin, null));
+                        com.android.server.wm.PolicyControl.getSystemUiVisibility(statusColorWin, null));
                 appearance |= (statusColorWin.mAttrs.insetsFlags.appearance | legacyAppearance)
                         & APPEARANCE_LIGHT_STATUS_BARS;
             } else if (statusColorWin.isDimming()) {
@@ -3467,7 +3468,7 @@ public class DisplayPolicy {
         final boolean imeWindowCanNavColorWindow = imeWindow != null
                 && imeWindow.isVisibleLw()
                 && navBarPosition == NAV_BAR_BOTTOM
-                && (PolicyControl.getWindowFlags(imeWindow, null)
+                && (com.android.server.wm.PolicyControl.getWindowFlags(imeWindow, null)
                 & WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) != 0;
 
         if (opaque != null && opaqueOrDimming == opaque) {
@@ -3490,7 +3491,7 @@ public class DisplayPolicy {
 
         // The IME window and the dimming window are competing.  Check if the dimming window can be
         // IME target or not.
-        if (LayoutParams.mayUseInputMethod(PolicyControl.getWindowFlags(opaqueOrDimming, null))) {
+        if (LayoutParams.mayUseInputMethod(com.android.server.wm.PolicyControl.getWindowFlags(opaqueOrDimming, null))) {
             // The IME window is above the dimming window.
             return imeWindow;
         } else {
@@ -3507,7 +3508,7 @@ public class DisplayPolicy {
             if (navColorWin == imeWindow || navColorWin == opaque) {
                 // Respect the light flag.
                 vis &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-                vis |= PolicyControl.getSystemUiVisibility(navColorWin, null)
+                vis |= com.android.server.wm.PolicyControl.getSystemUiVisibility(navColorWin, null)
                         & View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             } else if (navColorWin == opaqueOrDimming && navColorWin.isDimming()) {
                 // Clear the light flag for dimming window.
@@ -3601,7 +3602,7 @@ public class DisplayPolicy {
                 (vis & View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) != 0;
         final boolean hideStatusBarWM =
                 mTopFullscreenOpaqueWindowState != null
-                        && (PolicyControl.getWindowFlags(mTopFullscreenOpaqueWindowState, null)
+                        && (com.android.server.wm.PolicyControl.getWindowFlags(mTopFullscreenOpaqueWindowState, null)
                         & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
         final boolean hideStatusBarSysui =
                 (vis & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0;
@@ -3680,7 +3681,7 @@ public class DisplayPolicy {
         return Pair.create(vis, navColorWin);
     }
 
-    private boolean drawsBarBackground(int vis, WindowState win, BarController controller,
+    private boolean drawsBarBackground(int vis, WindowState win, com.android.server.wm.BarController controller,
             int translucentFlag) {
         if (!controller.isTransparentAllowed(win)) {
             return false;
@@ -3861,7 +3862,7 @@ public class DisplayPolicy {
         }
     }
 
-    RefreshRatePolicy getRefreshRatePolicy() {
+    com.android.server.wm.RefreshRatePolicy getRefreshRatePolicy() {
         return mRefreshRatePolicy;
     }
 

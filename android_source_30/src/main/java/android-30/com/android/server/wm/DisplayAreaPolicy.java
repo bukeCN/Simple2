@@ -28,23 +28,23 @@ import java.util.List;
  * Policy that manages DisplayAreas.
  */
 public abstract class DisplayAreaPolicy {
-    protected final WindowManagerService mWmService;
-    protected final DisplayContent mContent;
+    protected final com.android.server.wm.WindowManagerService mWmService;
+    protected final com.android.server.wm.DisplayContent mContent;
 
     /**
      * The root DisplayArea. Attach all DisplayAreas to this area (directly or indirectly).
      */
-    protected final DisplayArea.Root mRoot;
+    protected final com.android.server.wm.DisplayArea.Root mRoot;
 
     /**
      * The IME container. The IME's windows are automatically added to this container.
      */
-    protected final DisplayArea<? extends WindowContainer> mImeContainer;
+    protected final com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> mImeContainer;
 
     /**
      * The task display areas. Tasks etc. are automatically added to these containers.
      */
-    protected final List<TaskDisplayArea> mTaskDisplayAreas;
+    protected final List<com.android.server.wm.TaskDisplayArea> mTaskDisplayAreas;
 
     /**
      * Construct a new {@link DisplayAreaPolicy}
@@ -57,10 +57,10 @@ public abstract class DisplayAreaPolicy {
      *
      * @see #attachDisplayAreas()
      */
-    protected DisplayAreaPolicy(WindowManagerService wmService,
-            DisplayContent content, DisplayArea.Root root,
-            DisplayArea<? extends WindowContainer> imeContainer,
-            List<TaskDisplayArea> taskDisplayAreas) {
+    protected DisplayAreaPolicy(com.android.server.wm.WindowManagerService wmService,
+                                com.android.server.wm.DisplayContent content, com.android.server.wm.DisplayArea.Root root,
+                                com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> imeContainer,
+                                List<com.android.server.wm.TaskDisplayArea> taskDisplayAreas) {
         mWmService = wmService;
         mContent = content;
         mRoot = root;
@@ -83,7 +83,7 @@ public abstract class DisplayAreaPolicy {
      *
      * This must attach the token to mRoot (or one of its descendants).
      */
-    public abstract void addWindow(WindowToken token);
+    public abstract void addWindow(com.android.server.wm.WindowToken token);
 
     /**
      * @return the number of task display areas on the display.
@@ -95,21 +95,22 @@ public abstract class DisplayAreaPolicy {
     /**
      * @return the task display area at index.
      */
-    public TaskDisplayArea getTaskDisplayAreaAt(int index) {
+    public com.android.server.wm.TaskDisplayArea getTaskDisplayAreaAt(int index) {
         return mTaskDisplayAreas.get(index);
     }
 
     /** Provider for platform-default display area policy. */
     static final class DefaultProvider implements DisplayAreaPolicy.Provider {
         @Override
-        public DisplayAreaPolicy instantiate(WindowManagerService wmService,
-                DisplayContent content, DisplayArea.Root root,
-                DisplayArea<? extends WindowContainer> imeContainer) {
-            final TaskDisplayArea defaultTaskDisplayArea = new TaskDisplayArea(content, wmService,
+        public DisplayAreaPolicy instantiate(com.android.server.wm.WindowManagerService wmService,
+                                             com.android.server.wm.DisplayContent content, com.android.server.wm.DisplayArea.Root root,
+                                             com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> imeContainer) {
+            // 创建一个默认的显示区域
+            final com.android.server.wm.TaskDisplayArea defaultTaskDisplayArea = new com.android.server.wm.TaskDisplayArea(content, wmService,
                     "DefaultTaskDisplayArea", FEATURE_DEFAULT_TASK_CONTAINER);
-            final List<TaskDisplayArea> tdaList = new ArrayList<>();
+            final List<com.android.server.wm.TaskDisplayArea> tdaList = new ArrayList<>();
             tdaList.add(defaultTaskDisplayArea);
-            return new DisplayAreaPolicyBuilder()
+            return new com.android.server.wm.DisplayAreaPolicyBuilder()
                     .build(wmService, content, root, imeContainer, tdaList);
         }
     }
@@ -127,17 +128,19 @@ public abstract class DisplayAreaPolicy {
          *
          * @see DisplayAreaPolicy#DisplayAreaPolicy
          */
-        DisplayAreaPolicy instantiate(WindowManagerService wmService,
-                DisplayContent content, DisplayArea.Root root,
-                DisplayArea<? extends WindowContainer> imeContainer);
+        DisplayAreaPolicy instantiate(com.android.server.wm.WindowManagerService wmService,
+                                      com.android.server.wm.DisplayContent content, com.android.server.wm.DisplayArea.Root root,
+                                      com.android.server.wm.DisplayArea<? extends com.android.server.wm.WindowContainer> imeContainer);
 
         /**
          * Instantiate the device-specific {@link Provider}.
+         * 提供给特别的设备使用，如多屏幕。
          */
         static Provider fromResources(Resources res) {
             String name = res.getString(
                     com.android.internal.R.string.config_deviceSpecificDisplayAreaPolicyProvider);
             if (TextUtils.isEmpty(name)) {
+                // 没有就使用默认的
                 return new DisplayAreaPolicy.DefaultProvider();
             }
             try {

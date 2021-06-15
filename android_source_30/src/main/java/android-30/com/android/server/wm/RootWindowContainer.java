@@ -447,13 +447,13 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
     }
 
     boolean updateFocusedWindowLocked(int mode, boolean updateInputWindows) {
-        mTopFocusedAppByProcess.clear();
+        mTopFocusedAppByProcess.clear();// 具有焦点的顶层程序清楚
         boolean changed = false;
         int topFocusedDisplayId = INVALID_DISPLAY;
         for (int i = mChildren.size() - 1; i >= 0; --i) {
             final com.android.server.wm.DisplayContent dc = mChildren.get(i);
             changed |= dc.updateFocusedWindowLocked(mode, updateInputWindows, topFocusedDisplayId);
-            final WindowState newFocus = dc.mCurrentFocus;
+            final com.android.server.wm.WindowState newFocus = dc.mCurrentFocus;
             if (newFocus != null) {
                 final int pidOfNewFocus = newFocus.mSession.mPid;
                 if (mTopFocusedAppByProcess.get(pidOfNewFocus) == null) {
@@ -2944,10 +2944,10 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
             }
         }
 
-        // 获取默认的屏幕显示，创建堆栈, 这里是在获取应用程序显示窗口的默认位置，在不支持分屏、小窗口等情况下。
+        // 获取默认的屏幕显示，创建堆栈, 这里是在获取应用程序显示窗口的默认位置，如：
         if (container == null
                 || !canLaunchOnDisplay(r, container.mDisplayContent.mDisplayId)) {
-            // 获取默认的屏幕显示区域控制
+            // 获取默认的屏幕的默认显示区域控制
             container = getDefaultTaskDisplayArea();
             if (windowingMode == WindowConfiguration.WINDOWING_MODE_UNDEFINED) {
                 windowingMode = container.resolveWindowingMode(r, options, candidateTask,

@@ -1,6 +1,7 @@
 package com.live.simple2;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -19,6 +20,11 @@ import java.util.List;
 public class MyApplication extends Application {
 
     Handler handler;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+    }
 
     @Override
     public void onCreate() {

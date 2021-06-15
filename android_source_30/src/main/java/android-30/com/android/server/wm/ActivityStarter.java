@@ -1186,7 +1186,7 @@ class ActivityStarter {
 
         mService.onStartActivitySetDidAppSwitch();
         mController.doPendingActivityLaunches(false);
-
+        // 继续
         mLastStartActivityResult = startActivityUnchecked(r, sourceRecord, voiceSession,
                 request.voiceInteractor, startFlags, true /* doResume */, checkedOptions, inTask,
                 restrictedBgActivity, intentGrants);

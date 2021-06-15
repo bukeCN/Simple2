@@ -106,7 +106,7 @@ public final class LoadedApk {
     private static final String PROPERTY_NAME_APPEND_NATIVE = "pi.append_native_lib_paths";
 
     @UnsupportedAppUsage
-    private final ActivityThread mActivityThread;
+    private final android.app.ActivityThread mActivityThread;
     @UnsupportedAppUsage
     final String mPackageName;
     @UnsupportedAppUsage
@@ -168,9 +168,9 @@ public final class LoadedApk {
      * NOTE: This constructor is called with ActivityThread's lock held,
      * so MUST NOT call back out to the activity manager.
      */
-    public LoadedApk(ActivityThread activityThread, ApplicationInfo aInfo,
-            CompatibilityInfo compatInfo, ClassLoader baseLoader,
-            boolean securityViolation, boolean includeCode, boolean registerPackage) {
+    public LoadedApk(android.app.ActivityThread activityThread, ApplicationInfo aInfo,
+                     CompatibilityInfo compatInfo, ClassLoader baseLoader,
+                     boolean securityViolation, boolean includeCode, boolean registerPackage) {
 
         mActivityThread = activityThread;
         setApplicationInfo(aInfo);
@@ -214,7 +214,7 @@ public final class LoadedApk {
      * Create information about the system package.
      * Must call {@link #installSystemApplicationInfo} later.
      */
-    LoadedApk(ActivityThread activityThread) {
+    LoadedApk(android.app.ActivityThread activityThread) {
         mActivityThread = activityThread;
         mApplicationInfo = new ApplicationInfo();
         mApplicationInfo.packageName = "android";
@@ -308,7 +308,7 @@ public final class LoadedApk {
     private static String[] getLibrariesFor(String packageName) {
         ApplicationInfo ai = null;
         try {
-            ai = ActivityThread.getPackageManager().getApplicationInfo(packageName,
+            ai = android.app.ActivityThread.getPackageManager().getApplicationInfo(packageName,
                     PackageManager.GET_SHARED_LIBRARY_FILES, UserHandle.myUserId());
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
@@ -365,7 +365,7 @@ public final class LoadedApk {
                     throw new AssertionError("null split not found");
                 }
 
-                mResources = ResourcesManager.getInstance().getResources(null, mResDir,
+                mResources = android.app.ResourcesManager.getInstance().getResources(null, mResDir,
                         splitPaths, mOverlayDirs, mApplicationInfo.sharedLibraryFiles,
                         Display.DEFAULT_DISPLAY, null, getCompatibilityInfo(),
                         getClassLoader(), mApplication == null ? null
@@ -398,7 +398,7 @@ public final class LoadedApk {
         }
     }
 
-    public static void makePaths(ActivityThread activityThread,
+    public static void makePaths(android.app.ActivityThread activityThread,
                                  ApplicationInfo aInfo,
                                  List<String> outZipPaths) {
         makePaths(activityThread, false, aInfo, outZipPaths, null);
@@ -422,7 +422,7 @@ public final class LoadedApk {
         }
     }
 
-    public static void makePaths(ActivityThread activityThread,
+    public static void makePaths(android.app.ActivityThread activityThread,
                                  boolean isBundledApp,
                                  ApplicationInfo aInfo,
                                  List<String> outZipPaths,
@@ -614,7 +614,7 @@ public final class LoadedApk {
 
             // Since we handled the special base case above, parentSplitIdx is always valid.
             final ClassLoader parent = mCachedClassLoaders[parentSplitIdx];
-            mCachedClassLoaders[splitIdx] = ApplicationLoaders.getDefault().getClassLoader(
+            mCachedClassLoaders[splitIdx] = android.app.ApplicationLoaders.getDefault().getClassLoader(
                     mSplitAppDirs[splitIdx - 1], getTargetSdkVersion(), false, null, null, parent,
                     mSplitClassLoaderNames[splitIdx - 1]);
 
@@ -683,7 +683,7 @@ public final class LoadedApk {
 
         // Shared libraries get a null parent: this has the side effect of having canonicalized
         // shared libraries using ApplicationLoaders cache, which is the behavior we want.
-        return ApplicationLoaders.getDefault().getSharedLibraryClassLoaderWithSharedLibraries(jars,
+        return android.app.ApplicationLoaders.getDefault().getSharedLibraryClassLoaderWithSharedLibraries(jars,
                     mApplicationInfo.targetSdkVersion, isBundledApp, librarySearchPath,
                     libraryPermittedPath, /* parent */ null,
                     /* classLoaderName */ null, sharedLibraries);
@@ -744,10 +744,10 @@ public final class LoadedApk {
         // spinning up the process. Similarly, don't call into binder when we don't
         // have an ActivityThread object.
         if (mActivityThread != null
-                && !Objects.equals(mPackageName, ActivityThread.currentPackageName())
+                && !Objects.equals(mPackageName, android.app.ActivityThread.currentPackageName())
                 && mIncludeCode) {
             try {
-                ActivityThread.getPackageManager().notifyPackageUse(mPackageName,
+                android.app.ActivityThread.getPackageManager().notifyPackageUse(mPackageName,
                         PackageManager.NOTIFY_PACKAGE_USE_CROSS_PACKAGE);
             } catch (RemoteException re) {
                 throw re.rethrowFromSystemServer();
@@ -834,19 +834,19 @@ public final class LoadedApk {
                 // The current application is used to debug, attempt to get the debug layers.
                 try {
                     // Get the ApplicationInfo from PackageManager so that metadata fields present.
-                    final ApplicationInfo ai = ActivityThread.getPackageManager()
+                    final ApplicationInfo ai = android.app.ActivityThread.getPackageManager()
                             .getApplicationInfo(mPackageName, PackageManager.GET_META_DATA,
                                     UserHandle.myUserId());
                     final String debugLayerPath = GraphicsEnvironment.getInstance()
                             .getDebugLayerPathsFromSettings(mActivityThread.getCoreSettings(),
-                                    ActivityThread.getPackageManager(), mPackageName, ai);
+                                    android.app.ActivityThread.getPackageManager(), mPackageName, ai);
                     if (debugLayerPath != null) {
                         libraryPermittedPath += File.pathSeparator + debugLayerPath;
                     }
                 } catch (RemoteException e) {
                     // Unlikely to fail for applications, but in case of failure, something is wrong
                     // inside the system server, hence just skip.
-                    Slog.e(ActivityThread.TAG,
+                    Slog.e(android.app.ActivityThread.TAG,
                             "RemoteException when fetching debug layer paths for: " + mPackageName);
                 }
             }
@@ -860,7 +860,7 @@ public final class LoadedApk {
         if (!mIncludeCode) {
             if (mDefaultClassLoader == null) {
                 StrictMode.ThreadPolicy oldPolicy = allowThreadDiskReads();
-                mDefaultClassLoader = ApplicationLoaders.getDefault().getClassLoader(
+                mDefaultClassLoader = android.app.ApplicationLoaders.getDefault().getClassLoader(
                         "" /* codePath */, mApplicationInfo.targetSdkVersion, isBundledApp,
                         librarySearchPath, libraryPermittedPath, mBaseClassLoader,
                         null /* classLoaderName */);
@@ -885,7 +885,7 @@ public final class LoadedApk {
         final String zip = (zipPaths.size() == 1) ? zipPaths.get(0) :
                 TextUtils.join(File.pathSeparator, zipPaths);
 
-        if (DEBUG) Slog.v(ActivityThread.TAG, "Class path: " + zip +
+        if (DEBUG) Slog.v(android.app.ActivityThread.TAG, "Class path: " + zip +
                     ", JNI path: " + librarySearchPath);
 
         boolean needToSetupJitProfiles = false;
@@ -898,7 +898,7 @@ public final class LoadedApk {
                     mApplicationInfo.sharedLibraryInfos, isBundledApp, librarySearchPath,
                     libraryPermittedPath);
 
-            mDefaultClassLoader = ApplicationLoaders.getDefault().getClassLoaderWithSharedLibraries(
+            mDefaultClassLoader = android.app.ApplicationLoaders.getDefault().getClassLoaderWithSharedLibraries(
                     zip, mApplicationInfo.targetSdkVersion, isBundledApp, librarySearchPath,
                     libraryPermittedPath, mBaseClassLoader,
                     mApplicationInfo.classLoaderName, sharedLibraries);
@@ -913,7 +913,7 @@ public final class LoadedApk {
             // Temporarily disable logging of disk reads on the Looper thread as this is necessary
             StrictMode.ThreadPolicy oldPolicy = allowThreadDiskReads();
             try {
-                ApplicationLoaders.getDefault().addNative(mDefaultClassLoader, libPaths);
+                android.app.ApplicationLoaders.getDefault().addNative(mDefaultClassLoader, libPaths);
             } finally {
                 setThreadPolicy(oldPolicy);
             }
@@ -921,7 +921,7 @@ public final class LoadedApk {
 
         if (addedPaths != null && addedPaths.size() > 0) {
             final String add = TextUtils.join(File.pathSeparator, addedPaths);
-            ApplicationLoaders.getDefault().addPath(mDefaultClassLoader, add);
+            android.app.ApplicationLoaders.getDefault().addPath(mDefaultClassLoader, add);
             // Setup the new code paths for profiling.
             needToSetupJitProfiles = true;
         }
@@ -937,7 +937,7 @@ public final class LoadedApk {
         // loads code from) so we explicitly disallow it there.
         //
         // It is not ok to call this in a zygote context where mActivityThread is null.
-        if (needToSetupJitProfiles && !ActivityThread.isSystem() && mActivityThread != null) {
+        if (needToSetupJitProfiles && !android.app.ActivityThread.isSystem() && mActivityThread != null) {
             setupJitProfileSupport();
         }
 
@@ -972,7 +972,7 @@ public final class LoadedApk {
         // Note that we only need one global reporter per app.
         // Make sure we do this before invoking app code for the first time so that we
         // can capture the complete application startup.
-        BaseDexClassLoader.setReporter(DexLoadReporter.getInstance());
+        BaseDexClassLoader.setReporter(android.app.DexLoadReporter.getInstance());
 
         // Only set up profile support if the loaded apk has the same uid as the
         // current process.
@@ -1007,7 +1007,7 @@ public final class LoadedApk {
         // Register the app data directory with the reporter. It will
         // help deciding whether or not a dex file is the primary apk or a
         // secondary dex.
-        DexLoadReporter.getInstance().registerAppDataDir(mPackageName, mDataDir);
+        android.app.DexLoadReporter.getInstance().registerAppDataDir(mPackageName, mDataDir);
     }
 
     /**
@@ -1034,7 +1034,7 @@ public final class LoadedApk {
      * Java library that expects it to be set.
      */
     private void initializeJavaContextClassLoader() {
-        IPackageManager pm = ActivityThread.getPackageManager();
+        IPackageManager pm = android.app.ActivityThread.getPackageManager();
         android.content.pm.PackageInfo pi =
                 PackageManager.getPackageInfoAsUserCached(
                         mPackageName,
@@ -1074,7 +1074,7 @@ public final class LoadedApk {
             }
             warned = true;
             Thread.currentThread().setContextClassLoader(getParent());
-            Slog.w(ActivityThread.TAG, "ClassLoader." + methodName + ": " +
+            Slog.w(android.app.ActivityThread.TAG, "ClassLoader." + methodName + ": " +
                   "The class loader returned by " +
                   "Thread.getContextClassLoader() may fail for processes " +
                   "that host multiple applications. You should explicitly " +
@@ -1184,7 +1184,7 @@ public final class LoadedApk {
                 throw new AssertionError("null split not found");
             }
 
-            mResources = ResourcesManager.getInstance().getResources(null, mResDir,
+            mResources = android.app.ResourcesManager.getInstance().getResources(null, mResDir,
                     splitPaths, mOverlayDirs, mApplicationInfo.sharedLibraryFiles,
                     Display.DEFAULT_DISPLAY, null, getCompatibilityInfo(),
                     getClassLoader(), null);
@@ -1229,7 +1229,7 @@ public final class LoadedApk {
                 rewriteRValues(cl, packageIdentifiers.valueAt(i), id);
             }
 
-            ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
+            android.app.ContextImpl appContext = android.app.ContextImpl.createAppContext(mActivityThread, this);
             // The network security config needs to be aware of multiple
             // applications in the same process to handle discrepancies
             NetworkSecurityConfigProvider.handleNewApplication(appContext);
@@ -1314,7 +1314,7 @@ public final class LoadedApk {
                             "originally registered here. Are you missing a " +
                             "call to unregisterReceiver()?");
                     leak.setStackTrace(rd.getLocation().getStackTrace());
-                    Slog.e(ActivityThread.TAG, leak.getMessage(), leak);
+                    Slog.e(android.app.ActivityThread.TAG, leak.getMessage(), leak);
                     if (reportRegistrationLeaks) {
                         StrictMode.onIntentReceiverLeaked(leak);
                     }
@@ -1340,7 +1340,7 @@ public final class LoadedApk {
                             what + " " + who + " has leaked ServiceConnection "
                             + sd.getServiceConnection() + " that was originally bound here");
                     leak.setStackTrace(sd.getLocation().getStackTrace());
-                    Slog.e(ActivityThread.TAG, leak.getMessage(), leak);
+                    Slog.e(android.app.ActivityThread.TAG, leak.getMessage(), leak);
                     if (reportRegistrationLeaks) {
                         StrictMode.onServiceConnectionLeaked(leak);
                     }
@@ -1459,9 +1459,9 @@ public final class LoadedApk {
                 } else {
                     rd = mDispatcher.get();
                 }
-                if (ActivityThread.DEBUG_BROADCAST) {
+                if (android.app.ActivityThread.DEBUG_BROADCAST) {
                     int seq = intent.getIntExtra("seq", -1);
-                    Slog.i(ActivityThread.TAG, "Receiving broadcast " + intent.getAction()
+                    Slog.i(android.app.ActivityThread.TAG, "Receiving broadcast " + intent.getAction()
                             + " seq=" + seq + " to " + (rd != null ? rd.mReceiver : null));
                 }
                 if (rd != null) {
@@ -1472,7 +1472,7 @@ public final class LoadedApk {
                     // receiver in this process, but before it could be delivered the
                     // receiver was unregistered.  Acknowledge the broadcast on its
                     // behalf so that the system's broadcast sequence can continue.
-                    if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
+                    if (android.app.ActivityThread.DEBUG_BROADCAST) Slog.i(android.app.ActivityThread.TAG,
                             "Finishing broadcast to unregistered receiver");
                     IActivityManager mgr = ActivityManager.getService();
                     try {
@@ -1519,11 +1519,11 @@ public final class LoadedApk {
                     final BroadcastReceiver receiver = mReceiver;
                     final boolean ordered = mOrdered;
 
-                    if (ActivityThread.DEBUG_BROADCAST) {
+                    if (android.app.ActivityThread.DEBUG_BROADCAST) {
                         int seq = mCurIntent.getIntExtra("seq", -1);
-                        Slog.i(ActivityThread.TAG, "Dispatching broadcast " + mCurIntent.getAction()
+                        Slog.i(android.app.ActivityThread.TAG, "Dispatching broadcast " + mCurIntent.getAction()
                                 + " seq=" + seq + " to " + mReceiver);
-                        Slog.i(ActivityThread.TAG, "  mRegistered=" + mRegistered
+                        Slog.i(android.app.ActivityThread.TAG, "  mRegistered=" + mRegistered
                                 + " mOrderedHint=" + ordered);
                     }
 
@@ -1539,7 +1539,7 @@ public final class LoadedApk {
                     mRunCalled = true;
                     if (receiver == null || intent == null || mForgotten) {
                         if (mRegistered && ordered) {
-                            if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
+                            if (android.app.ActivityThread.DEBUG_BROADCAST) Slog.i(android.app.ActivityThread.TAG,
                                     "Finishing null broadcast to " + mReceiver);
                             sendFinished(mgr);
                         }
@@ -1556,7 +1556,7 @@ public final class LoadedApk {
                         receiver.onReceive(mContext, intent);
                     } catch (Exception e) {
                         if (mRegistered && ordered) {
-                            if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
+                            if (android.app.ActivityThread.DEBUG_BROADCAST) Slog.i(android.app.ActivityThread.TAG,
                                     "Finishing failed broadcast to " + mReceiver);
                             sendFinished(mgr);
                         }
@@ -1638,16 +1638,16 @@ public final class LoadedApk {
             if (intent == null) {
                 Log.wtf(TAG, "Null intent received");
             } else {
-                if (ActivityThread.DEBUG_BROADCAST) {
+                if (android.app.ActivityThread.DEBUG_BROADCAST) {
                     int seq = intent.getIntExtra("seq", -1);
-                    Slog.i(ActivityThread.TAG, "Enqueueing broadcast " + intent.getAction()
+                    Slog.i(android.app.ActivityThread.TAG, "Enqueueing broadcast " + intent.getAction()
                             + " seq=" + seq + " to " + mReceiver);
                 }
             }
             if (intent == null || !mActivityThread.post(args.getRunnable())) {
                 if (mRegistered && ordered) {
                     IActivityManager mgr = ActivityManager.getService();
-                    if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
+                    if (android.app.ActivityThread.DEBUG_BROADCAST) Slog.i(android.app.ActivityThread.TAG,
                             "Finishing sync broadcast to " + mReceiver);
                     args.sendFinished(mgr);
                 }

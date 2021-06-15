@@ -59,20 +59,20 @@ import java.util.function.Predicate;
  *
  * @param <T> type of the children of the DisplayArea.
  */
-public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
+public class DisplayArea<T extends com.android.server.wm.WindowContainer> extends com.android.server.wm.WindowContainer<T> {
 
     protected final Type mType;
     private final String mName;
     final int mFeatureId;
-    private final DisplayAreaOrganizerController mOrganizerController;
+    private final com.android.server.wm.DisplayAreaOrganizerController mOrganizerController;
     IDisplayAreaOrganizer mOrganizer;
     private final Configuration mTmpConfiguration = new Configuration();
 
-    DisplayArea(WindowManagerService wms, Type type, String name) {
+    DisplayArea(com.android.server.wm.WindowManagerService wms, Type type, String name) {
         this(wms, type, name, FEATURE_UNDEFINED);
     }
 
-    DisplayArea(WindowManagerService wms, Type type, String name, int featureId) {
+    DisplayArea(com.android.server.wm.WindowManagerService wms, Type type, String name, int featureId) {
         super(wms);
         // TODO(display-area): move this up to ConfigurationContainer
         mOrientation = SCREEN_ORIENTATION_UNSET;
@@ -85,21 +85,21 @@ public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
     }
 
     @Override
-    void onChildPositionChanged(WindowContainer child) {
+    void onChildPositionChanged(com.android.server.wm.WindowContainer child) {
         super.onChildPositionChanged(child);
 
         // Verify that we have proper ordering
         Type.checkChild(mType, Type.typeOf(child));
 
-        if (child instanceof ActivityStack) {
+        if (child instanceof com.android.server.wm.ActivityStack) {
             // TODO(display-area): ActivityStacks are type ANY, but are allowed to have siblings.
             //                     They might need a separate type.
             return;
         }
 
         for (int i = 1; i < getChildCount(); i++) {
-            final WindowContainer top = getChildAt(i - 1);
-            final WindowContainer bottom = getChildAt(i);
+            final com.android.server.wm.WindowContainer top = getChildAt(i - 1);
+            final com.android.server.wm.WindowContainer bottom = getChildAt(i);
             if (child == top || child == bottom) {
                 Type.checkSiblings(Type.typeOf(top), Type.typeOf(bottom));
             }
@@ -193,11 +193,11 @@ public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
     /**
      * DisplayArea that contains WindowTokens, and orders them according to their type.
      */
-    public static class Tokens extends DisplayArea<WindowToken> {
+    public static class Tokens extends DisplayArea<com.android.server.wm.WindowToken> {
         int mLastKeyguardForcedOrientation = SCREEN_ORIENTATION_UNSPECIFIED;
 
-        private final Comparator<WindowToken> mWindowComparator =
-                Comparator.comparingInt(WindowToken::getWindowLayerFromType);
+        private final Comparator<com.android.server.wm.WindowToken> mWindowComparator =
+                Comparator.comparingInt(com.android.server.wm.WindowToken::getWindowLayerFromType);
 
         private final Predicate<WindowState> mGetOrientingWindow = w -> {
             final WindowManagerPolicy policy = mWmService.mPolicy;
@@ -225,11 +225,11 @@ public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
             return true;
         };
 
-        Tokens(WindowManagerService wms, Type type, String name) {
+        Tokens(com.android.server.wm.WindowManagerService wms, Type type, String name) {
             super(wms, type, name, FEATURE_WINDOW_TOKENS);
         }
 
-        void addChild(WindowToken token) {
+        void addChild(com.android.server.wm.WindowToken token) {
             addChild(token, mWindowComparator);
         }
 
@@ -267,15 +267,15 @@ public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
      * Top-most DisplayArea under DisplayContent.
      */
     public static class Root extends DisplayArea<DisplayArea> {
-        private final Dimmer mDimmer = new Dimmer(this);
+        private final com.android.server.wm.Dimmer mDimmer = new com.android.server.wm.Dimmer(this);
         private final Rect mTmpDimBoundsRect = new Rect();
 
-        Root(WindowManagerService wms) {
+        Root(com.android.server.wm.WindowManagerService wms) {
             super(wms, Type.ANY, "DisplayArea.Root", FEATURE_ROOT);
         }
 
         @Override
-        Dimmer getDimmer() {
+        com.android.server.wm.Dimmer getDimmer() {
             return mDimmer;
         }
 
@@ -323,19 +323,19 @@ public class DisplayArea<T extends WindowContainer> extends WindowContainer<T> {
             }
         }
 
-        static Type typeOf(WindowContainer c) {
+        static Type typeOf(com.android.server.wm.WindowContainer c) {
             if (c instanceof DisplayArea) {
                 return ((DisplayArea) c).mType;
-            } else if (c instanceof WindowToken && !(c instanceof ActivityRecord)) {
-                return typeOf((WindowToken) c);
-            } else if (c instanceof ActivityStack) {
+            } else if (c instanceof com.android.server.wm.WindowToken && !(c instanceof com.android.server.wm.ActivityRecord)) {
+                return typeOf((com.android.server.wm.WindowToken) c);
+            } else if (c instanceof com.android.server.wm.ActivityStack) {
                 return ANY;
             } else {
                 throw new IllegalArgumentException("Unknown container: " + c);
             }
         }
 
-        private static Type typeOf(WindowToken c) {
+        private static Type typeOf(com.android.server.wm.WindowToken c) {
             return c.getWindowLayerFromType() < APPLICATION_LAYER ? BELOW_TASKS : ABOVE_TASKS;
         }
     }

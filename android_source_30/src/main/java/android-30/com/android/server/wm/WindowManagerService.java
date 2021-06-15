@@ -444,7 +444,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     final com.android.server.wm.WindowTracing mWindowTracing;
 
-    final com.android.server.wm.DisplayAreaPolicy.Provider mDisplayAreaPolicyProvider;
+    final com.android.server.wm.DisplayAreaPolicy.Provider mDisplayAreaPolicyProvider;// 显示区域策略提供程序
 
     final private com.android.server.wm.KeyguardDisableHandler mKeyguardDisableHandler;
     // TODO: eventually unify all keyguard state in a common place instead of having it spread over
@@ -1399,7 +1399,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (!mDisplayReady) {
                 throw new IllegalStateException("Display has not been initialialized");
             }
-            // 获取 or 创建 DisplayContent
+            // 根据屏幕 id、LP.token，获取 or 创建 DisplayContent，attrs.token 指向
             final com.android.server.wm.DisplayContent displayContent = getDisplayContentOrCreate(displayId, attrs.token);
 
             if (displayContent == null) {
@@ -1421,6 +1421,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             // 如果 window 是子窗口，那么必须有父窗口
             if (type >= FIRST_SUB_WINDOW && type <= LAST_SUB_WINDOW) {
+                // 获取父窗口的 WindowState
                 parentWindow = windowForClientLocked(null, attrs.token, false);
                 if (parentWindow == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to add window with token that is not a window: "
@@ -1464,9 +1465,13 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             com.android.server.wm.ActivityRecord activity = null;
+            // 是否有父窗口
             final boolean hasParent = parentWindow != null;
             // Use existing parent window token for child windows since they go in the same token
             // as there parent window so we can apply the same policy on them.
+            // 如果有父窗口就需要用父窗口的，没有就拿 attrs.token 的。
+            // 首次创建的拿不到值。
+            // Dialog 和 子窗口拿得到值.
             com.android.server.wm.WindowToken token = displayContent.getWindowToken(
                     hasParent ? parentWindow.mAttrs.token : attrs.token);
             // If this is a child window, we want to apply the same type checking rules as the
@@ -1476,17 +1481,21 @@ public class WindowManagerService extends IWindowManager.Stub
             boolean addToastWindowRequiresToken = false;
 
             if (token == null) {
+                // 什么情况下 token 为 null？
+                // 窗口首次创建，DC 中获取不到。
                 if (!unprivilegedAppCanCreateTokenWith(parentWindow, callingUid, type,
                         rootType, attrs.token, attrs.packageName)) {
                     return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
                 }
+                // binder
                 final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
-                // 创建 WindowToken，binder 为 ViewRootImpl 中的 Window, 这里会添加到 DisplayContent 中.
+                // 创建 WindowToken, 这里为什么要创建 WindowToken ？利用 ActivityRecord 的 token 创建一个。
+                // 这里会将创建的 token 添加到对应的 DisplayContent 中。
                 token = new com.android.server.wm.WindowToken(this, binder, type, false, displayContent,
                         session.mCanAddInternalSystemWindow, isRoundedCornerOverlay);
             } else if (rootType >= FIRST_APPLICATION_WINDOW
                     && rootType <= LAST_APPLICATION_WINDOW) {
-                // 子窗口
+                // 应用程序窗口
                 activity = token.asActivityRecord();
                 if (activity == null) {
                     ProtoLog.w(WM_ERROR, "Attempted to add window with non-application token "
@@ -1545,6 +1554,7 @@ public class WindowManagerService extends IWindowManager.Stub
             } else if (token.asActivityRecord() != null) {
                 ProtoLog.w(WM_ERROR, "Non-null activity for system window of rootType=%d",
                         rootType);
+                // token 有值，token.asActivityRecord 有值，说明是一个应用程序正在试图显示一个系统级的 dialog，因此不能使用原来的 token，需要创建一个！
                 // It is not valid to use an app token with other system types; we will
                 // instead make a new token for it (as if null had been passed in for the token).
                 attrs.token = null;
@@ -1552,7 +1562,10 @@ public class WindowManagerService extends IWindowManager.Stub
                         session.mCanAddInternalSystemWindow);
             }
             // 创建 WindowState
-            final WindowState win = new WindowState(this, session, client, token, parentWindow,
+            // 1. client 对应 ViewRootImpl 中的 mWindow 这个 Binder 对象。
+            // 2. token 应用程序类型的窗口，token 对应 Activity 的 mToken
+            //          子类型的窗口，token 对应父窗口的 ViewRootImpl 的 mWindow > Bidner。
+            final com.android.server.wm.WindowState win = new com.android.server.wm.WindowState(this, session, client, token, parentWindow,
                     appOp[0], seq, attrs, viewVisibility, session.mUid, userId,
                     session.mCanAddInternalSystemWindow);
             if (win.mDeathRecipient == null) {
@@ -1634,7 +1647,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             win.attach();
-            mWindowMap.put(client.asBinder(), win);// 添加到 map 中
+            mWindowMap.put(client.asBinder(), win);// 添加到 map 中，key 是 ViewRootImpl.mWindow，value 是 WindowState
             win.initAppOpsState();
 
             final boolean suspended = mPmInternal.isPackageSuspended(win.getOwningPackage(),
@@ -1652,7 +1665,13 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             boolean imMayMove = true;
-            // 添加一波？可能有子窗口
+            // 添加一波？子窗口直接被 retuen 了。
+            // 如果不是子窗口，就是自己添加自己。
+            // 添加到窗口 list 中，根据窗口的显示顺序来进行，这里会进行一波排序。
+            // 自己添加自己是因为本身也要参加排序。
+            // win.mToken 指向 ActivityRecord 构造函数中创建的 token。
+            // 只有 WindowState.mToken 指向同一个 token 的窗口才能进行排序，否则报错。
+            // 窗口排序从下标 0 开始，0 优先级最高。
             win.mToken.addWindow(win);
             displayPolicy.addWindowLw(win, attrs);
             if (type == TYPE_INPUT_METHOD) {
@@ -1677,6 +1696,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
 
+            // 动画
             final com.android.server.wm.WindowStateAnimator winAnimator = win.mWinAnimator;
             winAnimator.mEnterAnimationPending = true;
             winAnimator.mEnteringAnimation = true;
@@ -1706,9 +1726,12 @@ public class WindowManagerService extends IWindowManager.Stub
 
             boolean focusChanged = false;
             if (win.canReceiveKeys()) {
+                // 可以接受按钮、屏幕事件.
+                // 改变窗口的焦点
                 focusChanged = updateFocusedWindowLocked(UPDATE_FOCUS_WILL_ASSIGN_LAYERS,
                         false /*updateInputWindows*/);
                 if (focusChanged) {
+                    // 标记窗口焦点有变化
                     imMayMove = false;
                 }
             }
@@ -1719,6 +1742,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             // Don't do layout here, the window must call
             // relayout to be displayed, so we'll do it there.
+            // 当有动画时 z 轴排序可能需要改变
             win.getParent().assignChildLayers();
 
             if (focusChanged) {

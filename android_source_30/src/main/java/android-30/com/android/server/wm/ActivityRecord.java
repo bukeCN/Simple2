@@ -1494,6 +1494,7 @@ final class ActivityRecord extends com.android.server.wm.WindowToken implements 
                    String _resultWho, int _reqCode, boolean _componentSpecified,
                    boolean _rootVoiceInteraction, com.android.server.wm.ActivityStackSupervisor supervisor,
                    ActivityOptions options, ActivityRecord sourceRecord) {
+        // 注意 DC 为 null!!
         super(_service.mWindowManager, new Token(_intent).asBinder(), TYPE_APPLICATION, true,
                 null /* displayContent */, false /* ownerCanManageAppTokens */);
 
@@ -2555,7 +2556,7 @@ final class ActivityRecord extends com.android.server.wm.WindowToken implements 
             makeFinishingLocked();
             // Make a local reference to its task since this.task could be set to null once this
             // activity is destroyed and detached from task.
-            final Task task = getTask();
+            final com.android.server.wm.Task task = getTask();
             EventLogTags.writeWmFinishActivity(mUserId, System.identityHashCode(this),
                     task.mTaskId, shortComponentName, reason);
             ActivityRecord next = task.getActivityAbove(this);

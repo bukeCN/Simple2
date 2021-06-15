@@ -20,6 +20,9 @@ import java.util.Random;
 
 
 public class MyMainActivity extends AppCompatActivity {
+
+
+
     private TextView infoTv;
 
     @Override
@@ -31,23 +34,26 @@ public class MyMainActivity extends AppCompatActivity {
 
         infoTv = findViewById(R.id.infoTv);
 
-        findViewById(R.id.getAppInfosBtn).setOnClickListener( v -> {
+        findViewById(R.id.getAppInfosBtn).setOnClickListener(v -> {
 
-            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-            layoutParams.width = 400;
-            layoutParams.height = 400;
-            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+            Intent intent = new Intent(this, OtherActivity.class);
 
-            TextView textView = new TextView(this);
-            textView.setBackgroundColor(Color.RED);
-            textView.setText("测试测试测试");
 
-            WindowManager windowManager = getWindowManager();
-            windowManager.addView(textView,layoutParams);
-
-            infoTv.postDelayed(() ->{
-                Log.e("sun",textView.getWindowToken()+"**"+infoTv.getWindowToken());
-            },3000);
+//            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+//            layoutParams.width = 400;
+//            layoutParams.height = 400;
+//            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+//
+//            TextView textView = new TextView(this);
+//            textView.setBackgroundColor(Color.RED);
+//            textView.setText("测试测试测试");
+//
+//            WindowManager windowManager = getWindowManager();
+//            windowManager.addView(textView,layoutParams);
+//
+//            infoTv.postDelayed(() ->{
+//                Log.e("sun",textView.getWindowToken()+"**"+infoTv.getWindowToken());
+//            },3000);
 
 //            PopupWindow popupWindow = new PopupWindow();
 //            popupWindow.showAsDropDown();
@@ -70,7 +76,6 @@ public class MyMainActivity extends AppCompatActivity {
 //            startActivity(startIntent);
 
         });
-
 
 
     }

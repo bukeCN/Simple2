@@ -69,7 +69,7 @@ import java.util.Comparator;
  * which is the handle for an Activity that it uses to display windows. For nested windows, there is
  * a WindowToken created for the parent window to manage its children.
  */
-class WindowToken extends WindowContainer<WindowState> {
+class WindowToken extends com.android.server.wm.WindowContainer<com.android.server.wm.WindowState> {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowToken" : TAG_WM;
 
     // The actual token.
@@ -201,20 +201,25 @@ class WindowToken extends WindowContainer<WindowState> {
     /**
      * Compares two child window of this token and returns -1 if the first is lesser than the
      * second in terms of z-order and 1 otherwise.
+     * 此方法在 WindowContaniner 的循环遍历中调用，比对窗口大小
      */
     private final Comparator<WindowState> mWindowComparator =
             (WindowState newWindow, WindowState existingWindow) -> {
+        // 当前窗口的 window
         final WindowToken token = WindowToken.this;
         if (newWindow.mToken != token) {
+            // 窗口 token 保持一致.
             throw new IllegalArgumentException("newWindow=" + newWindow
                     + " is not a child of token=" + token);
         }
 
         if (existingWindow.mToken != token) {
+            // 用来比较的窗口 token 需要和新窗口 token 保持一致，两个窗口的 mToken 需要指向同一个 token！对于 Activity 来说，表示只有属于同一个 Activity 的才能进行比对添加。
             throw new IllegalArgumentException("existingWindow=" + existingWindow
                     + " is not a child of token=" + token);
         }
-
+        // 比较窗口的 mBaseLayer ，在 WindowState 构造函数中有计算.
+        // 如果新创建的层级大于或等于用来比较的窗口就返回 1, 小于就返回 -1
         return isFirstChildWindowGreaterThanSecond(newWindow, existingWindow) ? 1 : -1;
     };
 
@@ -242,6 +247,7 @@ class WindowToken extends WindowContainer<WindowState> {
         mRoundedCornerOverlay = roundedCornerOverlay;
         mFromClientToken = fromClientToken;
         if (dc != null) {
+            // 重要，屏幕中显示不同的区域, 会计算 z 轴排序
             dc.addWindowToken(token, this);
         }
         if (shouldReportToClient()) {
@@ -321,21 +327,25 @@ class WindowToken extends WindowContainer<WindowState> {
         return newWindow.mBaseLayer >= existingWindow.mBaseLayer;
     }
 
-    void addWindow(final WindowState win) {
+    void addWindow(final com.android.server.wm.WindowState win) {
         ProtoLog.d(WM_DEBUG_FOCUS,
                 "addWindow: win=%s Callers=%s", win, Debug.getCallers(5));
 
         if (win.isChildWindow()) {
             // Child windows are added to their parent windows.
+            // 添加的窗口时子窗口直接返回，子窗口应该添加到它的父窗口中
             return;
         }
         // This token is created from WindowContext and the client requests to addView now, create a
         // surface for this token.
         if (mSurfaceControl == null) {
+            // 创建 sc ？？？
             createSurfaceControl(true /* force */);
         }
         if (!mChildren.contains(win)) {
             ProtoLog.v(WM_DEBUG_ADD_REMOVE, "Adding %s to %s", win, this);
+            // 添加子窗口，会根据窗口层级进行添加，Activity 的主窗口和 Dialog 窗口的层级在这里确定？？
+            // 需要看比对过程
             addChild(win, mWindowComparator);
             mWmService.mWindowsChanged = true;
             // TODO: Should we also be setting layout needed here and other places?
@@ -788,7 +798,7 @@ class WindowToken extends WindowContainer<WindowState> {
                 mOwnerCanManageAppTokens);
         return mOwnerCanManageAppTokens && (layer > navLayer);
     }
-
+    // 根据窗口类型获取窗口层级
     int getWindowLayerFromType() {
         return mWmService.mPolicy.getWindowLayerFromTypeLw(windowType, mOwnerCanManageAppTokens);
     }
