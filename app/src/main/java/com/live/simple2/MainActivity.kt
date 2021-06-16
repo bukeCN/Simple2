@@ -26,15 +26,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        testLayout = findViewById(R.id.testLayout)
-
-        findViewById<View>(R.id.toAnimator).setOnClickListener {
-        }
+        view = findViewById(R.id.toAnimator)
 
 
 
-        var w = PopupWindow();
-        w.showAsDropDown(view);
     }
 
 }

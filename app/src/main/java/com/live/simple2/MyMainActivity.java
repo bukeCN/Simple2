@@ -34,9 +34,21 @@ public class MyMainActivity extends AppCompatActivity {
 
         infoTv = findViewById(R.id.infoTv);
 
+        infoTv.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(20*1000);
+                    Log.e("sun","没有 ANR");
+                }catch (Exception e){
+
+                }
+            }
+        },3000);
+
         findViewById(R.id.getAppInfosBtn).setOnClickListener(v -> {
 
-            Intent intent = new Intent(this, OtherActivity.class);
+//            Intent intent = new Intent(this, OtherActivity.class);
 
 
 //            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
