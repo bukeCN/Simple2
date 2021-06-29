@@ -30,6 +30,11 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        try {
+            Thread.sleep(20*1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 //        SelfMonitorManager.getInstance().init(new CompoentListener() {
 //            @Override

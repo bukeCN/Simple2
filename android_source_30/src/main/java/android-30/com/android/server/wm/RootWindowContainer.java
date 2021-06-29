@@ -1969,6 +1969,7 @@ class RootWindowContainer extends com.android.server.wm.WindowContainer<com.andr
         }
 
         try {
+            // 走起，执行启动 Activity
             if (mStackSupervisor.realStartActivityLocked(r, app, top == r /*andResume*/,
                     true /*checkConfig*/)) {
                 mTmpBoolean = true;

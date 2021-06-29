@@ -842,7 +842,7 @@ public class ActivityStackSupervisor implements com.android.server.wm.RecentTask
                         proc.getThread(), r.appToken);
 
                 final com.android.server.wm.DisplayContent dc = r.getDisplay().mDisplayContent;
-                // 添加 LaunchAct
+                // 添加 LaunchActivityItem
                 clientTransaction.addCallback(LaunchActivityItem.obtain(new Intent(r.intent),
                         System.identityHashCode(r), r.info,
                         // TODO: Have this take the merged configuration instead of separate global
