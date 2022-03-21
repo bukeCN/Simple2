@@ -7,17 +7,18 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/toAnimator"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="测试Start"/>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:orientation="vertical"
-        android:id="@+id/testLayout"
-        />
+
+<!--    <Button-->
+<!--        android:id="@+id/toAnimator"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="测试Start"/>-->
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="100dp"-->
+<!--        android:orientation="vertical"-->
+<!--        android:id="@+id/testLayout"-->
+<!--        />-->
     <!--    <com.live.simple2.view.RuningTextView-->
     <!--        android:layout_width="match_parent"-->
     <!--        android:layout_height="wrap_content"-->

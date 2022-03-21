@@ -441,7 +441,7 @@ public final class ViewRootImpl implements ViewParent,
     private int mResizeMode;
     private int mCanvasOffsetX;
     private int mCanvasOffsetY;
-    private boolean mActivityRelaunched;
+    private boolean mActivityRelaumAttachInfo.mThreadedRenderer.drawnched;
 
     CompatibilityInfo.Translator mTranslator;
 

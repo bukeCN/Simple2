@@ -638,7 +638,7 @@ public final class ThreadedRenderer extends HardwareRenderer {
     void draw(View view, AttachInfo attachInfo, DrawCallbacks callbacks) {
         final Choreographer choreographer = attachInfo.mViewRootImpl.mChoreographer;
         choreographer.mFrameInfo.markDrawStart();
-
+        // 更新 DisplayList
         updateRootDisplayList(view, callbacks);
 
         // register animating rendernodes which started animating prior to renderer
@@ -654,7 +654,7 @@ public final class ThreadedRenderer extends HardwareRenderer {
             // ViewRootImpl#attachRenderNodeAnimator will go directly to us.
             attachInfo.mPendingAnimatingRenderNodes = null;
         }
-
+        // 通知渲染线程开始工作
         int syncResult = syncAndDrawFrame(choreographer.mFrameInfo);
         if ((syncResult & SYNC_LOST_SURFACE_REWARD_IF_FOUND) != 0) {
             Log.w("OpenGLRenderer", "Surface lost, forcing relayout");

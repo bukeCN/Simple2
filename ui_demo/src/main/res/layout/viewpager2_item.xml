@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.example.simple3.recyclerview.GSampleView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<!--    <androidx.core.widget.NestedScrollView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent">-->
+<!--        <TextView-->
+<!--            android:layout_width="500dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:text="司法所符号法士大夫案发时发送到发送到地方发到付打法是否阿斯顿发斯蒂芬司法所符号法士大夫案发时发送到发送到地方发到付 打法是否 阿斯顿发斯蒂芬司法所符号法士大夫案发时发送到发送到地方发到付 打法是否 阿斯顿发斯蒂芬"-->
+<!--            android:maxLines="1"/>-->
+<!--    </androidx.core.widget.NestedScrollView>-->
+    <com.example.simple3.view.SampleListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/listView">
+
+    </com.example.simple3.view.SampleListView>
+</com.example.simple3.recyclerview.GSampleView>

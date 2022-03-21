@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.ViewActivity">
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="100dp">
+
+        <com.example.simple3.view.FourSquareImageView
+            android:id="@+id/view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+<!--    <com.example.simple3.view.RightEdgeMoveLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent">-->
+<!--        <TextView-->
+<!--            android:layout_width="200dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:text="右边"-->
+<!--            android:textSize="30dp"-->
+<!--            android:gravity="center"-->
+<!--            android:background="#efb"/>-->
+<!--        <androidx.viewpager.widget.ViewPager-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:text="中间"-->
+<!--            android:textSize="30dp"-->
+<!--            android:gravity="center"/>-->
+<!--    </com.example.simple3.view.RightEdgeMoveLayout>-->
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    tools:parentTag="androidx.swiperefreshlayout.widget.SwipeRefreshLayout">
+
+    <FrameLayout
+        android:id="@+id/wrap_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#00f">
+
+        <LinearLayout
+            android:id="@+id/action_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <androidx.core.widget.ContentLoadingProgressBar
+                android:id="@+id/loading_progress"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="32dp"
+                android:layout_height="32dp" />
+
+            <ImageView
+                android:id="@+id/empty_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_launcher_background"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tips_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                tools:text="内容加载中..." />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:background="#0f0"/>
+    </FrameLayout>
+</merge>
