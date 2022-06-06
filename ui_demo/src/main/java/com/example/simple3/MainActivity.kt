@@ -2,13 +2,17 @@ package com.example.simple3
 
 import android.animation.Animator
 import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewAnimationUtils
 import android.view.ViewGroup
+import android.view.animation.Animation
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -19,6 +23,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.viewholder.BaseViewHolder
 import com.example.simple3.recyclerview.BaseAdapter
 import com.example.simple3.view.*
+import java.io.File
 import kotlin.concurrent.thread
 import kotlin.random.Random
 
@@ -35,6 +40,16 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btn_to_behavior).setOnClickListener {
             startActivity(Intent(this, BehaviorTestActivity::class.java))
         }
+        val progress = findViewById<SampleProgressBar>(R.id.progress)
+        progress.setOnClickListener { view ->
+            ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 1000
+                addUpdateListener {
+                    val current = it.animatedValue as Float
+                    progress.currentProgress = current
+                }
+            }.start()
+        }
         recyclerView = findViewById(R.id.recycler_view)
         refrsh_btn = findViewById(R.id.refrsh_btn)
 
@@ -44,7 +59,7 @@ class MainActivity : AppCompatActivity() {
 //                    holder.itemView.findViewById<TextView>(R.id.text).text= item.id
 //                }
 //            }
-        val adapter = object : RecyclerView.Adapter<BaseViewHolder>(){
+        val adapter = object : RecyclerView.Adapter<BaseViewHolder>() {
             lateinit var datas: List<TestBean>
 
 
@@ -55,7 +70,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
                 val item = datas[position]
-                holder.itemView.findViewById<TextView>(R.id.text).text= item.id
+                holder.itemView.findViewById<TextView>(R.id.text).text = item.id
             }
 
             override fun getItemCount(): Int {

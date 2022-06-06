@@ -11,6 +11,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="behavior"/>
+    <com.example.simple3.view.SampleProgressBar
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"/>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"

@@ -38,13 +38,14 @@ class ScaleLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context,
         appBarLayout?.height?.apply { appBarLayoutHeight = this }
     }
 
+    override fun onOverScrolled(scrollX: Int, scrollY: Int, clampedX: Boolean, clampedY: Boolean) {
+        super.onOverScrolled(scrollX, scrollY, clampedX, clampedY)
+    }
+
     private var lastY = -1f
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (mVelocityTracker == null) {
-                    mVelocityTracker = VelocityTracker.obtain();
-                }
                 // 如果 scroller 动画没停止，但是用户已经触摸，则该立刻停止
                 if (!mScroller.isFinished()) {
                     mScroller.abortAnimation();
@@ -103,6 +104,13 @@ class ScaleLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context,
         return true
     }
 
+    override fun generateLayoutParams(attrs: AttributeSet?): LayoutParams {
+        return super.generateLayoutParams(attrs)
+    }
+    override fun generateDefaultLayoutParams(): LayoutParams {
+        return super.generateDefaultLayoutParams()
+    }
+
     private var flingStrat = false
     override fun computeScroll() {
         val curry = mScroller.currY
@@ -110,7 +118,7 @@ class ScaleLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context,
         if (mScroller.computeScrollOffset()) {
             Log.e("sun", "继续${mScroller.currY}")
             scrollTo(0, curry)
-            postInvalidate()
+//            postInvalidate()
             if (mScroller.currY == 0) {
                 flingStrat = false
                 Log.e("sun", "完成${mScroller.currY}")

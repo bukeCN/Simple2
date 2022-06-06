@@ -1290,6 +1290,13 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
         collectPrefetchPositionsForLayoutState(state, mLayoutState, layoutPrefetchRegistry);
     }
 
+    /**
+     *
+     * @param dy RV 滑动给到的滑动的值
+     * @param recycler 缓存复用
+     * @param state
+     * @return 返回真实可滑动的值。能不能滑、滑多少得由 LayoutManager 决定
+     */
     int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         if (getChildCount() == 0 || dy == 0) {
             return 0;
