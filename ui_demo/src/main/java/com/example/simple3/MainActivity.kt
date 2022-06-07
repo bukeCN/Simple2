@@ -1,31 +1,18 @@
 package com.example.simple3
 
-import android.animation.Animator
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewAnimationUtils
 import android.view.ViewGroup
-import android.view.animation.Animation
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.viewholder.BaseViewHolder
-import com.example.simple3.recyclerview.BaseAdapter
 import com.example.simple3.view.*
-import java.io.File
-import kotlin.concurrent.thread
-import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
@@ -52,6 +39,12 @@ class MainActivity : AppCompatActivity() {
         }
         recyclerView = findViewById(R.id.recycler_view)
         refrsh_btn = findViewById(R.id.refrsh_btn)
+
+        val tabs = mutableListOf<String>()
+        repeat(3) {
+            tabs.add("这是第 $it")
+        }
+        findViewById<OverHorizontalTabsView>(R.id.tab_view).bindTabs(tabs)
 
 //        val adapter =
 //            object : BaseQuickAdapter<TestBean, BaseViewHolder>(R.layout.rv_item) {

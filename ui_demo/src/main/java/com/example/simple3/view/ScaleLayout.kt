@@ -68,6 +68,7 @@ class ScaleLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context,
 
     private var moveCount = 0
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        postInvalidateOnAnimation()
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
             }
