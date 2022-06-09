@@ -41,8 +41,8 @@ class MainActivity : AppCompatActivity() {
         refrsh_btn = findViewById(R.id.refrsh_btn)
 
         val tabs = mutableListOf<String>()
-        repeat(3) {
-            tabs.add("这是第 $it")
+        repeat(5) {
+            tabs.add("第 $it")
         }
         findViewById<OverHorizontalTabsView>(R.id.tab_view).bindTabs(tabs)
 

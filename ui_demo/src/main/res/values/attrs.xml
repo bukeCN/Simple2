@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="OverHorizontalTabsView">
+        <attr name="selectedColor" format="color"/>
+        <attr name="normalColor" format="color"/>
+        <attr name="itemTextSize" format="dimension"/>
+        <attr name="itemGap" format="dimension"/>
+    </declare-styleable>
+
+</resources>

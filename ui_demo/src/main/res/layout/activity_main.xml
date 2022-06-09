@@ -21,13 +21,15 @@
         android:layout_height="wrap_content"
         android:background="#ccc"
         android:id="@+id/tab_view"
+        android:layout_marginTop="20dp"
         >
     </com.example.simple3.view.OverHorizontalTabsView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_marginTop="20dp"/>
 
     <Button
         android:id="@+id/refrsh_btn"
@@ -37,5 +39,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
-
 </androidx.appcompat.widget.LinearLayoutCompat>

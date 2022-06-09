@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.Scroller
 import android.widget.TextView
 import androidx.core.view.children
+import com.example.simple3.R
 import kotlin.math.abs
 
 /**
@@ -33,12 +34,14 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     /**
      * 选择颜色
      */
-    private var selectColor = Color.parseColor("#ff0000")
+    private var selectColor = Color.BLACK
 
     /**
      * 默认颜色
      */
-    private var normalColor = Color.parseColor("#eeeeee")
+    private var normalColor = Color.GRAY
+
+    private var itemTextSize = 16f
 
     /**
      * 最后选择 item 的数组下标
@@ -72,6 +75,18 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
      * 右留白宽度
      */
     private var endOffset = 0
+
+    init {
+        val typedArray = context.obtainStyledAttributes(
+            attrs, R.styleable.OverHorizontalTabsView, 0, 0
+        )
+
+        selectColor = typedArray.getColor(R.styleable.OverHorizontalTabsView_selectedColor, Color.BLACK)
+        normalColor = typedArray.getColor(R.styleable.OverHorizontalTabsView_normalColor, Color.GRAY)
+        itemTextSize = typedArray.getDimension(R.styleable.OverHorizontalTabsView_itemTextSize, 16f)
+
+        typedArray.recycle()
+    }
 
     /**
      * 回弹动画
@@ -111,7 +126,7 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 child.layout(childLeft, childTop, childRight, childTop + child.measuredHeight)
                 childLeft = childRight + childItemGap
 
-                if (i == childCount - 1){
+                if (i == childCount - 1) {
                     lastItemWidth = child.width
                     lastItemRight = child.right
                 }
@@ -162,7 +177,6 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 if (preScrollX < 0 || abs(preScrollX) > getMaxScrollRange()) { // 左越界,右越界
                     realMoveDis /= 4
                 }
-                Log.e("sun", "滑动scrollX$scrollX")
 
                 scrollBy(realMoveDis.toInt(), 0)
                 lastX = event.x
@@ -171,20 +185,20 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 // 当快速滑动时，使用 scroller 完成流程滑动
                 val tracker = mVelocityTracker
                 tracker?.apply {
-                    this.computeCurrentVelocity(1000,mMaximumVelocity.toFloat())
+                    this.computeCurrentVelocity(1000, mMaximumVelocity.toFloat())
                     val velocity = -xVelocity.toInt()
                     isLeftScroll = event.x < downX
 
                     val canFling = (scrollX < getMaxScrollRange()) && (scrollX > 0)
                     if (abs(velocity) > mMinimumVelocity && canFling) {
-                        Log.e("sun", "触发fliing")
+                        Log.e("sun", "触发 Fling")
+
                         mScroller.fling(
                             scrollX, 0, velocity, 0, 0,
                             getMaxScrollRange(), 0, 0
                         )
                         postInvalidate()
                     } else {
-                        Log.e("sun", "${left}${event.x}**${downX}")
                         canGotoBack()
                     }
 
@@ -214,18 +228,24 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     override fun computeScroll() {
         super.computeScroll()
         val currx = mScroller.currX
+        Log.e("sun", "当前值：$currx")
+
         if (mScroller.computeScrollOffset()) {
-            Log.e("sun", "继续${mScroller.currX}")
-            scrollTo(currx, 0)
-            postInvalidate()
+            Log.e("sun", "Fling：$currx")
+            val oldX: Int = scrollX
+            val x = mScroller.currX
+            if (x != oldX){
+                scrollBy(x - oldX,0)
+                postInvalidate()
+            }
         }
     }
 
     override fun onAnimationUpdate(animation: ValueAnimator?) {
         // 处理回弹
         val value = animation!!.animatedValue as Int
+        Log.e("sun", "回弹执行：$value")
         scrollTo(value, 0)
-        Log.e("sun", "回弹执行$value")
     }
 
     private fun getMaxScrollRange(): Int {
@@ -238,7 +258,7 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            textSize = 16f
+            textSize = itemTextSize
             text = tabTitle
             setOnClickListener(this@OverHorizontalTabsView)
         }
@@ -265,7 +285,6 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     }
 
     private fun tabSelectChangeScrll(selectItemWidth: Int, selectItemLeft: Int) {
-        Log.e("sun", "位置${selectItemLeft}**${selectItemLeft - scrollX}")
         // 计算已选择 item left
         val itemLeftOfParent = selectItemLeft - scrollX
         // 判断在中线左边还是右边
