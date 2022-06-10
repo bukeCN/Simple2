@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@color/white">
     <Button
         android:id="@+id/btn_to_behavior"
         android:layout_width="match_parent"
@@ -16,20 +17,27 @@
         android:layout_width="match_parent"
         android:layout_height="20dp"/>
 
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        />
+
     <com.example.simple3.view.OverHorizontalTabsView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#ccc"
         android:id="@+id/tab_view"
         android:layout_marginTop="20dp"
-        >
-    </com.example.simple3.view.OverHorizontalTabsView>
+        android:paddingVertical="10dp"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="20dp"/>
+
 
     <Button
         android:id="@+id/refrsh_btn"

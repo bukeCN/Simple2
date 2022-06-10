@@ -2,15 +2,23 @@ package com.example.simple3
 
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Color
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
+import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.viewholder.BaseViewHolder
 import com.example.simple3.view.*
 
@@ -20,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var refrsh_btn: View
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @ExperimentalStdlibApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +53,25 @@ class MainActivity : AppCompatActivity() {
         repeat(5) {
             tabs.add("第 $it")
         }
-        findViewById<OverHorizontalTabsView>(R.id.tab_view).bindTabs(tabs)
+        val vp = findViewById<ViewPager2>(R.id.view_pager).also { viewPager ->
+            viewPager.offscreenPageLimit = 1
+            val adapter = object :
+                BaseQuickAdapter<String, BaseViewHolder>(R.layout.item) {
+                override fun convert(holder: BaseViewHolder, item: String) {
+                    holder.itemView.findViewById<TextView>(R.id.content).text = item
+                }
+            }
+            viewPager?.adapter = adapter
+            adapter.setNewData(tabs)
+        }
+        findViewById<OverHorizontalTabsView>(R.id.tab_view).also {
+            it.onTabSelectedFun = { index ->
+                vp.currentItem = index
+            }
+            it.bindTabs(tabs)
+            it.flowOnViewPager2(vp)
+        }
+
 
 //        val adapter =
 //            object : BaseQuickAdapter<TestBean, BaseViewHolder>(R.layout.rv_item) {
