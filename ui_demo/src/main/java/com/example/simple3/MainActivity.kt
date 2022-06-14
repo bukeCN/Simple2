@@ -50,8 +50,8 @@ class MainActivity : AppCompatActivity() {
         refrsh_btn = findViewById(R.id.refrsh_btn)
 
         val tabs = mutableListOf<String>()
-        repeat(5) {
-            tabs.add("第 $it")
+        repeat(6) {
+            tabs.add("第**** $it")
         }
         val vp = findViewById<ViewPager2>(R.id.view_pager).also { viewPager ->
             viewPager.offscreenPageLimit = 1
@@ -64,13 +64,64 @@ class MainActivity : AppCompatActivity() {
             viewPager?.adapter = adapter
             adapter.setNewData(tabs)
         }
-        findViewById<OverHorizontalTabsView>(R.id.tab_view).also {
+         val tab = findViewById<OverHorizontalTabsView>(R.id.tab_view).also {
             it.onTabSelectedFun = { index ->
-                vp.currentItem = index
+                vp.setCurrentItem(index,false)
             }
             it.bindTabs(tabs)
-            it.flowOnViewPager2(vp)
+            it.bindToViewPager2(vp)
+            it.onNextChangeFun = {
+                Log.e("sun","下一个：$it")
+            }
         }
+
+        // vp 播放逻辑交互控制代码
+        vp.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            var startFlowViewPager2Rate = -1f
+            var beforPos = -1
+            var beforNextIndex = -1
+            var scrollState = RecyclerView.SCROLL_STATE_IDLE
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                Log.e("suw","播放当前：$position")
+                Log.e("suw","取消所有!!!!!")
+            }
+
+            override fun onPageScrollStateChanged(state: Int) {
+                scrollState = state
+                when(state){
+                    RecyclerView.SCROLL_STATE_DRAGGING -> {
+                        startFlowViewPager2Rate = -1f
+                    }
+                    RecyclerView.SCROLL_STATE_IDLE -> {
+                        Log.e("suw","取消所有000")
+                    }
+                }
+            }
+
+            override fun onPageScrolled(
+                position: Int,
+                positionOffset: Float,
+                positionOffsetPixels: Int
+            ) {
+                if (scrollState == RecyclerView.SCROLL_STATE_DRAGGING){
+                    if (startFlowViewPager2Rate == -1f || position != beforPos){
+                        startFlowViewPager2Rate = positionOffset
+                        val left = startFlowViewPager2Rate < 0.5
+                        val nextItemIndex = if (left) tab.lastSelectItemIndex + 1 else tab.lastSelectItemIndex - 1
+                        // 取消之前的，手指左右滑动不定的时候
+                        if (beforPos != -1 && beforNextIndex != tab.lastSelectItemIndex){
+                            Log.e("suw","取消：$beforNextIndex")
+                        }
+                        if (nextItemIndex in tabs.indices){
+                            Log.e("suw","播放：$nextItemIndex")
+                            beforNextIndex = nextItemIndex
+                        }
+                        beforPos = position
+                    }
+                }
+            }
+        })
 
 
 //        val adapter =

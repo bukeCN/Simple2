@@ -6,11 +6,9 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.Scroller
-import android.widget.TextView
+import android.widget.*
 import androidx.core.view.children
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.example.simple3.R
 import kotlin.math.abs
@@ -47,11 +45,16 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     /**
      * 最后选择 item 的数组下标
      */
-    private var lastSelectItemIndex = 0
+    var lastSelectItemIndex = 0
 
     var onTabSelectedFun: ((Int) -> Unit)? = null
 
-    private var mScroller: Scroller = Scroller(context)
+    /**
+     * 在改变过程中监控下一个 item pos
+     */
+    var onNextChangeFun: ((Int) -> Unit)? = null
+
+    private var mScroller: OverScroller = OverScroller(context)
     private var mVelocityTracker: VelocityTracker? = null
     private var mMinimumVelocity: Int = ViewConfiguration.get(context).scaledMinimumFlingVelocity
     private var mMaximumVelocity: Int = ViewConfiguration.get(context).scaledMaximumFlingVelocity
@@ -154,8 +157,13 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 }
                 lastX = event.x
                 downX = event.x
+
+                initVelocityTracker()
+                mVelocityTracker!!.addMovement(event)
             }
             MotionEvent.ACTION_MOVE -> {
+                mVelocityTracker!!.addMovement(event)
+
                 val moveX = event.x - lastX
                 if (abs(moveX) > mTouchSlop) {
                     lastX = event.x
@@ -198,7 +206,7 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
 
                         mScroller.fling(
                             scrollX, 0, velocity, 0, 0,
-                            getMaxScrollRange(), 0, 0
+                            getMaxScrollRange(), 0, 0, width / 2, 0
                         )
                         postInvalidate()
                     } else {
@@ -231,10 +239,10 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     override fun computeScroll() {
         super.computeScroll()
         val currx = mScroller.currX
-        Log.e("sun", "当前值：$currx")
+//        Log.e("sun", "当前值：$currx")
 
         if (mScroller.computeScrollOffset()) {
-            Log.e("sun", "Fling：$currx")
+//            Log.e("sun", "Fling：$currx")
             val oldX: Int = scrollX
             val x = mScroller.currX
             if (x != oldX) {
@@ -268,6 +276,10 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     }
 
     override fun onClick(v: View) {
+        changeTab(v)
+    }
+
+    private fun changeTab(v: View) {
         val itemIndex = children.indexOf(v)
         if (itemIndex == lastSelectItemIndex) return
 
@@ -331,14 +343,9 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
      * @param index Int
      */
     fun setSelectTab(index: Int) {
-        onClick(getChildAt(index))
+        changeTab(getChildAt(index))
     }
 
-    var startFlowViewPager2Rate = -1f
-
-    var isFlowFling = false
-
-    var isOnceScrollDs = 0
 
     /**
      * 跟随 ViewPager2 滑动
@@ -346,143 +353,94 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
      * @param positionOffset Float
      * @param positionOffsetPixels Int
      */
-    fun flowOnViewPager2(
+    fun bindToViewPager2(
         viewPager2: ViewPager2
     ) {
         viewPager2.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+
+            var lastScrollx = 0
+            var startLastScrollx = 0 // 一次 vp 切换最开始的滑动距离
+            var scrollState = RecyclerView.SCROLL_STATE_IDLE
+            var startFlowViewPager2Rate = -1f
+
+            var beforPos = 0 // 解决 vp 在前后两个来回不定的问题
+
             override fun onPageScrolled(
                 position: Int,
                 positionOffset: Float,
                 positionOffsetPixels: Int
             ) {
-//                Log.e(
-//                    "sunn",
-//                    "傻叉${position}**${positionOffset}**${positionOffset * 108}**${positionOffsetPixels}"
-//                )
-//                val left = startFlowViewPager2Rate < 0.5
-//                val nextItemIndex = if (left) position + 1 else position - 1
-//                val currentItemLeft = getChildAt(lastSelectItemIndex).left
-//                if (nextItemIndex < 0 || nextItemIndex > childCount - 1) return
-//                getChildAt(nextItemIndex)?.also { nextItem ->
-//                    val maxDistance = nextItem.left - currentItemLeft
-//////        val needDistance = (positionOffset * 100) * (maxDistance * 100) / 100
-//////        Log.e("sun","滑动_我擦：${(positionOffset * 100)}***${(maxDistance * 100)}")
-//////        val realDistance = if (left) needDistance else -needDistance
-//////        Log.e("sun","滑动：${maxDistance}***${needDistance}***$realDistance")
-//////        // 4. 滑动
-//                    scrollTo((positionOffset * maxDistance).toInt() + isOnceScrollDs, 0)
-//                }
+                Log.e("sun", "移动：$position")
 
-//                it.flowOnViewPager2(position, positionOffset, positionOffsetPixels)
+                if (childCount <= 0) {
+                    return
+                }
+                if (startFlowViewPager2Rate == -1f || position != beforPos) {
+                    beforPos = position
+                    startFlowViewPager2Rate = positionOffset
+                }
+
+                // 确定滑动方向
+                val left = startFlowViewPager2Rate < 0.5
+                // 依据滑动方向定位下一个 item
+                val nextItemIndex = if (left) lastSelectItemIndex + 1 else lastSelectItemIndex - 1
+                // 计算实际进度 [0-1)
+                val realOffset = if (left) positionOffset else 1 - positionOffset
+
+                val currentItem = getChildAt(lastSelectItemIndex)
+                val nextItem = getChildAt(nextItemIndex) ?: return
+
+                onNextChangeFun?.invoke(nextItemIndex)
+
+                // 计算切换的总滑动值
+                val dis = currentItem.left - nextItem.left
+
+                // 根据进行进行计算
+                val offset: Int = (realOffset * dis).toInt()
+                var newScrollX: Int = -offset
+
+                if (newScrollX != lastScrollx) {
+                    // 计算滑动距离
+                    newScrollX += startLastScrollx
+                    lastScrollx = newScrollX
+                    scrollTo(newScrollX, 0)
+                }
             }
 
             override fun onPageSelected(position: Int) {
+                Log.e("sun", "选择：$position")
                 setSelectTab(position)
             }
 
             override fun onPageScrollStateChanged(state: Int) {
-                super.onPageScrollStateChanged(state)
-                Log.e("sunn", "状态:$state")
-                if (state == 1) {
-                    // 判断在中线左边还是右边
-                    val currentItem = getChildAt(lastSelectItemIndex)
+                Log.e("sun", "状态：$state")
 
+                scrollState = state
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    startFlowViewPager2Rate = -1f
+
+                    // 居中操作！！！！
+                    val currentItem = getChildAt(lastSelectItemIndex)
+                    val selectItemLeft = currentItem.left
+                    val selectItemWidth = currentItem.width
                     // 计算已选择 item left
-                    val itemLeftOfParent = currentItem.left - scrollX
+                    val itemLeftOfParent = selectItemLeft - scrollX
                     // 判断在中线左边还是右边
                     val left = itemLeftOfParent < width / 2
                     // 根据左右进行滑动
                     var scrllDistance = 0
                     if (left) {
                         // 位于中线右边，需要向右滑动
-                        scrllDistance = -(width / 2 - (itemLeftOfParent + currentItem.width / 2))
+                        scrllDistance = -(width / 2 - (itemLeftOfParent + selectItemWidth / 2))
                     } else {
-                        scrllDistance = itemLeftOfParent - width / 2 + currentItem.width / 2
+                        scrllDistance = itemLeftOfParent - width / 2 + selectItemWidth / 2
                     }
+                    startLastScrollx = scrollX + scrllDistance
                     mScroller.startScroll(scrollX, 0, scrllDistance, 0, 0)
                     postInvalidate()
                 }
-                //                    val currentItemLeft = currentItem.left
-//                    val currentItemWidth = currentItem.width
-//
-//                    // 计算已选择 item left
-//                    val itemLeftOfParent = currentItemLeft - scrollX
-//                    val left = itemLeftOfParent < width / 2
-//
-//                    // 2.5 确定当前位置 Item 是否居中，不居中飞回来，并且添加已滑动的值
-//                    val currentItemMiddlePostion =
-//                        currentItem.left - scrollX + (currentItem.width / 2)
-//                    val isCenter = currentItemMiddlePostion == width / 2
-//
-//                    if (!isCenter && !isFlowFling) {
-//                        isFlowFling = true
-//                        // 2.5.1 确定飞回来的滑动距离
-//                        // 计算已选择 item left
-//                        val itemLeftOfParent = currentItemLeft - scrollX
-//                        var scrllDistance = 0
-//                        if (left) {
-//                            // 位于中线右边，需要向右滑动
-//                            scrllDistance = -(width / 2 - (itemLeftOfParent + currentItemWidth / 2))
-//                        } else {
-//                            scrllDistance = itemLeftOfParent - width / 2 + currentItemWidth / 2
-//                        }
-//                        scrollBy(scrllDistance, 0)
-//                        return
-//                    }
-//                }
             }
         })
-//
-//        // 1. 确定用户手指滑动方向
-//        if (startFlowViewPager2Rate == -1f) {
-//            startFlowViewPager2Rate = positionOffset
-//            isOnceScrollDs = scrollX
-//        }
-//        val left = startFlowViewPager2Rate < 0.5
-//        // 2. 确定当前 Item 位置
-//        val nextItemIndex = if (left) position + 1 else position - 1
-//
-//        val currentItem = getChildAt(position)
-//        val currentItemLeft = currentItem.left
-//        val currentItemWidth = currentItem.width
-//
-//        // 2.5 确定当前位置 Item 是否居中，不居中飞回来，并且添加已滑动的值
-//        val currentItemMiddlePostion = currentItem.left - scrollX + (currentItem.width / 2)
-//        val isCenter = currentItemMiddlePostion == width / 2
-//
-//        if (!isCenter && !isFlowFling) {
-//            isFlowFling = true
-//            // 2.5.1 确定飞回来的滑动距离
-//            // 计算已选择 item left
-//            val itemLeftOfParent = currentItemLeft - scrollX
-//            var scrllDistance = 0
-//            if (left) {
-//                // 位于中线右边，需要向右滑动
-//                scrllDistance = -(width / 2 - (itemLeftOfParent + currentItemWidth / 2))
-//            } else {
-//                scrllDistance = itemLeftOfParent - width / 2 + currentItemWidth / 2
-//            }
-//            scrollBy(scrllDistance, 0)
-//            return
-//        }
 
-//        // 3. 确定最大滑动距离，计算需要滑动的值(注意正负方向)
-//        getChildAt(nextItemIndex)?.also { nextItem ->
-//            val maxDistance = nextItem.left - currentItemLeft
-////        val needDistance = (positionOffset * 100) * (maxDistance * 100) / 100
-////        Log.e("sun","滑动_我擦：${(positionOffset * 100)}***${(maxDistance * 100)}")
-////        val realDistance = if (left) needDistance else -needDistance
-////        Log.e("sun","滑动：${maxDistance}***${needDistance}***$realDistance")
-////        // 4. 滑动
-//            scrollTo((positionOffset * maxDistance).toInt() + isOnceScrollDs, 0)
-////        isOnceScrollDs += needDistance
-////
-////        // end
-//        if (positionOffset == 0f && positionOffsetPixels == 0) {
-//            startFlowViewPager2Rate = -1f
-//            isFlowFling = false
-////            isOnceScrollDs = 0f
-//        }
-//        }
     }
 }
