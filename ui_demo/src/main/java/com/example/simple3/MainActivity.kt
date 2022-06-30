@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        lifecycle
         findViewById<View>(R.id.to_fragment).setOnClickListener {
             startActivity(Intent(this, MyFragmentActivity::class.java))
         }
