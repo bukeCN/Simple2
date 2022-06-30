@@ -193,7 +193,7 @@ public final class Choreographer {
      * TODO: Is there a better home for this? Currently Choreographer
      * is the only one with CALLBACK_ANIMATION start time, hence why this
      * resides here.
-     *
+     * 记录帧绘制信息
      * @hide
      */
     FrameInfo mFrameInfo = new FrameInfo();

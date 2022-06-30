@@ -8,6 +8,9 @@
         <entry key="ui_demo/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="ui_demo/src/main/res/layout/content_view.xml" value="0.43854166666666666" />
         <entry key="ui_demo/src/main/res/layout/item.xml" value="0.43854166666666666" />
+        <entry key="ui_demo/src/main/res/layout/my_fragment_activity.xml" value="0.2351851851851852" />
+        <entry key="ui_demo/src/main/res/layout/one_fragment.xml" value="0.4375" />
+        <entry key="ui_demo/src/main/res/layout/two_fragment.xml" value="0.4307692307692308" />
       </map>
     </option>
   </component>

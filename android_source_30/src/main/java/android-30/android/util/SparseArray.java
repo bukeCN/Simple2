@@ -246,26 +246,28 @@ public class SparseArray<E> implements Cloneable {
      * was one.
      */
     public void put(int key, E value) {
+        // 二分查找，定位 index
         int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
 
-        if (i >= 0) {
+        if (i >= 0) { // 定位到了，直接赋值
             mValues[i] = value;
-        } else {
+        } else { // 没查到，决定放哪里
             i = ~i;
 
-            if (i < mSize && mValues[i] == DELETED) {
+            if (i < mSize && mValues[i] == DELETED) { // 索引小于当前内容的 size ，且原来的位置已经被标记清除，则直接覆盖
                 mKeys[i] = key;
                 mValues[i] = value;
                 return;
             }
 
-            if (mGarbage && mSize >= mKeys.length) {
-                gc();
+            if (mGarbage && mSize >= mKeys.length) { // 标记需要清除，主动 gc() ，然后重新定位索引
+                gc();// 主动清除，会移动 key value 数组。
 
                 // Search again because indices may have changed.
                 i = ~ContainerHelpers.binarySearch(mKeys, mSize, key);
             }
 
+            // 插入 key value
             mKeys = GrowingArrayUtils.insert(mKeys, mSize, i, key);
             mValues = GrowingArrayUtils.insert(mValues, mSize, i, value);
             mSize++;

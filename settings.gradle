@@ -2,3 +2,4 @@
 include ':app'
 rootProject.name = "simple2"
 include ':ui_demo'
+include ':android_source_30'

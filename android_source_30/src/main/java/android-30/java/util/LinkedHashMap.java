@@ -463,6 +463,7 @@ public class LinkedHashMap<K,V>
         Node<K,V> e;
         if ((e = getNode(hash(key), key)) == null)
             return null;
+        // 如果是按照访问循序排序，则将该节点从现位置删除，然后添加到尾节点
         if (accessOrder)
             afterNodeAccess(e);
         return e.value;

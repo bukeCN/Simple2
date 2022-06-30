@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.viewholder.BaseViewHolder
+import com.example.simple3.fragment.MyFragmentActivity
 import com.example.simple3.view.*
 
 class MainActivity : AppCompatActivity() {
@@ -33,8 +34,24 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        findViewById<View>(R.id.to_fragment).setOnClickListener {
+            startActivity(Intent(this, MyFragmentActivity::class.java))
+        }
         findViewById<View>(R.id.btn_to_behavior).setOnClickListener {
-            startActivity(Intent(this, BehaviorTestActivity::class.java))
+//            startActivity(Intent(this, BehaviorTestActivity::class.java))
+            it.setOnClickListener {
+                ValueAnimator.ofInt(0,400)
+                    .apply {
+                        duration = 3000
+                        addUpdateListener {
+                            val value = it.animatedValue as Int
+//                            repeat(1000000){
+//                                print("${it}sfsfs")
+//                            }
+                        }
+                    }
+                    .start()
+            }
         }
         val progress = findViewById<SampleProgressBar>(R.id.progress)
         progress.setOnClickListener { view ->

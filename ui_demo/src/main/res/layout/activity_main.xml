@@ -8,6 +8,11 @@
     tools:context=".MainActivity"
     android:background="@color/white">
     <Button
+        android:id="@+id/to_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Fragment"/>
+    <Button
         android:id="@+id/btn_to_behavior"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
