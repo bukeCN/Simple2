@@ -4600,6 +4600,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         r.nextIdle = mNewActivities;
         mNewActivities = r;
         if (localLOGV) Slog.v(TAG, "Scheduling idle handler for " + r);
+        // 重点逻辑，通过 IdleHandler 通知 ASMS 来执行需要被停止或者销毁的 Activity 相关操作
         Looper.myQueue().addIdleHandler(new Idler());
     }
 
