@@ -2,7 +2,6 @@ package com.live.simple2.ipc.server;
 
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.IInterface;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
@@ -10,11 +9,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.live.simple2.ipc.proxy.Proxy;
-
 /**
  * 一个 Binder 对象实体，位于服务端，来用处理 Client 端的请求数据。
- *
+ * 可以对应 Native 层的 BnBinder 既 BBinder,需要实现 onTransact() 处理客户端 Proxy(对应的BpBinder) 发来的请求
  *
  */
 public abstract  class Stub extends Binder implements BookManager {

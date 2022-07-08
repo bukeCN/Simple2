@@ -202,7 +202,6 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
 
                     val canFling = (scrollX < getMaxScrollRange()) && (scrollX > 0)
                     if (abs(velocity) > mMinimumVelocity && canFling) {
-                        Log.e("sun", "触发 Fling")
 
                         mScroller.fling(
                             scrollX, 0, velocity, 0, 0,
@@ -255,7 +254,7 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
     override fun onAnimationUpdate(animation: ValueAnimator?) {
         // 处理回弹
         val value = animation!!.animatedValue as Int
-        Log.e("sun", "回弹执行：$value")
+//        Log.e("sun", "回弹执行：$value")
         scrollTo(value, 0)
     }
 
@@ -370,7 +369,7 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
                 positionOffset: Float,
                 positionOffsetPixels: Int
             ) {
-                Log.e("sun", "移动：$position")
+//                Log.e("sun", "移动：$position")
 
                 if (childCount <= 0) {
                     return
@@ -408,12 +407,12 @@ class OverHorizontalTabsView(context: Context, attrs: AttributeSet?) : FrameLayo
             }
 
             override fun onPageSelected(position: Int) {
-                Log.e("sun", "选择：$position")
+//                Log.e("sun", "选择：$position")
                 setSelectTab(position)
             }
 
             override fun onPageScrollStateChanged(state: Int) {
-                Log.e("sun", "状态：$state")
+//                Log.e("sun", "状态：$state")
 
                 scrollState = state
                 if (state == RecyclerView.SCROLL_STATE_DRAGGING) {

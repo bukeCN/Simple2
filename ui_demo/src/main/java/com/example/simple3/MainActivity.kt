@@ -14,14 +14,20 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmap
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.viewholder.BaseViewHolder
 import com.example.simple3.fragment.MyFragmentActivity
+import com.example.simple3.fragment.OneFragment
+import com.example.simple3.fragment.ThreeFragment
+import com.example.simple3.fragment.TwoFragment
 import com.example.simple3.view.*
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var refrsh_btn: View
 
     @RequiresApi(Build.VERSION_CODES.M)
-    @ExperimentalStdlibApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -71,15 +76,36 @@ class MainActivity : AppCompatActivity() {
             tabs.add("第**** $it")
         }
         val vp = findViewById<ViewPager2>(R.id.view_pager).also { viewPager ->
-            viewPager.offscreenPageLimit = 1
-            val adapter = object :
-                BaseQuickAdapter<String, BaseViewHolder>(R.layout.item) {
-                override fun convert(holder: BaseViewHolder, item: String) {
-                    holder.itemView.findViewById<TextView>(R.id.content).text = item
+//            (viewPager.getChildAt(0) as RecyclerView).apply {
+//                setPadding(Utils.dp2px(20).toInt(),0, Utils.dp2px(20).toInt(),0)
+//                clipToPadding = false
+//            }
+//            viewPager.offscreenPageLimit = 2
+            val adapter = object : FragmentStateAdapter(this){
+                override fun getItemCount(): Int {
+                    return tabs.size
                 }
+
+                override fun createFragment(position: Int): Fragment {
+                    if (position == 1){
+                        return TwoFragment()
+                    }
+                    if (position == 2){
+                        return ThreeFragment()
+                    }
+                    return OneFragment()
+                }
+
             }
+//                BaseQuickAdapter<String, BaseViewHolder>(R.layout.item) {
+//                override fun convert(holder: BaseViewHolder, item: String) {
+//                    holder.itemView.findViewById<TextView>(R.id.content).text = item
+//                }
+//            }
             viewPager?.adapter = adapter
-            adapter.setNewData(tabs)
+//            viewPager.currentItem = 2
+
+//            adapter.setNewData(tabs)
         }
          val tab = findViewById<OverHorizontalTabsView>(R.id.tab_view).also {
             it.onTabSelectedFun = { index ->
@@ -87,9 +113,6 @@ class MainActivity : AppCompatActivity() {
             }
             it.bindTabs(tabs)
             it.bindToViewPager2(vp)
-            it.onNextChangeFun = {
-                Log.e("sun","下一个：$it")
-            }
         }
 
         // vp 播放逻辑交互控制代码

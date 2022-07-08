@@ -17,6 +17,7 @@ import com.live.simple2.view.RuningAdView
 import com.live.simple2.view.TestView
 import com.live.simple2.view.TextSwitchView
 import com.live.simple2.view.animator.TestAnimatorActivity
+import com.test.aidl.IMyPrintServerlInterface
 
 class MainActivity : AppCompatActivity() {
 

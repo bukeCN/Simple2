@@ -12,7 +12,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.live.simple2.ipc.client.IClientService;
+import com.live.simple2.ipc.proxy.IClientService;
 import com.test.aidl.IMyPrintServerlInterface;
 
 /**

@@ -32,6 +32,7 @@ class OneFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e(TAG, "onCreate")
+        userVisibleHint
     }
 
     override fun onCreateView(
