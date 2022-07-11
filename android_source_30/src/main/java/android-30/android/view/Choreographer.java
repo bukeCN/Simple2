@@ -677,16 +677,17 @@ public final class Choreographer {
                         + ((frameTimeNanos - mLastFrameTimeNanos) * 0.000001f) + " ms");
             }
 
-            long intendedFrameTimeNanos = frameTimeNanos;
-            startNanos = System.nanoTime();
-            final long jitterNanos = startNanos - frameTimeNanos;
-            if (jitterNanos >= mFrameIntervalNanos) {
-                final long skippedFrames = jitterNanos / mFrameIntervalNanos;
+            // 修正逻辑 1. 目的：对齐 vsync 信号，上一帧延迟少于 2 帧的情况
+            long intendedFrameTimeNanos = frameTimeNanos; // frameTimeNanos vsync 信号到来时间
+            startNanos = System.nanoTime(); // 处理 vsync 信号开始时间
+            final long jitterNanos = startNanos - frameTimeNanos;// 当前 vsync 信号延迟处理时间
+            if (jitterNanos >= mFrameIntervalNanos) { // 是否超过一帧时间
+                final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 跳过了几帧
                 if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) {
                     Log.i(TAG, "Skipped " + skippedFrames + " frames!  "
                             + "The application may be doing too much work on its main thread.");
                 }
-                final long lastFrameOffset = jitterNanos % mFrameIntervalNanos;
+                final long lastFrameOffset = jitterNanos % mFrameIntervalNanos;// 对齐信号需要的时间，如：100%16.6 = 0.4
                 if (DEBUG_JANK) {
                     Log.d(TAG, "Missed vsync by " + (jitterNanos * 0.000001f) + " ms "
                             + "which is more than the frame interval of "
@@ -694,9 +695,9 @@ public final class Choreographer {
                             + "Skipping " + skippedFrames + " frames and setting frame "
                             + "time to " + (lastFrameOffset * 0.000001f) + " ms in the past.");
                 }
-                frameTimeNanos = startNanos - lastFrameOffset;
+                frameTimeNanos = startNanos - lastFrameOffset;// 修正 frameTimeNanos， 如：当前时间 - 0.4
             }
-
+            // mLastFrameTimeNanos 上一帧时间，正常情况下 frameTimeNanos 应该大于 mLastFrameTimeNanos
             if (frameTimeNanos < mLastFrameTimeNanos) {
                 if (DEBUG_JANK) {
                     Log.d(TAG, "Frame time appears to be going backwards.  May be due to a "
@@ -772,7 +773,8 @@ public final class Choreographer {
             if (callbackType == Choreographer.CALLBACK_COMMIT) {
                 final long jitterNanos = now - frameTimeNanos;
                 Trace.traceCounter(Trace.TRACE_TAG_VIEW, "jitterNanos", (int) jitterNanos);
-                if (jitterNanos >= 2 * mFrameIntervalNanos) {
+                // 修正逻辑 2. 目的：对齐 vsync 信号，当前帧执行超过了 2 帧时间，单依靠修正逻辑 1 会导致 vsync 信号延迟 1 整个帧。
+                if (jitterNanos >= 2 * mFrameIntervalNanos) { // 这一帧执时间太长，修正
                     final long lastFrameOffset = jitterNanos % mFrameIntervalNanos
                             + mFrameIntervalNanos;
                     if (DEBUG_JANK) {
