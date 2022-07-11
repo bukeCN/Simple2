@@ -1607,10 +1607,12 @@ class ContextImpl extends Context {
             Handler scheduler, Context context, int flags) {
         IIntentReceiver rd = null;
         if (receiver != null) {
+            // mPackageInfo 不为空，应用已经启动
             if (mPackageInfo != null && context != null) {
                 if (scheduler == null) {
                     scheduler = mMainThread.getHandler();
                 }
+                // 构建 ReceiverDispatcher
                 rd = mPackageInfo.getReceiverDispatcher(
                     receiver, context, scheduler,
                     mMainThread.getInstrumentation(), true);
@@ -1618,13 +1620,18 @@ class ContextImpl extends Context {
                 if (scheduler == null) {
                     scheduler = mMainThread.getHandler();
                 }
+                // 构建 ReceiverDispatcher
                 rd = new LoadedApk.ReceiverDispatcher(
                         receiver, context, scheduler, null, true).getIIntentReceiver();
             }
         }
         try {
+            // 跨进程调用 AMS registerReceiverWithFeature()
             final Intent intent = ActivityManager.getService().registerReceiverWithFeature(
-                    mMainThread.getApplicationThread(), mBasePackageName, getAttributionTag(), rd,
+                    mMainThread.getApplicationThread(), // Binder 服务端
+                    mBasePackageName,
+                    getAttributionTag(),
+                    rd, // 其中包含一个 Binder 服务端 ,注意这两个
                     filter, broadcastPermission, userId, flags);
             if (intent != null) {
                 intent.setExtrasClassLoader(getClassLoader());

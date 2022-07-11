@@ -948,6 +948,14 @@ public final class BroadcastQueue {
         }
     }
 
+    /**
+     * 有点长，分步看。
+     *  step 1 : 处理并行广播。
+     *  step 2 : 查看 mPendingBroadcast 是否被处理。
+     *  step 3 :
+     * @param fromMsg
+     * @param skipOomAdj
+     */
     final void processNextBroadcastLocked(boolean fromMsg, boolean skipOomAdj) {
         BroadcastRecord r;
 
@@ -962,6 +970,7 @@ public final class BroadcastQueue {
             mBroadcastsScheduled = false;
         }
 
+        // step 1. 处理并行广播
         // First, deliver any non-serialized broadcasts right away.
         while (mParallelBroadcasts.size() > 0) {
             r = mParallelBroadcasts.remove(0);
@@ -985,15 +994,17 @@ public final class BroadcastQueue {
                 if (DEBUG_BROADCAST)  Slog.v(TAG_BROADCAST,
                         "Delivering non-ordered on [" + mQueueName + "] to registered "
                         + target + ": " + r);
+                // 将广播分发给接受者
                 deliverToRegisteredReceiverLocked(r, (BroadcastFilter)target, false, i);
             }
-            addBroadcastToHistoryLocked(r);
+            addBroadcastToHistoryLocked(r); // 添加历史统计
             if (DEBUG_BROADCAST_LIGHT) Slog.v(TAG_BROADCAST, "Done with parallel broadcast ["
                     + mQueueName + "] " + r);
         }
 
         // Now take care of the next serialized one...
 
+        // step 2. 看英文注释，好像是等待接受广播的进程启动，查看看看起来没
         // If we are waiting for a process to come up to handle the next
         // broadcast, then do nothing at this point.  Just in case, we
         // check that the process we're waiting for still exists.
@@ -1015,6 +1026,7 @@ public final class BroadcastQueue {
                 isDead = proc == null || !proc.pendingStart;
             }
             if (!isDead) {
+                // 进程还活着，等到它来处理 mPendingBroadcast
                 // It's still alive, so keep waiting
                 return;
             } else {
@@ -1029,8 +1041,10 @@ public final class BroadcastQueue {
 
         boolean looped = false;
 
+        // step 3 处理串行广播
         do {
             final long now = SystemClock.uptimeMillis();
+            // 获取
             r = mDispatcher.getNextBroadcastLocked(now);
 
             if (r == null) {

@@ -15528,11 +15528,24 @@ public class ActivityManagerService extends IActivityManager.Stub
                 permission, userId, flags);
     }
 
+    /**
+     * 注册广播
+     * @param caller 注册者的 IApplicationThread 属于服务端的 Binder 对象
+     * @param callerPackage 注册者包名
+     * @param callerFeatureId
+     * @param receiver LoadApk.ReceiverDispatcher.InnerReceiver 是一个 Binder,
+     *                 继承至 IIntentReceiver.Stub 是 Binder 中的服务端
+     * @param filter Intent 过滤的 actions
+     * @param permission
+     * @param userId 设备上的用户 id ,多用户支持？
+     * @param flags
+     * @return
+     */
     public Intent registerReceiverWithFeature(IApplicationThread caller, String callerPackage,
             String callerFeatureId, IIntentReceiver receiver, IntentFilter filter,
             String permission, int userId, int flags) {
         enforceNotIsolatedCaller("registerReceiver");
-        ArrayList<Intent> stickyIntents = null;
+        ArrayList<Intent> stickyIntents = null; // 粘性广播 list
         com.android.server.am.ProcessRecord callerApp = null;
         final boolean visibleToInstantApps
                 = (flags & Context.RECEIVER_VISIBLE_TO_INSTANT_APPS) != 0;
@@ -15541,6 +15554,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         boolean instantApp;
         synchronized(this) {
             if (caller != null) {
+                // 通过 IApplicationThread Binder 对象去查询对应进程信息
                 callerApp = getRecordForAppLocked(caller);
                 if (callerApp == null) {
                     throw new SecurityException(
@@ -15566,6 +15580,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             userId = mUserController.handleIncomingUser(callingPid, callingUid, userId, true,
                     ALLOW_FULL_ONLY, "registerReceiver", callerPackage);
 
+            // 获取 IntentFilter actions ，就是监听广播所添加的 actions
             Iterator<String> actions = filter.actionsIterator();
             if (actions == null) {
                 ArrayList<String> noAction = new ArrayList<String>(1);
@@ -15574,6 +15589,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
 
             // Collect stickies of users
+            // 通过用户 Id 获取粘性广播，保存到 mStickyBroadcasts 中
             int[] userIds = { UserHandle.USER_ALL, UserHandle.getUserId(callingUid) };
             while (actions.hasNext()) {
                 String action = actions.next();
@@ -15592,6 +15608,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
+        // 查询和 Intent actions 匹配成功的粘性广播，加入 allSticky 中
         ArrayList<Intent> allSticky = null;
         if (stickyIntents != null) {
             final ContentResolver resolver = mContext.getContentResolver();
@@ -15607,6 +15624,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 // provider that needs to lock mProviderMap in ActivityThread
                 // and also it may need to wait application response, so we
                 // cannot lock ActivityManagerService here.
+                // 进行匹配
                 if (filter.match(resolver, intent, true, TAG) >= 0) {
                     if (allSticky == null) {
                         allSticky = new ArrayList<Intent>();
@@ -15619,6 +15637,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // The first sticky in the list is returned directly back to the client.
         Intent sticky = allSticky != null ? allSticky.get(0) : null;
         if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "Register receiver " + filter + ": " + sticky);
+        // 接受者为空，则返回第一个粘性广播，这是为什么？一种获取粘性广播的方法吗？
         if (receiver == null) {
             return sticky;
         }
@@ -15629,11 +15648,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                 // Original caller already died
                 return null;
             }
+            // 通过 receiver Binder 查找接受者队列
             com.android.server.am.ReceiverList rl = mRegisteredReceivers.get(receiver.asBinder());
             if (rl == null) {
+                // 没有就新建接受者队列
                 rl = new com.android.server.am.ReceiverList(this, callerApp, callingPid, callingUid,
                         userId, receiver);
                 if (rl.app != null) {
+                    // 一个 app 广播接受者数量不能超过 100 个
                     final int totalReceiversForApp = rl.app.receivers.size();
                     if (totalReceiversForApp >= MAX_RECEIVERS_ALLOWED_PER_APP) {
                         throw new IllegalStateException("Too many receivers, total of "
@@ -15643,12 +15665,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                     rl.app.receivers.add(rl);
                 } else {
                     try {
+                        // 注册 receiver Binder 死亡通知
                         receiver.asBinder().linkToDeath(rl, 0);
                     } catch (RemoteException e) {
                         return sticky;
                     }
                     rl.linkedToDeath = true;
                 }
+                // 新的接受者队列添加到 mRegisteredReceivers
                 mRegisteredReceivers.put(receiver.asBinder(), rl);
             } else if (rl.uid != callingUid) {
                 throw new IllegalArgumentException(
@@ -15666,6 +15690,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                         + " was previously registered for user " + rl.userId
                         + " callerPackage is " + callerPackage);
             }
+            // 新建广播过滤
             com.android.server.am.BroadcastFilter bf = new com.android.server.am.BroadcastFilter(filter, rl, callerPackage, callerFeatureId,
                     permission, callingUid, userId, instantApp, visibleToInstantApps);
             if (rl.containsFilter(filter)) {
@@ -15677,11 +15702,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                 if (!bf.debugCheck()) {
                     Slog.w(TAG, "==> For Dynamic broadcast");
                 }
+                // ！！！将新创建的广播添加到 mReceiverResolver Set 中
                 mReceiverResolver.addFilter(bf);
             }
 
             // Enqueue broadcasts for all existing stickies that match
             // this filter.
+            //所有匹配该filter的sticky广播执行入队操作
+            //如果没有使用sendStickyBroadcast，则allSticky=null。
             if (allSticky != null) {
                 ArrayList receivers = new ArrayList();
                 receivers.add(bf);
@@ -15689,12 +15717,16 @@ public class ActivityManagerService extends IActivityManager.Stub
                 final int stickyCount = allSticky.size();
                 for (int i = 0; i < stickyCount; i++) {
                     Intent intent = allSticky.get(i);
+                    // 根据 Intent 返回前台或者后台广播队列
                     com.android.server.am.BroadcastQueue queue = broadcastQueueForIntent(intent);
+                    // 构造广播接受者 BroadcastRecord
                     com.android.server.am.BroadcastRecord r = new com.android.server.am.BroadcastRecord(queue, intent, null,
                             null, null, -1, -1, false, null, null, OP_NONE, null, receivers,
                             null, 0, null, null, false, true, true, -1, false,
                             false /* only PRE_BOOT_COMPLETED should be exempt, no stickies */);
+                    // 添加入队列
                     queue.enqueueParallelBroadcastLocked(r);
+                    // 调度广播，向 Handler 发送 BROADCAST_INTENT_MSG，触发下一个广播
                     queue.scheduleBroadcastsLocked();
                 }
             }
@@ -15943,6 +15975,18 @@ public class ActivityManagerService extends IActivityManager.Stub
                 null /*broadcastWhitelist*/);
     }
 
+    /**
+     * 这方法太长了，根据 gityuan 的说明，这里可以分为 8 个部分，一个一个来看：
+     *      //step1: 设置flag
+     *     //step2: 广播权限验证
+     *     //step3: 处理系统相关广播
+     *     //step4: 增加sticky广播
+     *     //step5: 查询receivers和registeredReceivers
+     *     //step6: 处理并行广播
+     *     //step7: 合并registeredReceivers到receivers
+     *     //step8: 处理串行广播
+     * @return
+     */
     @GuardedBy("this")
     final int broadcastIntentLocked(com.android.server.am.ProcessRecord callerApp, String callerPackage,
                                     @Nullable String callerFeatureId, Intent intent, String resolvedType,
@@ -15953,6 +15997,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                                     @Nullable int[] broadcastWhitelist) {
         intent = new Intent(intent);
 
+        // step 1 start 添加 FLAG >>>>>>>>>>
         final boolean callerInstantApp = isInstantApp(callerApp, callerPackage, callingUid);
         // Instant Apps cannot use FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS
         if (callerInstantApp) {
@@ -15966,9 +16011,11 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         // By default broadcasts do not go to stopped apps.
+        // 添加 FLAG_EXCLUDE_STOPPED_PACKAGES 保证已停止的 App 不会接收到广播
         intent.addFlags(Intent.FLAG_EXCLUDE_STOPPED_PACKAGES);
 
         // If we have not finished booting, don't allow this to launch new processes.
+        // 系统还没启动完成，不允许启动进程，只允许动态注册的。
         if (!mProcessesReady && (intent.getFlags()&Intent.FLAG_RECEIVER_BOOT_UPGRADE) == 0) {
             intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         }
@@ -15985,6 +16032,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         // Make sure that the user who is receiving this broadcast or its parent is running.
         // If not, we will just skip it. Make an exception for shutdown broadcasts, upgrade steps.
+        // 检查发送广播时用户状态，当非USER_ALL广播且当前用户并没有处于Running的情况下，除非是系统升级广播或者关机广播，否则直接返回。
         if (userId != UserHandle.USER_ALL && !mUserController.isUserOrItsParentRunning(userId)) {
             if ((callingUid != SYSTEM_UID
                     || (intent.getFlags() & Intent.FLAG_RECEIVER_BOOT_UPGRADE) == 0)
@@ -15995,6 +16043,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
+        // step 2 start 广播权限验证 >>>>>>>>>>
         final String action = intent.getAction();
         BroadcastOptions brOptions = null;
         if (bOptions != null) {
@@ -16054,6 +16103,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             return ActivityManager.BROADCAST_SUCCESS;
         }
 
+        //  step 3 start 处理系统广播 >>>>>>>>>>
         final boolean isCallerSystem;
         switch (UserHandle.getAppId(callingUid)) {
             case ROOT_UID:
@@ -16069,7 +16119,6 @@ public class ActivityManagerService extends IActivityManager.Stub
                 isCallerSystem = (callerApp != null) && callerApp.isPersistent();
                 break;
         }
-
         // First line security check before anything else: stop non-system apps from
         // sending protected broadcasts.
         if (!isCallerSystem) {
@@ -16369,6 +16418,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
+        //  step 4 start 粘性广播，进行增加 >>>>>>>>>>
         // Add to the sticky list if requested.
         if (sticky) {
             if (checkPermission(android.Manifest.permission.BROADCAST_STICKY,
@@ -16412,6 +16462,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     }
                 }
             }
+            // 获取 userId 获取粘性广播 list
             ArrayMap<String, ArrayList<Intent>> stickies = mStickyBroadcasts.get(userId);
             if (stickies == null) {
                 stickies = new ArrayMap<>();
@@ -16427,11 +16478,13 @@ public class ActivityManagerService extends IActivityManager.Stub
             for (i = 0; i < stickiesCount; i++) {
                 if (intent.filterEquals(list.get(i))) {
                     // This sticky already exists, replace it.
+                    // 替换已存在的粘性广播
                     list.set(i, new Intent(intent));
                     break;
                 }
             }
             if (i >= stickiesCount) {
+                // 添加粘性广播
                 list.add(new Intent(intent));
             }
         }
@@ -16445,16 +16498,19 @@ public class ActivityManagerService extends IActivityManager.Stub
             users = new int[] {userId};
         }
 
+        //  step 5 start 查询receivers(静态注册)和registeredReceivers(动态注册) >>>>>>>>>>
         // Figure out who all will receive this broadcast.
         List receivers = null;
-        List<com.android.server.am.BroadcastFilter> registeredReceivers = null;
+        List<com.android.server.am.BroadcastFilter> registeredReceivers = null;// 回忆下接受者注册时
         // Need to resolve the intent to interested receivers...
         if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)
                  == 0) {
+            // 如果允许静态接受者接受，则通过 PKMS 收集符合的，添加到 receivers
             receivers = collectReceiverComponents(
                     intent, resolvedType, callingUid, users, broadcastWhitelist);
         }
         if (intent.getComponent() == null) {
+            // 通过 userId 查询动态注册的接受者
             if (userId == UserHandle.USER_ALL && callingUid == SHELL_UID) {
                 // Query one target user at a time, excluding shell-restricted users
                 for (int i = 0; i < users.length; i++) {
@@ -16477,6 +16533,8 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
+        //  step 6 start 处理并行广播 >>>>>>>>>>
+        //用于标识是否需要用新intent替换旧的intent。
         final boolean replacePending =
                 (intent.getFlags()&Intent.FLAG_RECEIVER_REPLACE_PENDING) != 0;
 
@@ -16495,7 +16553,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         int NR = registeredReceivers != null ? registeredReceivers.size() : 0;
-        if (!ordered && NR > 0) {
+        if (!ordered && NR > 0) { // 不能是有序广播，意思是有序广播不能并行
             // If we are not serializing this broadcast, then send the
             // registered receivers separately so they don't wait for the
             // components to be launched.
@@ -16503,8 +16561,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                 checkBroadcastFromSystem(intent, callerApp, callerPackage, callingUid,
                         isProtectedBroadcast, registeredReceivers);
             }
-            final com.android.server.am.BroadcastQueue queue = broadcastQueueForIntent(intent);
-            com.android.server.am.BroadcastRecord r = new com.android.server.am.BroadcastRecord(queue, intent, callerApp, callerPackage,
+            // 根据 intent 获取前台 or 后台广播队列
+            BroadcastQueue queue = broadcastQueueForIntent(intent);
+            // 构建 BroadcastRecord
+            BroadcastRecord r = new com.android.server.am.BroadcastRecord(queue, intent, callerApp, callerPackage,
                     callerFeatureId, callingPid, callingUid, callerInstantApp, resolvedType,
                     requiredPermissions, appOp, brOptions, registeredReceivers, resultTo,
                     resultCode, resultData, resultExtras, ordered, sticky, false, userId,
@@ -16514,13 +16574,16 @@ public class ActivityManagerService extends IActivityManager.Stub
                     && (queue.replaceParallelBroadcastLocked(r) != null);
             // Note: We assume resultTo is null for non-ordered broadcasts.
             if (!replaced) {
+                // 将 BroadcastRecord 加入并行广播队列
                 queue.enqueueParallelBroadcastLocked(r);
+                // 调度执行广播，发送 BROADCAST_INTENT_MSG 消息
                 queue.scheduleBroadcastsLocked();
             }
             registeredReceivers = null;
             NR = 0;
         }
 
+        //  step 7 start 合并 registeredReceivers 至 receivers >>>>>>>>>>
         // Merge into one list.
         int ir = 0;
         if (receivers != null) {
@@ -16530,6 +16593,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             // installed.  Maybe in the future we want to have a special install
             // broadcast or such for apps, but we'd like to deliberately make
             // this decision.
+            // 防止应用监听该广播，在安装时直接运行, 看英文
             String skipPackages[] = null;
             if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())
                     || Intent.ACTION_PACKAGE_RESTARTED.equals(intent.getAction())
@@ -16544,6 +16608,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             } else if (Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
                 skipPackages = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST);
             }
+            //将skipPackages相关的广播接收者从receivers列表中移除
             if (skipPackages != null && (skipPackages.length > 0)) {
                 for (String skipPackage : skipPackages) {
                     if (skipPackage != null) {
@@ -16559,7 +16624,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     }
                 }
             }
-
+            // 和 step 6 并行处理有关，暂时没看懂
             int NT = receivers != null ? receivers.size() : 0;
             int it = 0;
             ResolveInfo curt = null;
@@ -16598,9 +16663,12 @@ public class ActivityManagerService extends IActivityManager.Stub
                     isProtectedBroadcast, receivers);
         }
 
+        //  step 8 start 处理串行广播 >>>>>>>>>>
         if ((receivers != null && receivers.size() > 0)
                 || resultTo != null) {
+            // 通过 intent.flag 获取前or后广播队列
             com.android.server.am.BroadcastQueue queue = broadcastQueueForIntent(intent);
+            // 构建 BroadcastRecord
             com.android.server.am.BroadcastRecord r = new com.android.server.am.BroadcastRecord(queue, intent, callerApp, callerPackage,
                     callerFeatureId, callingPid, callingUid, callerInstantApp, resolvedType,
                     requiredPermissions, appOp, brOptions, receivers, resultTo, resultCode,
@@ -16628,10 +16696,13 @@ public class ActivityManagerService extends IActivityManager.Stub
                     }
                 }
             } else {
+                // 将 BroadcastRecord 加入并行广播队列
                 queue.enqueueOrderedBroadcastLocked(r);
+                // 调度执行广播，发送 BROADCAST_INTENT_MSG 消息
                 queue.scheduleBroadcastsLocked();
             }
         } else {
+            // 没有人处理广播，仍然记录
             // There was nobody interested in the broadcast, but we still want to record
             // that it happened.
             if (intent.getComponent() == null && intent.getPackage() == null
@@ -16742,8 +16813,9 @@ public class ActivityManagerService extends IActivityManager.Stub
             boolean serialized, boolean sticky, int userId) {
         enforceNotIsolatedCaller("broadcastIntent");
         synchronized(this) {
+            // 验证广播Intent是否有效
             intent = verifyBroadcastLocked(intent);
-
+            // 获取条用着 ProcessRecord 对象
             final com.android.server.am.ProcessRecord callerApp = getRecordForAppLocked(caller);
             final int callingPid = Binder.getCallingPid();
             final int callingUid = Binder.getCallingUid();

@@ -1363,6 +1363,7 @@ public final class LoadedApk {
             Instrumentation instrumentation, boolean registered) {
         synchronized (mReceivers) {
             LoadedApk.ReceiverDispatcher rd = null;
+            // map 以 Context 为 key ，ReceiverDispatcher 为 value 没有则创建一个
             ArrayMap<BroadcastReceiver, LoadedApk.ReceiverDispatcher> map = null;
             if (registered) {
                 map = mReceivers.get(context);
@@ -1381,6 +1382,7 @@ public final class LoadedApk {
                     map.put(r, rd);
                 }
             } else {
+                // 检查 context 与 Handler
                 rd.validate(context, handler);
             }
             rd.mForgotten = false;
@@ -1583,7 +1585,7 @@ public final class LoadedApk {
             if (activityThread == null) {
                 throw new NullPointerException("Handler must not be null");
             }
-
+            // InnerReceiver 是一个 Binder,  继承至 IIntentReceiver.Stub 是 Binder 中的服务端
             mIIntentReceiver = new InnerReceiver(this, !registered);
             mReceiver = receiver;
             mContext = context;
