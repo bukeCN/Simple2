@@ -947,10 +947,13 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
     private class ApplicationThread extends IApplicationThread.Stub {
         private static final String DB_INFO_FORMAT = "  %8s %8s %14s %14s  %s";
 
+        // AMS Binder 调用.
         public final void scheduleReceiver(Intent intent, ActivityInfo info,
                 CompatibilityInfo compatInfo, int resultCode, String data, Bundle extras,
                 boolean sync, int sendingUser, int processState) {
+            // 更新进程状态
             updateProcessState(processState, false);
+            // 通过 handler 处理
             ReceiverData r = new ReceiverData(intent, resultCode, data, extras,
                     sync, false, mAppThread.asBinder(), sendingUser);
             r.info = info;
@@ -4012,6 +4015,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
             data.intent.setExtrasClassLoader(cl);
             data.intent.prepareToEnterProcess();
             data.setExtrasClassLoader(cl);
+            // 放射创建 BroadcastReceiver 实例
             receiver = packageInfo.getAppFactory()
                     .instantiateReceiver(cl, data.info.name, data.intent);
         } catch (Exception e) {
@@ -4034,6 +4038,7 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
 
             sCurrentBroadcastIntent.set(data.intent);
             receiver.setPendingResult(data);
+            // 回调 onReceive()
             receiver.onReceive(context.getReceiverRestrictedContext(),
                     data.intent);
         } catch (Exception e) {

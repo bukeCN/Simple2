@@ -950,7 +950,8 @@ public final class BroadcastQueue {
         }
     }
 
-    final void processNextBroadcastLocked(boolean fromMsg, boolean skipOomAdj) {
+    final void
+            (boolean fromMsg, boolean skipOomAdj) {
         BroadcastRecord r;
 
         if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "processNextBroadcast ["

@@ -16418,7 +16418,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
-        //  step 4 start 粘性广播，进行增加 >>>>>>>>>>
+        //  step4 start 粘性广播，进行增加 >>>>>>>>>>
         // Add to the sticky list if requested.
         if (sticky) {
             if (checkPermission(android.Manifest.permission.BROADCAST_STICKY,
@@ -16498,14 +16498,14 @@ public class ActivityManagerService extends IActivityManager.Stub
             users = new int[] {userId};
         }
 
-        //  step 5 start 查询receivers(静态注册)和registeredReceivers(动态注册) >>>>>>>>>>
+        //  step5 start 查询receivers(静态注册)和registeredReceivers(动态注册) >>>>>>>>>>
         // Figure out who all will receive this broadcast.
         List receivers = null;
         List<com.android.server.am.BroadcastFilter> registeredReceivers = null;// 回忆下接受者注册时
         // Need to resolve the intent to interested receivers...
         if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)
                  == 0) {
-            // 如果允许静态接受者接受，则通过 PKMS 收集符合的，添加到 receivers
+            // 如果允许静态接受者接受，则通过 PKMS 收集符合的，添加到 receivers ，注意 动态注册 registeredReceivers 进行分别
             receivers = collectReceiverComponents(
                     intent, resolvedType, callingUid, users, broadcastWhitelist);
         }
@@ -16533,7 +16533,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
         }
 
-        //  step 6 start 处理并行广播 >>>>>>>>>>
+        //  step6 start 处理并行广播 >>>>>>>>>>
         //用于标识是否需要用新intent替换旧的intent。
         final boolean replacePending =
                 (intent.getFlags()&Intent.FLAG_RECEIVER_REPLACE_PENDING) != 0;
@@ -16696,7 +16696,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     }
                 }
             } else {
-                // 将 BroadcastRecord 加入并行广播队列
+                // 将 BroadcastRecord 加入串行广播队列
                 queue.enqueueOrderedBroadcastLocked(r);
                 // 调度执行广播，发送 BROADCAST_INTENT_MSG 消息
                 queue.scheduleBroadcastsLocked();
@@ -16815,7 +16815,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         synchronized(this) {
             // 验证广播Intent是否有效
             intent = verifyBroadcastLocked(intent);
-            // 获取条用着 ProcessRecord 对象
+            // 获取调用者 ProcessRecord 对象
             final com.android.server.am.ProcessRecord callerApp = getRecordForAppLocked(caller);
             final int callingPid = Binder.getCallingPid();
             final int callingUid = Binder.getCallingUid();
@@ -16926,13 +16926,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                     queue = (flags & Intent.FLAG_RECEIVER_FOREGROUND) != 0
                             ? mFgBroadcastQueue : mBgBroadcastQueue;
                 }
-
+                // 获取串行派发的当前活动的 BroadcastRecord
                 r = queue.getMatchingOrderedReceiver(who);
                 if (r != null) {
                     doNext = r.queue.finishReceiverLocked(r, resultCode,
                         resultData, resultExtras, resultAbort, true);
                 }
                 if (doNext) {
+                    // 处理下一条广播
                     r.queue.processNextBroadcastLocked(/*fromMsg=*/ false, /*skipOomAdj=*/ true);
                 }
                 // updateOomAdjLocked() will be done here

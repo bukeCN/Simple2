@@ -219,9 +219,10 @@ public abstract class BroadcastReceiver {
          * next broadcast will proceed.
          */
         public final void finish() {
-            if (mType == TYPE_COMPONENT) {
+            if (mType == TYPE_COMPONENT) { // 静态注册组件
                 final IActivityManager mgr = ActivityManager.getService();
-                if (QueuedWork.hasPendingWork()) {
+                if (QueuedWork.hasPendingWork()) { // 对于静态注册的组件，需要等到 sp 执行完成，保证数据持久化的完成，
+                    // 这也导致对于这类广播的超时检测 ANR 会比较久。
                     // If this is a broadcast component, we need to make sure any
                     // queued work is complete before telling AM we are done, so
                     // we don't have our process killed before that.  We now know
@@ -244,10 +245,11 @@ public abstract class BroadcastReceiver {
                             "Finishing broadcast to component " + mToken);
                     sendFinished(mgr);
                 }
-            } else if (mOrderedHint && mType != TYPE_UNREGISTERED) {
+            } else if (mOrderedHint && mType != TYPE_UNREGISTERED) { // 动态注册，发送的是串行广播, 则直接调用sendFinished方法.
                 if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
                         "Finishing broadcast to " + mToken);
                 final IActivityManager mgr = ActivityManager.getService();
+                // Binder 调用 AMS.finishReceiver()
                 sendFinished(mgr);
             }
         }

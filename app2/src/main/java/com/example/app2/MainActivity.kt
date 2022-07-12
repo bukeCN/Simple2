@@ -1,5 +1,9 @@
 package com.example.app2
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -28,14 +32,15 @@ class MainActivity : AppCompatActivity() {
         tabs.setupWithViewPager(viewPager)
         val fab: FloatingActionButton = binding.fab
 
-        this.sendBroadcast()
-        this.sendStickyBroadcast()
-
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-
-
+            sendBroadcast(Intent("test"))
         }
+
+        registerReceiver(object : BroadcastReceiver(){
+            override fun onReceive(p0: Context, p1: Intent) {
+                p0.startActivity(Intent(p0, MainActivity::class.java))
+            }
+
+        }, IntentFilter("test"))
     }
 }
