@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.provider.UserDictionary
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
@@ -33,14 +34,18 @@ class MainActivity : AppCompatActivity() {
         val fab: FloatingActionButton = binding.fab
 
         fab.setOnClickListener { view ->
-            sendBroadcast(Intent("test"))
+//            sendBroadcast(Intent("test"))
+            this.contentResolver.insert(UserDictionary.Words.CONTENT_URI)
+            this.contentResolver.delete(UserDictionary.Words.CONTENT_URI)
+            this.contentResolver.refresh(UserDictionary.Words.CONTENT_URI)
+            this.contentResolver.query(UserDictionary.Words.CONTENT_URI)
         }
 
-        registerReceiver(object : BroadcastReceiver(){
-            override fun onReceive(p0: Context, p1: Intent) {
-                p0.startActivity(Intent(p0, MainActivity::class.java))
-            }
-
-        }, IntentFilter("test"))
+//        registerReceiver(object : BroadcastReceiver(){
+//            override fun onReceive(p0: Context, p1: Intent) {
+//                p0.startActivity(Intent(p0, MainActivity::class.java))
+//            }
+//
+//        }, IntentFilter("test"))
     }
 }

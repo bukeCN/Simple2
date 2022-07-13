@@ -6813,6 +6813,14 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         }
     }
 
+    /**
+     * 通过 Uri 的 auth 获取 ContentProvider 的 Binder 代理引用
+     * @param c
+     * @param auth
+     * @param userId
+     * @param stable
+     * @return
+     */
     @UnsupportedAppUsage
     public final IContentProvider acquireProvider(
             Context c, String auth, int userId, boolean stable) {
@@ -6829,6 +6837,9 @@ public final class ActivityThread extends android.app.ClientTransactionHandler {
         // be re-entrant in the case where the provider is in the same process.
         android.app.ContentProviderHolder holder = null;
         try {
+            // 这个锁有趣，因为可能有其它线程在访问同其它 ContentProvider 且可能是耗时的，因此个每个ContentProvider都建立一个锁 。
+            // 锁是使用 auth 和 userId 来构造的，重写了 hashCode 和 equals 方法。
+            // 需要等待返回值！
             synchronized (getGetProviderLock(auth, userId)) {
                 holder = ActivityManager.getService().getContentProvider(
                         getApplicationThread(), c.getOpPackageName(), auth, userId, stable);
