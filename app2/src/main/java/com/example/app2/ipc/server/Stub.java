@@ -1,4 +1,4 @@
-package com.live.simple2.ipc.server;
+package com.example.app2.ipc.server;
 
 import android.os.Binder;
 import android.os.IBinder;

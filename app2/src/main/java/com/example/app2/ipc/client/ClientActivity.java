@@ -1,4 +1,4 @@
-package com.live.simple2.ipc.client;
+package com.example.app2.ipc.client;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,11 +12,11 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.live.simple2.R;
-import com.live.simple2.ipc.proxy.ClientService;
-import com.live.simple2.ipc.proxy.BinderProxy;
-import com.live.simple2.ipc.server.BookManager;
-import com.live.simple2.ipc.server.RemoteService;
+import com.example.app2.R;
+import com.example.app2.ipc.proxy.BinderProxy;
+import com.example.app2.ipc.proxy.ClientService;
+import com.example.app2.ipc.server.BookManager;
+import com.example.app2.ipc.server.RemoteService;
 
 public class ClientActivity extends AppCompatActivity {
 
@@ -46,13 +46,12 @@ public class ClientActivity extends AppCompatActivity {
 
         textView = findViewById(R.id.text);
 
-
         findViewById(R.id.qureyBtn).setOnClickListener(v -> {
             // 向 service 传递匿名 binder
             try {
-                bookManagerProxy.bindIClient(bpService);
-//                String result = bookManager.queryBook();
-//                textView.setText(result);
+//                bookManagerProxy.bindIClient(bpService);
+                String result = bookManagerProxy.queryBook();
+                textView.setText(result);
 //
             } catch (RemoteException e) {
                 e.printStackTrace();

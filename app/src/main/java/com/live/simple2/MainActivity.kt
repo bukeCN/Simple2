@@ -18,11 +18,13 @@ import com.live.simple2.view.TestView
 import com.live.simple2.view.TextSwitchView
 import com.live.simple2.view.animator.TestAnimatorActivity
 import com.test.aidl.IMyPrintServerlInterface
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
         findViewById<View>(R.id.toAnimator).also {
 

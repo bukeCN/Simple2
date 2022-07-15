@@ -34,11 +34,6 @@ class MainActivity : AppCompatActivity() {
         val fab: FloatingActionButton = binding.fab
 
         fab.setOnClickListener { view ->
-//            sendBroadcast(Intent("test"))
-            this.contentResolver.insert(UserDictionary.Words.CONTENT_URI)
-            this.contentResolver.delete(UserDictionary.Words.CONTENT_URI)
-            this.contentResolver.refresh(UserDictionary.Words.CONTENT_URI)
-            this.contentResolver.query(UserDictionary.Words.CONTENT_URI)
         }
 
 //        registerReceiver(object : BroadcastReceiver(){

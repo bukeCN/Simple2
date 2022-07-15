@@ -20,6 +20,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ipc.client.ClientActivity"/>
+        <service android:name=".ipc.server.RemoteService"
+            android:process=":remote"/>
     </application>
 
 </manifest>

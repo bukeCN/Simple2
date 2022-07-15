@@ -5,7 +5,9 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
 import java.util.Random;
+import java.util.Stack;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -23,7 +25,6 @@ public class JavaTest {
                 Log.e("sun","终极任务开始执行");
             }
         });
-
 //        ExecutorService executorService = Executors.newFixedThreadPool(100);
 
         for (int i = 0; i < 2;i++){
@@ -36,10 +37,6 @@ public class JavaTest {
         options.inBitmap = bitmap;
 
         BitmapFactory.decodeFile("",options);
-
-
-
-
     }
 
 
